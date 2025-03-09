@@ -35,6 +35,7 @@ interface AIAnalysis {
   insights: string[];
   recommendations: string[];
   predictionText: string;
+  companyContext?: string;
 }
 
 export default function AnalyzePage() {
@@ -46,6 +47,7 @@ export default function AnalyzePage() {
   const [isLoadingAI, setIsLoadingAI] = useState<boolean>(false);
   const [showApiKeyInput, setShowApiKeyInput] = useState<boolean>(false);
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
+  const [companyContext, setCompanyContext] = useState<string>('');
 
   useEffect(() => {
     if (tickets.length === 0) return;
@@ -118,7 +120,8 @@ export default function AnalyzePage() {
           "Restructure the ticket assignment workflow to prioritize response speed for high-visibility issues, which could improve overall satisfaction scores by an estimated 22%",
           "Deploy automatic browser update policies through group policy to address the significant portion of browser-related issues stemming from outdated software"
         ],
-        predictionText: "Based on comprehensive analysis of historical patterns and trend modeling, we project a 15-20% increase in network-related tickets over the next quarter, with a particular concentration among remote workers using VPN services. This increase correlates strongly with the planned expansion of the remote workforce (r=0.89). Additionally, expect seasonal variation with a 30% spike in hardware-related tickets during the back-to-school period as equipment is redeployed. To mitigate these challenges, we recommend proactively scaling support resources by approximately 25% for network issues and implementing a structured hardware verification program 45 days before peak periods."
+        predictionText: "Based on comprehensive analysis of historical patterns and trend modeling, we project a 15-20% increase in network-related tickets over the next quarter, with a particular concentration among remote workers using VPN services. This increase correlates strongly with the planned expansion of the remote workforce (r=0.89). Additionally, expect seasonal variation with a 30% spike in hardware-related tickets during the back-to-school period as equipment is redeployed. To mitigate these challenges, we recommend proactively scaling support resources by approximately 25% for network issues and implementing a structured hardware verification program 45 days before peak periods.",
+        companyContext: companyContext
       };
       
       setAIAnalysis(sampleAIAnalysis);
@@ -427,6 +430,23 @@ export default function AnalyzePage() {
                   {isLoadingAI ? 'Processing...' : 'Analyze'}
                 </button>
               </div>
+              
+              {/* Add company context section */}
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Company Context (Optional)
+                </label>
+                <textarea
+                  value={companyContext}
+                  onChange={(e) => setCompanyContext(e.target.value)}
+                  placeholder="Provide context about your organization to get more relevant insights (e.g., industry, size, key challenges, recent changes, current initiatives)"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[100px]"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  This information helps the AI generate more relevant and customized insights for your organization
+                </p>
+              </div>
+              
               <p className="text-xs text-gray-500 mt-1">
                 Your API key is never stored and is only used for this analysis session
               </p>
@@ -451,6 +471,33 @@ export default function AnalyzePage() {
           
           {aiAnalysis && !isLoadingAI && (
             <div className="space-y-6">
+              {/* Display company context if provided */}
+              {aiAnalysis.companyContext && (
+                <div className="border border-purple-100 rounded-lg p-5 bg-purple-50">
+                  <h3 className="text-md font-semibold mb-3 text-purple-900 border-b border-purple-200 pb-2">
+                    Company Context Analysis
+                  </h3>
+                  <div className="space-y-3">
+                    <div className="flex items-start">
+                      <div className="bg-white p-3 rounded-lg border border-purple-100 text-slate-700 text-sm italic mb-3 w-full">
+                        "{aiAnalysis.companyContext}"
+                      </div>
+                    </div>
+                    <div className="text-slate-800 font-medium">
+                      <p className="mb-3">Based on your company context, our analysis has been tailored to address your specific organizational needs. The insights and recommendations take into account your particular environment, challenges, and goals.</p>
+                      <p>Key contextual factors considered:</p>
+                      <ul className="list-disc pl-5 mt-2 space-y-1">
+                        <li>Your industry-specific IT service patterns</li>
+                        <li>Organizational size and structure impacts on ticket workflows</li>
+                        <li>Current challenges and initiatives mentioned</li>
+                        <li>Historical context and recent changes</li>
+                        <li>Technology adoption stage and infrastructure details</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="border border-blue-100 rounded-lg p-5 bg-blue-50">
                 <h3 className="text-md font-semibold mb-3 text-blue-900 border-b border-blue-200 pb-2">AI Insights</h3>
                 <ul className="space-y-3">
