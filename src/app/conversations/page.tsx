@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useConversations, Conversation, ConversationMessage } from '@/context/ConversationContext';
+import { useConversations, Conversation } from '@/context/ConversationContext';
 import { Header } from '@/components/Header';
 import { FaComments, FaUser, FaRobot, FaClock, FaCalendarAlt, FaSearch, FaFilter } from 'react-icons/fa';
 
