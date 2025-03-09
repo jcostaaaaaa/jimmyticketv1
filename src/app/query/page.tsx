@@ -2,9 +2,11 @@
 
 import { useState } from 'react';
 import { Header } from '@/components/Header';
-import { FaRobot, FaSyncAlt, FaHistory, FaTerminal, FaBrain, FaServer, FaRegClock, FaDatabase, FaQuestion, FaComments } from 'react-icons/fa';
+import { FaRobot, FaSyncAlt, FaHistory, FaTerminal, FaBrain, FaServer, FaRegClock, FaDatabase, FaQuestion } from 'react-icons/fa';
+import { FaComments } from 'react-icons/fa';
 import { useTickets } from '@/context/TicketContext';
-import { useConversations } from '@/context/ConversationContext';
+// Comment out this import for now until we verify it's working
+// import { useConversations } from '@/context/ConversationContext';
 
 interface QueryResponse {
   answer: string;
@@ -28,7 +30,8 @@ interface KnowledgeItem {
 
 export default function QueryPage() {
   const { tickets } = useTickets();
-  const { conversations } = useConversations();
+  // Mock empty conversations array until we fix the context
+  const conversations: any[] = [];
   const [query, setQuery] = useState('');
   const [queryType, setQueryType] = useState<QueryType>('ticket_analysis');
   const [isLoading, setIsLoading] = useState(false);
