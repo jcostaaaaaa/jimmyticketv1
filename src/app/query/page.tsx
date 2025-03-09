@@ -227,10 +227,28 @@ export default function QueryPage() {
     }
   };
 
+  // Update to reset response when query changes
+  const handleQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Reset response when user starts typing a new query
+    if (response) {
+      setResponse(null);
+    }
+    setQuery(e.target.value);
+  };
+
+  // Update to reset response when query type changes
+  const handleQueryTypeChange = (type: QueryType) => {
+    setQueryType(type);
+    // Reset response when switching query types
+    setResponse(null);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!query.trim()) return;
     
+    // Clear previous response immediately when submitting new query
+    setResponse(null);
     setIsLoading(true);
     
     try {
@@ -273,6 +291,8 @@ export default function QueryPage() {
   };
 
   const handleSuggestedQuery = (suggestedQuery: string, type: QueryType) => {
+    // Reset response when selecting a suggested query
+    setResponse(null);
     setQuery(suggestedQuery);
     setQueryType(type);
   };
@@ -295,7 +315,7 @@ export default function QueryPage() {
                       ? 'bg-blue-600 text-white' 
                       : 'bg-gray-100 hover:bg-gray-200 text-gray-800'
                   }`}
-                  onClick={() => setQueryType('ticket_analysis')}
+                  onClick={() => handleQueryTypeChange('ticket_analysis')}
                 >
                   <FaDatabase className="mr-2" />
                   Ticket Analysis
@@ -306,7 +326,7 @@ export default function QueryPage() {
                       ? 'bg-blue-600 text-white' 
                       : 'bg-gray-100 hover:bg-gray-200 text-gray-800'
                   }`}
-                  onClick={() => setQueryType('conversation_analysis')}
+                  onClick={() => handleQueryTypeChange('conversation_analysis')}
                 >
                   <FaComments className="mr-2" />
                   Conversation Analysis
@@ -317,7 +337,7 @@ export default function QueryPage() {
                       ? 'bg-blue-600 text-white' 
                       : 'bg-gray-100 hover:bg-gray-200 text-gray-800'
                   }`}
-                  onClick={() => setQueryType('it_knowledge')}
+                  onClick={() => handleQueryTypeChange('it_knowledge')}
                 >
                   <FaQuestion className="mr-2" />
                   IT Knowledge
@@ -330,7 +350,7 @@ export default function QueryPage() {
                   <input
                     type="text"
                     value={query}
-                    onChange={(e) => setQuery(e.target.value)}
+                    onChange={handleQueryChange}
                     placeholder={
                       queryType === 'ticket_analysis' 
                         ? "Ask a question about your ticket data..." 
