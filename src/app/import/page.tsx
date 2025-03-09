@@ -525,7 +525,7 @@ export default function ImportPage() {
         <div className="bg-blue-50 p-6 rounded-xl border border-blue-100">
           <h2 className="text-lg font-semibold mb-2 text-blue-900">Data Format Information</h2>
           <p className="text-blue-800 mb-3">
-            The system can extract both ticket data and conversation history from the same JSON file, or from separate files. Simply upload your file(s) and we'll identify the data types automatically.
+            The system can extract both ticket data and conversation history from the same JSON file, or from separate files. Simply upload your file(s) and we&apos;ll identify the data types automatically.
           </p>
           
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
