@@ -5,9 +5,12 @@ import { Header } from '@/components/Header';
 import { FaFileUpload, FaCheck, FaExclamationTriangle } from 'react-icons/fa';
 import { useTickets, Ticket } from '@/context/TicketContext';
 
+// Define types we'll use
+type JsonData = Record<string, unknown> | unknown[] | unknown;
+
 // Define a more specific type for the preview data
 interface PreviewData {
-  original: Record<string, any>;
+  original: JsonData;
   tickets: Ticket[];
 }
 
@@ -46,11 +49,11 @@ export default function ImportPage() {
     }
   };
 
-  const extractTickets = (data: Record<string, any>): Ticket[] => {
+  const extractTickets = (data: JsonData): Ticket[] => {
     // Try to extract tickets from various structures
     if (Array.isArray(data)) {
       console.log('Found array with', data.length, 'items');
-      return data;
+      return data as Ticket[];
     }
     
     if (typeof data !== 'object' || data === null) {
@@ -58,70 +61,74 @@ export default function ImportPage() {
       return [];
     }
     
+    const obj = data as Record<string, unknown>;
+    
     // Check for nested structures
-    if (data.result && typeof data.result === 'object') {
+    if (obj.result && typeof obj.result === 'object') {
       // Look for tickets array inside result
-      if (data.result.tickets && Array.isArray(data.result.tickets)) {
-        console.log('Found tickets array in result.tickets with', data.result.tickets.length, 'items');
-        return data.result.tickets;
+      const result = obj.result as Record<string, unknown>;
+      
+      if (result.tickets && Array.isArray(result.tickets)) {
+        console.log('Found tickets array in result.tickets with', result.tickets.length, 'items');
+        return result.tickets as Ticket[];
       }
       
       // Standard ServiceNow structure
-      if (Array.isArray(data.result)) {
-        console.log('Found array in result with', data.result.length, 'items');
-        return data.result;
+      if (Array.isArray(obj.result)) {
+        console.log('Found array in result with', obj.result.length, 'items');
+        return obj.result as Ticket[];
       }
     }
     
     // Other common structures
-    if (data.records && Array.isArray(data.records)) {
-      console.log('Found records array with', data.records.length, 'items');
-      return data.records;
+    if (obj.records && Array.isArray(obj.records)) {
+      console.log('Found records array with', obj.records.length, 'items');
+      return obj.records as Ticket[];
     }
     
-    if (data.data && Array.isArray(data.data)) {
-      console.log('Found data array with', data.data.length, 'items');
-      return data.data;
+    if (obj.data && Array.isArray(obj.data)) {
+      console.log('Found data array with', obj.data.length, 'items');
+      return obj.data as Ticket[];
     }
     
-    if (data.items && Array.isArray(data.items)) {
-      console.log('Found items array with', data.items.length, 'items');
-      return data.items;
+    if (obj.items && Array.isArray(obj.items)) {
+      console.log('Found items array with', obj.items.length, 'items');
+      return obj.items as Ticket[];
     }
     
-    if (data.tickets && Array.isArray(data.tickets)) {
-      console.log('Found tickets array with', data.tickets.length, 'items');
-      return data.tickets;
+    if (obj.tickets && Array.isArray(obj.tickets)) {
+      console.log('Found tickets array with', obj.tickets.length, 'items');
+      return obj.tickets as Ticket[];
     }
     
     // Check for ticket properties to determine if it's a single ticket
-    if (data.ticket_id || data.number || data.sys_id) {
+    if (obj.ticket_id || obj.number || obj.sys_id) {
       console.log('Found single ticket object');
-      return [data];
+      return [obj as Ticket];
     }
     
     // Last resort: search recursively for any array property that might contain tickets
     console.log('Searching recursively for ticket arrays...');
     
     // First, look for any property that's an array with objects that look like tickets
-    for (const key in data) {
-      if (Array.isArray(data[key]) && data[key].length > 0) {
+    for (const key in obj) {
+      if (Array.isArray(obj[key]) && obj[key].length > 0) {
         // Check if first item looks like a ticket
-        const firstItem = data[key][0];
+        const firstItem = obj[key][0];
         if (typeof firstItem === 'object' && 
             (firstItem.ticket_id || firstItem.number || 
              firstItem.short_description || firstItem.status || 
              firstItem.priority)) {
-          console.log(`Found likely ticket array in "${key}" with ${data[key].length} items`);
-          return data[key];
+          console.log(`Found likely ticket array in "${key}" with ${obj[key].length} items`);
+          return obj[key] as Ticket[];
         }
       }
     }
     
     // Then, look for nested objects that might contain ticket arrays
-    for (const key in data) {
-      if (typeof data[key] === 'object' && data[key] !== null && !Array.isArray(data[key])) {
-        const nestedTickets = extractTickets(data[key]);
+    for (const key in obj) {
+      if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
+        const nestedTickets = extractTickets(obj[key]);
         if (nestedTickets.length > 0) {
           return nestedTickets;
         }
@@ -236,14 +243,21 @@ export default function ImportPage() {
       const origData = previewData.original;
       let dataStructure = 'Custom Format';
       
-      if (origData.result && origData.result.tickets) {
-        dataStructure = 'Nested "result.tickets" Array';
-      } else if (origData.result && Array.isArray(origData.result)) {
-        dataStructure = 'ServiceNow API Result Array';
-      } else if (origData.records) {
-        dataStructure = 'Records Array';
-      } else if (origData.tickets) {
-        dataStructure = 'Tickets Array';
+      if (typeof origData === 'object' && origData !== null) {
+        const obj = origData as Record<string, unknown>;
+        
+        if (obj.result && typeof obj.result === 'object') {
+          const result = obj.result as Record<string, unknown>;
+          if (result.tickets && Array.isArray(result.tickets)) {
+            dataStructure = 'Nested "result.tickets" Array';
+          }
+        } else if (obj.result && Array.isArray(obj.result)) {
+          dataStructure = 'ServiceNow API Result Array';
+        } else if (obj.records) {
+          dataStructure = 'Records Array';
+        } else if (obj.tickets) {
+          dataStructure = 'Tickets Array';
+        } 
       } else if (Array.isArray(origData)) {
         dataStructure = 'Direct Array';
       }
@@ -269,14 +283,14 @@ export default function ImportPage() {
           </div>
         </div>
       );
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error rendering data preview:', error);
       return (
         <div className="mt-4 bg-red-50 text-red-700 p-3 rounded-md flex items-center">
           <FaExclamationTriangle className="mr-2" />
           <div>
             <p>Invalid ticket data format. Please check your JSON structure.</p>
-            <p className="text-sm opacity-75 mt-1">Error: {error.message || 'Unknown error'}</p>
+            <p className="text-sm opacity-75 mt-1">Error: {error instanceof Error ? error.message : 'Unknown error'}</p>
             <p className="text-sm mt-2">
               Try uploading a standard ServiceNow export file or check the console for debugging information.
             </p>
@@ -297,7 +311,7 @@ export default function ImportPage() {
           <h2 className="text-xl font-semibold mb-4">Upload JSON Data</h2>
           <p className="text-gray-600 mb-6">
             Export your tickets from ServiceNow in JSON format and upload the file here.
-            We'll automatically parse and analyze the data.
+            We&apos;ll automatically parse and analyze the data.
           </p>
           
           <div 

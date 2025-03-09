@@ -40,7 +40,7 @@ export default function HelpPage() {
                 <li>Export your tickets from ServiceNow in JSON format</li>
                 <li>Go to the <Link href="/import" className="text-blue-600 hover:underline">Import</Link> page</li>
                 <li>Drag and drop your JSON file or click to select it</li>
-                <li>Click "Process File" to analyze your data</li>
+                <li>Click &quot;Process File&quot; to analyze your data</li>
                 <li>Once processing is complete, you can view analytics or query the data</li>
               </ol>
             </div>

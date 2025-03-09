@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Header } from '@/components/Header';
-import { FaSearch, FaRobot, FaSyncAlt, FaHistory, FaTerminal, FaBrain, FaServer, FaRegClock } from 'react-icons/fa';
+import { FaRobot, FaSyncAlt, FaHistory, FaTerminal, FaBrain, FaServer, FaRegClock } from 'react-icons/fa';
 
 interface QueryResponse {
   answer: string;
