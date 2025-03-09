@@ -2,16 +2,38 @@
 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
-interface Ticket {
+export interface Ticket {
   number?: string;
   short_description?: string;
   description?: string;
   priority?: string | number;
+  status?: string;
   state?: string;
   category?: string;
+  subcategory?: string;
   assigned_to?: string;
+  created_at?: string;
   created?: string;
   closed_at?: string;
+  satisfaction?: {
+    score?: number;
+    comments?: string;
+  };
+  time_metrics?: {
+    response_time_minutes?: number;
+    resolution_time_minutes?: number;
+  };
+  software?: {
+    name?: string;
+    version?: string;
+  };
+  hardware?: {
+    model?: string;
+    type?: string;
+  };
+  network?: {
+    type?: string;
+  };
   [key: string]: any;
 }
 

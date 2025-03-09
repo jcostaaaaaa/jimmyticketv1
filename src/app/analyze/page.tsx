@@ -5,6 +5,9 @@ import { Header } from '@/components/Header';
 import { useTickets } from '@/context/TicketContext';
 import { FaExclamationCircle, FaCheckCircle, FaClock, FaUserCog, FaRobot, FaBrain, FaKey, FaInfoCircle } from 'react-icons/fa';
 
+// Import the Ticket type from the context to ensure we're using consistent types
+import { Ticket } from '@/context/TicketContext';
+
 interface TicketAnalytics {
   totalTickets: number;
   openTickets: number;
@@ -51,7 +54,6 @@ export default function AnalyzePage() {
     console.log("Sample ticket:", tickets[0]);
 
     // Calculate analytics
-    const now = new Date();
     
     // Correctly identify open vs closed tickets based on the status field
     const closedTickets = tickets.filter(t => 
@@ -504,7 +506,7 @@ function MetricCard({ title, value, icon, color }: {
 }
 
 // Helper functions
-function calculateAverageResolutionTime(tickets: any[]): string {
+function calculateAverageResolutionTime(tickets: Ticket[]): string {
   const resolvedTickets = tickets.filter(t => 
     (t.status === 'Closed' || t.status === 'Resolved') && t.created_at && t.closed_at
   );
@@ -512,8 +514,8 @@ function calculateAverageResolutionTime(tickets: any[]): string {
   if (resolvedTickets.length === 0) return 'N/A';
 
   const totalTime = resolvedTickets.reduce((sum, ticket) => {
-    const created = new Date(ticket.created_at);
-    const closed = new Date(ticket.closed_at);
+    const created = new Date(ticket.created_at || '');
+    const closed = new Date(ticket.closed_at || '');
     return sum + (closed.getTime() - created.getTime());
   }, 0);
 
@@ -521,20 +523,20 @@ function calculateAverageResolutionTime(tickets: any[]): string {
   return `${Math.round(avgTimeInHours)} hours`;
 }
 
-function calculateDistribution(tickets: any[], field: string): { [key: string]: number } {
+function calculateDistribution(tickets: Ticket[], field: string): { [key: string]: number } {
   return tickets.reduce((acc, ticket) => {
     const value = String(ticket[field] || 'Unspecified');
     acc[value] = (acc[value] || 0) + 1;
     return acc;
-  }, {});
+  }, {} as Record<string, number>);
 }
 
-function calculateTopAssignees(tickets: any[]): { name: string; count: number }[] {
+function calculateTopAssignees(tickets: Ticket[]): { name: string; count: number }[] {
   const distribution = tickets.reduce((acc, ticket) => {
     const assignee = ticket.assigned_to || 'Unassigned';
     acc[assignee] = (acc[assignee] || 0) + 1;
     return acc;
-  }, {});
+  }, {} as Record<string, number>);
 
   return Object.entries(distribution)
     .map(([name, count]) => ({ name, count: count as number }))
@@ -542,17 +544,17 @@ function calculateTopAssignees(tickets: any[]): { name: string; count: number }[
     .slice(0, 5);
 }
 
-function calculateMonthlyTrends(tickets: any[]): { month: string; count: number }[] {
+function calculateMonthlyTrends(tickets: Ticket[]): { month: string; count: number }[] {
   const monthCounts = tickets.reduce((acc, ticket) => {
     if (!ticket.created_at) return acc;
     const date = new Date(ticket.created_at);
     const monthYear = date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
     acc[monthYear] = (acc[monthYear] || 0) + 1;
     return acc;
-  }, {});
+  }, {} as Record<string, number>);
 
   return Object.entries(monthCounts)
-    .map(([month, count]) => ({ month, count: count as number }))
+    .map(([month, count]) => ({ month, count }))
     .sort((a, b) => {
       // Sort by date
       const [aMonth, aYear] = a.month.split(' ');
@@ -568,7 +570,7 @@ function calculateMonthlyTrends(tickets: any[]): { month: string; count: number 
     });
 }
 
-function extractCommonIssues(tickets: any[]): string[] {
+function extractCommonIssues(tickets: Ticket[]): string[] {
   // Build a map of short descriptions and their frequencies
   const issueMap = tickets.reduce((acc, ticket) => {
     const desc = ticket.short_description;
@@ -582,7 +584,7 @@ function extractCommonIssues(tickets: any[]): string[] {
       acc[normalizedDesc] = (acc[normalizedDesc] || 0) + 1;
     }
     return acc;
-  }, {});
+  }, {} as Record<string, number>);
 
   // Sort and get top issues
   return Object.entries(issueMap)
@@ -591,11 +593,11 @@ function extractCommonIssues(tickets: any[]): string[] {
     .map(([desc, count]) => {
       // Capitalize first letter of each sentence
       const formattedDesc = desc.charAt(0).toUpperCase() + desc.slice(1);
-      return `${formattedDesc} (${count} tickets)`;
+      return `${formattedDesc} (${count as number} tickets)`;
     });
 }
 
-function calculateResolutionEfficiency(tickets: any[]): number {
+function calculateResolutionEfficiency(tickets: Ticket[]): number {
   if (tickets.length === 0) return 0;
   
   const resolvedTickets = tickets.filter(t => t.status === 'Closed' || t.status === 'Resolved');
@@ -658,7 +660,7 @@ function calculateResolutionEfficiency(tickets: any[]): number {
   return Math.round(efficiencyScore);
 }
 
-function generateInsights(analytics: TicketAnalytics, tickets: any[]): string[] {
+function generateInsights(analytics: TicketAnalytics, tickets: Ticket[]): string[] {
   const insights: string[] = [];
   
   // 1. Analyze resolution time by category
@@ -780,7 +782,7 @@ function generateInsights(analytics: TicketAnalytics, tickets: any[]): string[] 
 }
 
 // New helper functions for subcategory analysis
-function calculateCategoryToSubcategory(tickets: any[]): { [category: string]: { [subcategory: string]: number } } {
+function calculateCategoryToSubcategory(tickets: Ticket[]): { [category: string]: { [subcategory: string]: number } } {
   const result: { [category: string]: { [subcategory: string]: number } } = {};
   
   tickets.forEach(ticket => {
@@ -797,7 +799,7 @@ function calculateCategoryToSubcategory(tickets: any[]): { [category: string]: {
   return result;
 }
 
-function calculateCategoryDetails(tickets: any[]): { [category: string]: { [detail: string]: number } } {
+function calculateCategoryDetails(tickets: Ticket[]): { [category: string]: { [detail: string]: number } } {
   const result: { [category: string]: { [detail: string]: number } } = {};
   
   tickets.forEach(ticket => {

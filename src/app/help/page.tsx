@@ -78,7 +78,7 @@ export default function HelpPage() {
                   </ul>
                 </li>
                 <li>The AI will analyze your data and provide insights</li>
-                <li>View related tickets that support the AI's conclusion</li>
+                <li>View related tickets that support the AI&apos;s conclusion</li>
               </ul>
             </div>
             

@@ -3,13 +3,12 @@
 import { useState } from 'react';
 import { Header } from '@/components/Header';
 import { FaFileUpload, FaCheck, FaExclamationTriangle } from 'react-icons/fa';
-import { useTickets } from '@/context/TicketContext';
+import { useTickets, Ticket } from '@/context/TicketContext';
 
-interface Ticket {
-  number?: string;
-  short_description?: string;
-  description?: string;
-  [key: string]: any;
+// Define a more specific type for the preview data
+interface PreviewData {
+  original: Record<string, any>;
+  tickets: Ticket[];
 }
 
 export default function ImportPage() {
@@ -18,7 +17,7 @@ export default function ImportPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
-  const [previewData, setPreviewData] = useState<any>(null);
+  const [previewData, setPreviewData] = useState<PreviewData | null>(null);
   const { setTickets } = useTickets();
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -47,7 +46,7 @@ export default function ImportPage() {
     }
   };
 
-  const extractTickets = (data: any): Ticket[] => {
+  const extractTickets = (data: Record<string, any>): Ticket[] => {
     // Try to extract tickets from various structures
     if (Array.isArray(data)) {
       console.log('Found array with', data.length, 'items');
@@ -201,9 +200,10 @@ export default function ImportPage() {
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       setUploadStatus('success');
-    } catch (error: any) {
+    } catch (error: unknown) {
       setUploadStatus('error');
-      setErrorMessage('An error occurred during processing: ' + (error.message || 'Unknown error'));
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+      setErrorMessage('An error occurred during processing: ' + errorMsg);
     } finally {
       setIsUploading(false);
     }
