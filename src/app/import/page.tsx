@@ -2,17 +2,25 @@
 
 import { useState } from 'react';
 import { Header } from '@/components/Header';
-import { FaFileUpload, FaCheck, FaExclamationTriangle } from 'react-icons/fa';
+import { FaFileUpload, FaCheck, FaExclamationTriangle, FaTicketAlt, FaComments } from 'react-icons/fa';
 import { useTickets, Ticket } from '@/context/TicketContext';
+import { useConversations, Conversation } from '@/context/ConversationContext';
 
 // Define types we'll use
 type JsonData = Record<string, unknown> | unknown[] | unknown;
 
 // Define a more specific type for the preview data
-interface PreviewData {
+interface TicketPreviewData {
   original: JsonData;
   tickets: Ticket[];
 }
+
+interface ConversationPreviewData {
+  original: JsonData;
+  conversations: Conversation[];
+}
+
+type ImportDataType = 'tickets' | 'conversations';
 
 export default function ImportPage() {
   const [isDragging, setIsDragging] = useState(false);
@@ -20,8 +28,11 @@ export default function ImportPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
-  const [previewData, setPreviewData] = useState<PreviewData | null>(null);
+  const [ticketPreviewData, setTicketPreviewData] = useState<TicketPreviewData | null>(null);
+  const [conversationPreviewData, setConversationPreviewData] = useState<ConversationPreviewData | null>(null);
+  const [dataType, setDataType] = useState<ImportDataType>('tickets');
   const { setTickets } = useTickets();
+  const { setConversations } = useConversations();
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -139,6 +150,71 @@ export default function ImportPage() {
     return [];
   };
 
+  const extractConversations = (data: JsonData): Conversation[] => {
+    // Similar pattern to extractTickets but for conversations
+    if (Array.isArray(data)) {
+      console.log('Found array with', data.length, 'items');
+      if (data.length > 0 && isLikelyConversation(data[0])) {
+        return data as Conversation[];
+      }
+    }
+    
+    if (typeof data !== 'object' || data === null) {
+      console.warn('Data is not an object or array');
+      return [];
+    }
+    
+    const obj = data as Record<string, unknown>;
+    
+    // Check for nested structures
+    if (obj.conversations && Array.isArray(obj.conversations)) {
+      console.log('Found conversations array with', obj.conversations.length, 'items');
+      return obj.conversations as Conversation[];
+    }
+    
+    if (obj.data && Array.isArray(obj.data) && obj.data.length > 0 && isLikelyConversation(obj.data[0])) {
+      console.log('Found conversations in data array with', obj.data.length, 'items');
+      return obj.data as Conversation[];
+    }
+    
+    // Check for properties that might indicate this is a single conversation
+    if (isLikelyConversation(obj)) {
+      console.log('Found single conversation object');
+      return [obj as Conversation];
+    }
+    
+    // Search recursively for conversation arrays
+    for (const key in obj) {
+      if (Array.isArray(obj[key]) && obj[key].length > 0 && isLikelyConversation(obj[key][0])) {
+        console.log(`Found likely conversation array in "${key}" with ${obj[key].length} items`);
+        return obj[key] as Conversation[];
+      }
+    }
+    
+    console.warn('No conversation data found in the structure');
+    return [];
+  };
+
+  // Helper to check if an object looks like a conversation
+  const isLikelyConversation = (obj: unknown): boolean => {
+    if (typeof obj !== 'object' || obj === null) return false;
+    
+    const possibleConversation = obj as Record<string, unknown>;
+    
+    // Check for conversation-specific properties
+    if (possibleConversation.messages && Array.isArray(possibleConversation.messages)) {
+      return true;
+    }
+    
+    if (possibleConversation.channel && 
+       (typeof possibleConversation.resolved === 'boolean') && 
+       possibleConversation.id) {
+      return true;
+    }
+    
+    return false;
+  };
+
   const handleFileSelection = (uploadedFile: File) => {
     // Check if file is JSON
     if (uploadedFile.type !== 'application/json' && !uploadedFile.name.endsWith('.json')) {
@@ -150,6 +226,8 @@ export default function ImportPage() {
     setFile(uploadedFile);
     setUploadStatus('idle');
     setErrorMessage('');
+    setTicketPreviewData(null);
+    setConversationPreviewData(null);
 
     // Read file preview
     const reader = new FileReader();
@@ -161,47 +239,67 @@ export default function ImportPage() {
         const jsonData = JSON.parse(rawData);
         console.log('Parsed JSON type:', typeof jsonData);
         
-        // Extract tickets using our helper function
-        const extractedTickets = extractTickets(jsonData);
+        // First, try to determine if this is ticket or conversation data
+        const tickets = extractTickets(jsonData);
+        const conversations = extractConversations(jsonData);
         
-        if (extractedTickets.length === 0) {
-          console.warn('Could not find any tickets in the JSON data');
-          setUploadStatus('error');
-          setErrorMessage('Could not find ticket data in this JSON file. Please check the format.');
-          return;
+        if (tickets.length > 0 && (conversations.length === 0 || tickets.length > conversations.length)) {
+          // This appears to be ticket data
+          setDataType('tickets');
+          setTicketPreviewData({
+            original: jsonData,
+            tickets: tickets
+          });
+          console.log(`Successfully identified as ticket data with ${tickets.length} tickets`);
+        } else if (conversations.length > 0) {
+          // This appears to be conversation data
+          setDataType('conversations');
+          setConversationPreviewData({
+            original: jsonData,
+            conversations: conversations
+          });
+          console.log(`Successfully identified as conversation data with ${conversations.length} conversations`);
+        } else {
+          throw new Error('Could not identify the data format as either tickets or conversations');
         }
-        
-        console.log(`Successfully found ${extractedTickets.length} tickets`);
-        // Store the original data for rendering and the extracted tickets for processing
-        setPreviewData({
-          original: jsonData,
-          tickets: extractedTickets
-        });
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Error parsing JSON:', error);
         setUploadStatus('error');
-        setErrorMessage('Invalid JSON format. Please check your file: ' + (error as Error).message);
+        const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+        setErrorMessage('Invalid JSON format. Please check your file: ' + errorMsg);
       }
     };
     reader.readAsText(uploadedFile);
   };
 
   const handleSubmit = async () => {
-    if (!file || !previewData) return;
+    if (!file) return;
+    
+    if (dataType === 'tickets' && !ticketPreviewData) {
+      setErrorMessage('No valid ticket data found');
+      return;
+    }
+    
+    if (dataType === 'conversations' && !conversationPreviewData) {
+      setErrorMessage('No valid conversation data found');
+      return;
+    }
 
     setIsUploading(true);
     setUploadStatus('idle');
 
     try {
-      // Get the extracted tickets from our preview data
-      const tickets = previewData.tickets;
-      
-      if (!tickets || tickets.length === 0) {
-        throw new Error('No valid ticket data found');
+      if (dataType === 'tickets' && ticketPreviewData) {
+        // Process ticket data
+        const tickets = ticketPreviewData.tickets;
+        console.log(`Processing ${tickets.length} tickets`);
+        setTickets(tickets);
+      } else if (dataType === 'conversations' && conversationPreviewData) {
+        // Process conversation data
+        const conversations = conversationPreviewData.conversations;
+        console.log(`Processing ${conversations.length} conversations`);
+        setConversations(conversations);
       }
-      
-      console.log(`Processing ${tickets.length} tickets`);
-      setTickets(tickets);
       
       // Simulate processing time
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -216,18 +314,26 @@ export default function ImportPage() {
     }
   };
 
-  const renderDataPreview = () => {
-    if (!previewData) {
+  const renderPreview = () => {
+    if (dataType === 'tickets') {
+      return renderTicketPreview();
+    } else {
+      return renderConversationPreview();
+    }
+  };
+
+  const renderTicketPreview = () => {
+    if (!ticketPreviewData) {
       return (
         <div className="mt-4 bg-yellow-50 text-yellow-700 p-3 rounded-md flex items-center">
           <FaExclamationTriangle className="mr-2" />
-          <span>No data loaded yet. Please select a file.</span>
+          <span>No ticket data loaded yet. Please select a file.</span>
         </div>
       );
     }
 
     try {
-      const tickets = previewData.tickets;
+      const tickets = ticketPreviewData.tickets;
       
       if (!tickets || tickets.length === 0) {
         throw new Error('No ticket data found in the JSON');
@@ -239,39 +345,13 @@ export default function ImportPage() {
       // Format the JSON with proper indentation for better readability
       const formattedJson = JSON.stringify(sample, null, 2);
 
-      // Try to determine the original structure
-      const origData = previewData.original;
-      let dataStructure = 'Custom Format';
-      
-      if (typeof origData === 'object' && origData !== null) {
-        const obj = origData as Record<string, unknown>;
-        
-        if (obj.result && typeof obj.result === 'object') {
-          const result = obj.result as Record<string, unknown>;
-          if (result.tickets && Array.isArray(result.tickets)) {
-            dataStructure = 'Nested "result.tickets" Array';
-          }
-        } else if (obj.result && Array.isArray(obj.result)) {
-          dataStructure = 'ServiceNow API Result Array';
-        } else if (obj.records) {
-          dataStructure = 'Records Array';
-        } else if (obj.tickets) {
-          dataStructure = 'Tickets Array';
-        } 
-      } else if (Array.isArray(origData)) {
-        dataStructure = 'Direct Array';
-      }
-
       return (
         <div className="mt-6">
-          <h3 className="text-lg font-semibold mb-2">Data Preview</h3>
+          <h3 className="text-lg font-semibold mb-2">Ticket Data Preview</h3>
           <div className="bg-slate-800 p-4 rounded border border-slate-700 overflow-auto max-h-80">
             <pre className="text-sm text-slate-100 font-mono whitespace-pre-wrap">{formattedJson}</pre>
           </div>
           <div className="mt-2 space-y-1">
-            <p className="text-sm text-gray-600">
-              <span className="font-medium">Format:</span> {dataStructure}
-            </p>
             <p className="text-sm text-gray-600">
               <span className="font-medium">Total tickets found:</span> {tickets.length}
             </p>
@@ -284,7 +364,7 @@ export default function ImportPage() {
         </div>
       );
     } catch (error: unknown) {
-      console.error('Error rendering data preview:', error);
+      console.error('Error rendering ticket preview:', error);
       return (
         <div className="mt-4 bg-red-50 text-red-700 p-3 rounded-md flex items-center">
           <FaExclamationTriangle className="mr-2" />
@@ -300,18 +380,109 @@ export default function ImportPage() {
     }
   };
 
+  const renderConversationPreview = () => {
+    if (!conversationPreviewData) {
+      return (
+        <div className="mt-4 bg-yellow-50 text-yellow-700 p-3 rounded-md flex items-center">
+          <FaExclamationTriangle className="mr-2" />
+          <span>No conversation data loaded yet. Please select a file.</span>
+        </div>
+      );
+    }
+
+    try {
+      const conversations = conversationPreviewData.conversations;
+      
+      if (!conversations || conversations.length === 0) {
+        throw new Error('No conversation data found in the JSON');
+      }
+      
+      // Take first conversation for preview
+      const sample = conversations.slice(0, 1);
+      
+      // Format the JSON with proper indentation for better readability
+      const formattedJson = JSON.stringify(sample, null, 2);
+
+      return (
+        <div className="mt-6">
+          <h3 className="text-lg font-semibold mb-2">Conversation Data Preview</h3>
+          <div className="bg-slate-800 p-4 rounded border border-slate-700 overflow-auto max-h-80">
+            <pre className="text-sm text-slate-100 font-mono whitespace-pre-wrap">{formattedJson}</pre>
+          </div>
+          <div className="mt-2 space-y-1">
+            <p className="text-sm text-gray-600">
+              <span className="font-medium">Total conversations found:</span> {conversations.length}
+            </p>
+            <p className="text-sm text-gray-600">
+              <span className="font-medium">Total messages:</span> {conversations.reduce((total, conv) => total + conv.messages.length, 0)}
+            </p>
+            {conversations.length > 1 && (
+              <p className="text-sm text-gray-500">
+                Showing first of {conversations.length} conversations
+              </p>
+            )}
+          </div>
+        </div>
+      );
+    } catch (error: unknown) {
+      console.error('Error rendering conversation preview:', error);
+      return (
+        <div className="mt-4 bg-red-50 text-red-700 p-3 rounded-md flex items-center">
+          <FaExclamationTriangle className="mr-2" />
+          <div>
+            <p>Invalid conversation data format. Please check your JSON structure.</p>
+            <p className="text-sm opacity-75 mt-1">Error: {error instanceof Error ? error.message : 'Unknown error'}</p>
+            <p className="text-sm mt-2">
+              Try uploading a standard conversation export file or check the console for debugging information.
+            </p>
+          </div>
+        </div>
+      );
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
       
       <main className="container mx-auto py-8 px-4">
-        <h1 className="text-2xl font-bold mb-6">Import ServiceNow Tickets</h1>
+        <h1 className="text-2xl font-bold mb-6">Import Data</h1>
         
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-8">
-          <h2 className="text-xl font-semibold mb-4">Upload JSON Data</h2>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold">Upload JSON Data</h2>
+            
+            <div className="flex space-x-2">
+              <button 
+                onClick={() => setDataType('tickets')}
+                className={`flex items-center px-3 py-2 rounded ${
+                  dataType === 'tickets' 
+                    ? 'bg-blue-600 text-white' 
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                <FaTicketAlt className="mr-2" />
+                Ticket Data
+              </button>
+              <button 
+                onClick={() => setDataType('conversations')}
+                className={`flex items-center px-3 py-2 rounded ${
+                  dataType === 'conversations' 
+                    ? 'bg-blue-600 text-white' 
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                <FaComments className="mr-2" />
+                Conversation History
+              </button>
+            </div>
+          </div>
+          
           <p className="text-gray-600 mb-6">
-            Export your tickets from ServiceNow in JSON format and upload the file here.
-            We&apos;ll automatically parse and analyze the data.
+            {dataType === 'tickets' 
+              ? 'Export your tickets from ServiceNow in JSON format and upload the file here. We&apos;ll automatically parse and analyze the data.'
+              : 'Upload your conversation history JSON file to analyze customer interactions. We&apos;ll automatically parse and analyze the conversation data.'
+            }
           </p>
           
           <div 
@@ -349,17 +520,17 @@ export default function ImportPage() {
                 <span className="ml-2 text-gray-500">({(file.size / 1024).toFixed(1)} KB)</span>
               </div>
               
-              {renderDataPreview()}
+              {renderPreview()}
               
               <div className="mt-6">
                 <button
                   onClick={handleSubmit}
-                  disabled={isUploading || uploadStatus === 'success'}
+                  disabled={isUploading || uploadStatus === 'success' || (!ticketPreviewData && !conversationPreviewData)}
                   className={`font-medium py-2 px-6 rounded ${
-                    isUploading ? 'bg-gray-400 cursor-not-allowed' : 
-                    uploadStatus === 'success' ? 'bg-green-600 hover:bg-green-700' : 
-                    'bg-blue-600 hover:bg-blue-700'
-                  } text-white`}
+                    isUploading || uploadStatus === 'success' || (!ticketPreviewData && !conversationPreviewData)
+                      ? 'bg-gray-400 cursor-not-allowed' 
+                    : 'bg-blue-600 hover:bg-blue-700 text-white'
+                  }`}
                 >
                   {isUploading ? 'Uploading...' : 
                    uploadStatus === 'success' ? 'Uploaded Successfully' : 
@@ -379,21 +550,53 @@ export default function ImportPage() {
           {uploadStatus === 'success' && (
             <div className="mt-4 bg-green-50 text-green-700 p-3 rounded-md flex items-center">
               <FaCheck className="mr-2" />
-              <span>File processed successfully! You can now analyze your ticket data.</span>
+              <span>
+                {dataType === 'tickets'
+                  ? 'Ticket data processed successfully! You can now analyze your ticket data.'
+                  : 'Conversation data processed successfully! You can now analyze your conversation history.'
+                }
+              </span>
             </div>
           )}
         </div>
         
         <div className="bg-blue-50 p-6 rounded-xl border border-blue-100">
-          <h2 className="text-lg font-semibold mb-2 text-blue-900">How to Export ServiceNow Tickets</h2>
-          <ol className="list-decimal pl-5 space-y-2 text-blue-800">
-            <li>Log in to your ServiceNow instance</li>
-            <li>Navigate to the <strong>Incident</strong> list view</li>
-            <li>Use filters to select the tickets you want to analyze</li>
-            <li>Click the <strong>Export</strong> button (usually in the upper right)</li>
-            <li>Select <strong>JSON</strong> as the export format</li>
-            <li>Download the file and upload it here</li>
-          </ol>
+          <h2 className="text-lg font-semibold mb-2 text-blue-900">
+            {dataType === 'tickets'
+              ? 'How to Export ServiceNow Tickets'
+              : 'How to Export Conversation History'
+            }
+          </h2>
+          {dataType === 'tickets' ? (
+            <ol className="list-decimal pl-5 space-y-2 text-blue-800">
+              <li>Log in to your ServiceNow instance</li>
+              <li>Navigate to the <strong>Incident</strong> list view</li>
+              <li>Use filters to select the tickets you want to analyze</li>
+              <li>Click the <strong>Export</strong> button (usually in the upper right)</li>
+              <li>Select <strong>JSON</strong> as the export format</li>
+              <li>Download the file and upload it here</li>
+            </ol>
+          ) : (
+            <>
+              <ol className="list-decimal pl-5 space-y-2 text-blue-800">
+                <li>Log in to your customer service platform</li>
+                <li>Navigate to the <strong>Conversation History</strong> section</li>
+                <li>Use filters to select the date range and agents</li>
+                <li>Click the <strong>Export</strong> button</li>
+                <li>Select <strong>JSON</strong> as the export format</li>
+                <li>Download the file and upload it here</li>
+              </ol>
+              <div className="mt-4 p-3 bg-blue-100 rounded-md">
+                <p className="text-blue-800 font-medium">
+                  Not sure about the format? 
+                  <a href="/sample-conversation.json" download className="text-blue-600 ml-1 underline hover:text-blue-800">
+                    Download our sample conversation JSON
+                  </a> 
+                  to see the expected structure.
+                </p>
+              </div>
+            </>
+          )}
         </div>
       </main>
       

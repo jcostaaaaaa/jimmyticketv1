@@ -2,6 +2,7 @@ import './globals.css';
 import { Inter } from 'next/font/google';
 import type { Metadata } from 'next';
 import { TicketProvider } from '@/context/TicketContext';
+import { ConversationProvider } from '@/context/ConversationContext';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -23,7 +24,9 @@ export default function RootLayout({
     <html lang="en" className={`${inter.variable}`}>
       <body className={`min-h-screen font-sans ${inter.className}`}>
         <TicketProvider>
-          {children}
+          <ConversationProvider>
+            {children}
+          </ConversationProvider>
         </TicketProvider>
       </body>
     </html>

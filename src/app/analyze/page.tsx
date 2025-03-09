@@ -209,9 +209,9 @@ export default function AnalyzePage() {
                   return getLevel(a) - getLevel(b);
                 })
                 .map(([priority, count]) => (
-                  <div key={priority} className="flex items-center">
-                    <span className="w-32 text-sm text-gray-600">{priority || 'Unspecified'}</span>
-                    <div className="flex-1 mx-2">
+                  <div key={priority} className="flex flex-wrap items-center mb-2">
+                    <span className="w-20 sm:w-32 text-sm text-gray-600 mb-1 sm:mb-0">{priority || 'Unspecified'}</span>
+                    <div className="flex-1 mx-2 min-w-[100px]">
                       <div className="h-4 bg-blue-100 rounded-full overflow-hidden">
                         <div
                           className="h-full bg-blue-500"
@@ -221,7 +221,7 @@ export default function AnalyzePage() {
                         />
                       </div>
                     </div>
-                    <span className="text-sm text-gray-600">{count} ({Math.round((count / analytics.totalTickets) * 100)}%)</span>
+                    <span className="text-sm text-gray-600 whitespace-nowrap">{count} ({Math.round((count / analytics.totalTickets) * 100)}%)</span>
                   </div>
                 ))}
             </div>
@@ -236,12 +236,12 @@ export default function AnalyzePage() {
                 .map(([category, count]) => (
                   <div key={category} className="relative">
                     <div 
-                      className="flex items-center mb-1"
+                      className="flex flex-wrap items-center mb-1"
                       onMouseEnter={() => setHoveredCategory(category)}
                       onMouseLeave={() => setHoveredCategory(null)}
                     >
-                      <span className="w-32 text-sm text-gray-600">{category || 'Unspecified'}</span>
-                      <div className="flex-1 mx-2">
+                      <span className="w-20 sm:w-32 text-sm text-gray-600 mb-1 sm:mb-0">{category || 'Unspecified'}</span>
+                      <div className="flex-1 mx-2 min-w-[100px]">
                         <div className="h-4 bg-green-100 rounded-full overflow-hidden">
                           <div
                             className="h-full bg-green-500"
@@ -251,26 +251,26 @@ export default function AnalyzePage() {
                           />
                         </div>
                       </div>
-                      <span className="text-sm text-gray-600">
+                      <span className="text-sm text-gray-600 flex items-center whitespace-nowrap">
                         {count} ({Math.round((count / analytics.totalTickets) * 100)}%)
-                      </span>
-                      <span className="ml-1 text-blue-500 cursor-pointer" title="View subcategories">
-                        <FaInfoCircle />
+                        <span className="ml-1 text-blue-500 cursor-pointer" title="View subcategories">
+                          <FaInfoCircle />
+                        </span>
                       </span>
                     </div>
 
-                    {/* Subcategory tooltip */}
+                    {/* Subcategory tooltip - position it differently on mobile */}
                     {hoveredCategory === category && analytics.categoryToSubcategory[category] && (
-                      <div className="absolute left-0 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg p-3 z-10">
+                      <div className="absolute left-0 right-0 sm:left-auto sm:right-auto mt-1 sm:w-full bg-white border border-gray-200 rounded-md shadow-lg p-3 z-10">
                         <h3 className="text-sm font-medium mb-2">{category} Breakdown</h3>
                         <div className="space-y-2 max-h-60 overflow-y-auto">
                           {/* Show subcategories */}
                           {Object.entries(analytics.categoryToSubcategory[category] || {})
                             .sort(([, a], [, b]) => b - a)
                             .map(([subcategory, subCount]) => (
-                              <div key={subcategory} className="flex items-center">
-                                <span className="w-24 text-xs text-gray-600 truncate">{subcategory || 'Other'}</span>
-                                <div className="flex-1 mx-2">
+                              <div key={subcategory} className="flex flex-wrap items-center">
+                                <span className="w-20 sm:w-24 text-xs text-gray-600 truncate mb-1 sm:mb-0">{subcategory || 'Other'}</span>
+                                <div className="flex-1 mx-2 min-w-[80px]">
                                   <div className="h-3 bg-blue-100 rounded-full overflow-hidden">
                                     <div
                                       className="h-full bg-blue-400"
@@ -291,8 +291,8 @@ export default function AnalyzePage() {
                               {Object.entries(analytics.categoryDetails[category])
                                 .sort(([, a], [, b]) => b - a)
                                 .map(([detail, detailCount]) => (
-                                  <div key={detail} className="flex items-center">
-                                    <span className="w-32 text-xs text-gray-600 truncate">{detail}</span>
+                                  <div key={detail} className="flex flex-wrap items-center">
+                                    <span className="w-24 text-xs text-gray-600 truncate mb-1 sm:mb-0">{detail}</span>
                                     <span className="text-xs text-gray-600 ml-2">{detailCount}</span>
                                   </div>
                                 ))}
@@ -311,9 +311,9 @@ export default function AnalyzePage() {
             <h2 className="text-lg font-semibold mb-4">Top Assignees</h2>
             <div className="space-y-2">
               {analytics?.topAssignees.map(({ name, count }) => (
-                <div key={name} className="flex items-center">
-                  <span className="w-40 text-sm text-gray-600 truncate">{name || 'Unassigned'}</span>
-                  <div className="flex-1 mx-2">
+                <div key={name} className="flex flex-wrap items-center mb-2">
+                  <span className="w-20 sm:w-40 text-sm text-gray-600 truncate mb-1 sm:mb-0">{name || 'Unassigned'}</span>
+                  <div className="flex-1 mx-2 min-w-[100px]">
                     <div className="h-4 bg-purple-100 rounded-full overflow-hidden">
                       <div
                         className="h-full bg-purple-500"
@@ -323,7 +323,7 @@ export default function AnalyzePage() {
                       />
                     </div>
                   </div>
-                  <span className="text-sm text-gray-600">{count} tickets</span>
+                  <span className="text-sm text-gray-600 whitespace-nowrap">{count} tickets</span>
                 </div>
               ))}
             </div>
@@ -334,9 +334,9 @@ export default function AnalyzePage() {
             <h2 className="text-lg font-semibold mb-4">Monthly Trends</h2>
             <div className="space-y-2">
               {analytics?.monthlyTrends.map(({ month, count }) => (
-                <div key={month} className="flex items-center">
-                  <span className="w-24 text-sm text-gray-600">{month}</span>
-                  <div className="flex-1 mx-2">
+                <div key={month} className="flex flex-wrap items-center mb-2">
+                  <span className="w-20 sm:w-24 text-sm text-gray-600 mb-1 sm:mb-0">{month}</span>
+                  <div className="flex-1 mx-2 min-w-[100px]">
                     <div className="h-4 bg-yellow-100 rounded-full overflow-hidden">
                       <div
                         className="h-full bg-yellow-500"
@@ -346,7 +346,7 @@ export default function AnalyzePage() {
                       />
                     </div>
                   </div>
-                  <span className="text-sm text-gray-600">{count} tickets</span>
+                  <span className="text-sm text-gray-600 whitespace-nowrap">{count} tickets</span>
                 </div>
               ))}
             </div>

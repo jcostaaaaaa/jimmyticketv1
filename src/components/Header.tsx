@@ -1,7 +1,7 @@
 "use client";
 
 import Link from 'next/link';
-import { FaFileUpload, FaChartBar, FaSearch, FaQuestion, FaServer, FaHome } from 'react-icons/fa';
+import { FaFileUpload, FaChartBar, FaSearch, FaQuestion, FaServer, FaHome, FaComments } from 'react-icons/fa';
 import { useState } from 'react';
 
 export function Header() {
@@ -36,6 +36,7 @@ export function Header() {
             <NavLink href="/" icon={<FaHome />} text="Home" />
             <NavLink href="/import" icon={<FaFileUpload />} text="Import" />
             <NavLink href="/analyze" icon={<FaChartBar />} text="Analytics" />
+            <NavLink href="/conversations" icon={<FaComments />} text="Conversations" />
             <NavLink href="/query" icon={<FaSearch />} text="Query" />
             <NavLink href="/help" icon={<FaQuestion />} text="Help" />
           </nav>

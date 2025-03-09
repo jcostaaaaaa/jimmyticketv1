@@ -193,10 +193,10 @@ export default function QueryPage() {
     if (bestMatch.score < 0.1) {
       return {
         answer: type === 'it_knowledge' 
-          ? "I understand you&apos;re looking for IT assistance, but I need more specific information about your question. Please provide details about what specific IT issue or system you need help with. You might want to include:\n\n- The specific application or hardware you&apos;re using\n- Any error messages you&apos;re receiving\n- What you&apos;ve already tried to resolve the issue\n- When the problem started occurring\n\nThis will help me provide you with more accurate and helpful information."
+          ? "Based on your question, I'll provide some general IT assistance. If this doesn't fully address your concern, please feel free to ask a more specific question.\n\nCommon IT troubleshooting steps include:\n\n1. Restart your device - This resolves many temporary issues\n2. Check all physical connections\n3. Verify network connectivity\n4. Clear browser cache and cookies\n5. Update software/drivers to the latest version\n6. Run built-in diagnostics tools\n7. Check system/application logs for error messages\n\nFor more specific help, try asking about common issues like printer problems, email configuration, network connectivity, or password resets."
           : type === 'conversation_analysis'
-            ? "I couldn&apos;t find specific information about that in our conversation data. Please try asking about sentiment analysis, agent performance, conversation topics, or conversation volume patterns."
-            : "I couldn&apos;t find specific information about that in our ticket data. Please try asking about common issues, resolution times, department analysis, or ticket priorities.",
+            ? "I couldn't find specific information about that in our conversation data. Our analysis can provide insights on customer sentiment, agent performance, conversation length, resolution rates, and common topics. Try asking about one of these specific areas for more detailed information."
+            : "I couldn't find specific information about that in our ticket data. Our analysis can provide insights on common issues, resolution times, department workloads, priority distribution, and trending problems. Try asking about one of these specific areas for more detailed information.",
         confidence: 0.5,
         type: type
       };
@@ -387,8 +387,7 @@ export default function QueryPage() {
                     {response.type === 'it_knowledge' && <FaQuestion className="text-xl" />}
                   </div>
                   <div className="flex-1">
-                    <div className="whitespace-pre-line text-slate-800">
-                      {response.answer}
+                    <div className="whitespace-pre-line text-slate-800" dangerouslySetInnerHTML={{ __html: response.answer.replace(/&apos;/g, "'") }}>
                     </div>
                     
                     {response.sources && (

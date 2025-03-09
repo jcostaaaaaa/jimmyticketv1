@@ -1,6 +1,6 @@
 import { Header } from "@/components/Header";
 import Link from "next/link";
-import { FaFileUpload, FaChartBar, FaSearch, FaLightbulb, FaServer, FaNetworkWired, FaDatabase } from "react-icons/fa";
+import { FaFileUpload, FaChartBar, FaSearch, FaLightbulb, FaServer, FaNetworkWired, FaDatabase, FaComments, FaChartPie } from "react-icons/fa";
 
 export default function Home() {
   return (
@@ -13,7 +13,7 @@ export default function Home() {
             ServiceNow Ticket Analysis
           </h1>
           <p className="text-xl text-slate-700 mb-10 leading-relaxed">
-            Transform your ServiceNow ticket data into actionable insights using advanced 
+            Transform your ServiceNow ticket data and customer conversations into actionable insights using advanced 
             analytics and machine learning.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -21,7 +21,7 @@ export default function Home() {
               href="/import" 
               className="btn-primary flex items-center justify-center gap-2 text-lg py-3 px-8"
             >
-              <FaFileUpload /> Import Tickets
+              <FaFileUpload /> Import Data
             </Link>
             <Link 
               href="/analyze" 
@@ -41,7 +41,7 @@ export default function Home() {
               <h2 className="text-2xl font-bold mb-2 text-slate-900">Import & Parse</h2>
             </div>
             <p className="text-lg text-slate-700">
-              Import your ServiceNow ticket data in JSON format. Our system automatically parses the structure 
+              Import your ServiceNow ticket data and conversation history in JSON format. Our system automatically parses the structure 
               and prepares it for in-depth analysis.
             </p>
           </div>
@@ -54,8 +54,8 @@ export default function Home() {
               <h2 className="text-2xl font-bold mb-2 text-slate-900">Analyze & Visualize</h2>
             </div>
             <p className="text-lg text-slate-700">
-              Automatically categorize tickets by issue type, affected software, resolution methods, 
-              and time metrics with intuitive visualizations.
+              Automatically categorize tickets by issue type and analyze conversations for sentiment, 
+              agent performance, and resolution efficiency with intuitive visualizations.
             </p>
           </div>
           
@@ -67,8 +67,8 @@ export default function Home() {
               <h2 className="text-2xl font-bold mb-2 text-slate-900">Query & Learn</h2>
             </div>
             <p className="text-lg text-slate-700">
-              Ask questions about your ticket data in natural language. Our AI assistant provides 
-              insights based on your historical data and patterns.
+              Ask questions about your ticket data or general IT help in natural language. Our AI assistant provides 
+              insights and solutions based on historical data and IT knowledge.
             </p>
           </div>
         </div>
@@ -77,7 +77,7 @@ export default function Home() {
           <div className="bg-slate-800 text-white p-6">
             <h2 className="text-2xl font-bold flex items-center gap-2">
               <FaServer className="text-cyan-400" />
-              <span>Why Analyze ServiceNow Tickets?</span>
+              <span>Comprehensive IT Support Analytics</span>
             </h2>
           </div>
           
@@ -146,10 +146,73 @@ export default function Home() {
           </div>
         </div>
         
+        <div className="bg-white rounded-xl shadow-md border border-slate-200 mb-16 overflow-hidden">
+          <div className="bg-blue-700 text-white p-6">
+            <h2 className="text-2xl font-bold flex items-center gap-2">
+              <FaComments className="text-blue-200" />
+              <span>New: Conversation History Analysis</span>
+            </h2>
+          </div>
+          
+          <div className="p-8">
+            <p className="text-xl text-slate-700 mb-6">
+              Our platform now supports conversation history analysis, helping you gain deeper insights into customer 
+              interactions and support agent performance.
+            </p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+              <div className="bg-slate-50 p-5 rounded-lg border border-slate-200">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="bg-purple-100 p-2 rounded-full">
+                    <FaChartPie className="text-purple-600" />
+                  </div>
+                  <h3 className="font-semibold text-slate-900">Sentiment Analysis</h3>
+                </div>
+                <p className="text-slate-700">
+                  Automatically detect customer sentiment to identify pain points and measure satisfaction throughout interactions.
+                </p>
+              </div>
+              
+              <div className="bg-slate-50 p-5 rounded-lg border border-slate-200">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="bg-green-100 p-2 rounded-full">
+                    <FaLightbulb className="text-green-600" />
+                  </div>
+                  <h3 className="font-semibold text-slate-900">Topic Detection</h3>
+                </div>
+                <p className="text-slate-700">
+                  Identify common topics and categorize conversations to understand what issues are most frequently discussed.
+                </p>
+              </div>
+              
+              <div className="bg-slate-50 p-5 rounded-lg border border-slate-200">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="bg-amber-100 p-2 rounded-full">
+                    <FaChartBar className="text-amber-600" />
+                  </div>
+                  <h3 className="font-semibold text-slate-900">Agent Performance</h3>
+                </div>
+                <p className="text-slate-700">
+                  Analyze response times, resolution rates, and customer satisfaction scores to evaluate and improve agent performance.
+                </p>
+              </div>
+            </div>
+            
+            <div className="text-center">
+              <Link 
+                href="/conversations" 
+                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg inline-flex items-center justify-center gap-2 shadow-sm hover:shadow transition-all"
+              >
+                <FaComments /> Explore Conversation Analysis
+              </Link>
+            </div>
+          </div>
+        </div>
+        
         <div className="text-center bg-gradient-to-r from-blue-600 to-cyan-600 text-white p-10 rounded-xl shadow-md">
-          <h2 className="text-3xl font-bold mb-4">Ready to analyze your ServiceNow data?</h2>
+          <h2 className="text-3xl font-bold mb-4">Ready to analyze your IT support data?</h2>
           <p className="text-xl mb-8 max-w-3xl mx-auto">
-            Import your ServiceNow ticket data and discover insights that will transform 
+            Import your ServiceNow ticket data and customer conversations to discover insights that will transform 
             how your IT department operates and responds to issues.
           </p>
           <Link 
