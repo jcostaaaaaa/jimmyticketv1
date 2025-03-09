@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Header } from '@/components/Header';
-import { FaRobot, FaSyncAlt, FaHistory, FaTerminal, FaBrain, FaServer, FaRegClock, FaDatabase, FaQuestion } from 'react-icons/fa';
+import { FaRobot, FaSyncAlt, FaHistory, FaTerminal, FaDatabase, FaQuestion } from 'react-icons/fa';
 import { FaComments } from 'react-icons/fa';
 import { useTickets } from '@/context/TicketContext';
 // Comment out this import for now until we verify it's working
@@ -31,7 +31,7 @@ interface KnowledgeItem {
 export default function QueryPage() {
   const { tickets } = useTickets();
   // Mock empty conversations array until we fix the context
-  const conversations: any[] = [];
+  const conversations: { id: string; messages: Array<{ content: string }> }[] = [];
   const [query, setQuery] = useState('');
   const [queryType, setQueryType] = useState<QueryType>('ticket_analysis');
   const [isLoading, setIsLoading] = useState(false);
@@ -118,31 +118,31 @@ export default function QueryPage() {
   const itKnowledge: Record<string, KnowledgeItem> = {
     vpn_issues: {
       keywords: ['vpn', 'connect', 'connection', 'remote', 'access', 'tunnel', 'secure'],
-      answer: "To troubleshoot VPN connection issues:\n\n1. Verify your internet connection is working\n2. Check that you're using the correct VPN credentials\n3. Ensure the VPN client software is up to date (check for updates)\n4. Try connecting using a different network (e.g., mobile hotspot)\n5. Disable any firewalls or antivirus software temporarily\n6. Clear the VPN client cache and reconnect\n7. Check if the VPN server is operational (contact IT for server status)\n8. Try a different VPN protocol if available\n9. Restart your computer after applying changes\n\nIf problems persist, contact your IT department with the specific error message you're receiving.",
+      answer: "To troubleshoot VPN connection issues:\n\n1. Verify your internet connection is working\n2. Check that you&apos;re using the correct VPN credentials\n3. Ensure the VPN client software is up to date (check for updates)\n4. Try connecting using a different network (e.g., mobile hotspot)\n5. Disable any firewalls or antivirus software temporarily\n6. Clear the VPN client cache and reconnect\n7. Check if the VPN server is operational (contact IT for server status)\n8. Try a different VPN protocol if available\n9. Restart your computer after applying changes\n\nIf problems persist, contact your IT department with the specific error message you&apos;re receiving.",
       sources: ["IT Knowledge Base", "Cisco VPN Troubleshooting Guide", "Internal Documentation"],
       confidence: 0.95
     },
     password_reset: {
       keywords: ['password', 'reset', 'forgot', 'change', 'login', 'credentials', 'account', 'access'],
-      answer: "To reset your password:\n\n1. Visit the company password portal at password.company.com\n2. Click on 'Forgot Password'\n3. Enter your employee ID or email address\n4. Check your email for a password reset link (check spam/junk folders if not received)\n5. Follow the link within 30 minutes, as reset links expire\n6. Create a new password that meets the following requirements:\n   - At least 12 characters\n   - Contains uppercase and lowercase letters\n   - Contains at least one number and one special character\n   - Cannot be similar to your previous 5 passwords\n   - Should not contain your username or full name\n\nIf you don't receive a reset email within 10 minutes, contact the IT helpdesk at extension 4357 or helpdesk@company.com.",
+      answer: "To reset your password:\n\n1. Visit the company password portal at password.company.com\n2. Click on &apos;Forgot Password&apos;\n3. Enter your employee ID or email address\n4. Check your email for a password reset link (check spam/junk folders if not received)\n5. Follow the link within 30 minutes, as reset links expire\n6. Create a new password that meets the following requirements:\n   - At least 12 characters\n   - Contains uppercase and lowercase letters\n   - Contains at least one number and one special character\n   - Cannot be similar to your previous 5 passwords\n   - Should not contain your username or full name\n\nIf you don&apos;t receive a reset email within 10 minutes, contact the IT helpdesk at extension 4357 or helpdesk@company.com.",
       sources: ["IT Security Policy", "Password Management Guidelines", "Company Intranet"],
       confidence: 0.97
     },
     printer_issues: {
       keywords: ['printer', 'print', 'printing', 'scanner', 'scan', 'copy', 'paper', 'ink', 'toner', 'jam'],
-      answer: "To troubleshoot printer issues:\n\n1. Check physical connections and ensure the printer is powered on\n2. Verify the printer has paper and no paper jams\n3. Check ink or toner levels in the printer settings or control panel\n4. Restart the printer and wait for it to fully initialize\n5. On your computer, open the printer queue and clear any stuck jobs\n6. Try printing a test page from the printer's control panel\n7. Reinstall or update the printer driver\n8. Verify you're connected to the correct network if using a network printer\n9. If using wireless printing, ensure your device is connected to the same network\n10. For scanning issues, make sure the scanner glass is clean\n\nFor specific printer models or persistent issues, consult your IT department's printer documentation or contact the helpdesk.",
+      answer: "To troubleshoot printer issues:\n\n1. Check physical connections and ensure the printer is powered on\n2. Verify the printer has paper and no paper jams\n3. Check ink or toner levels in the printer settings or control panel\n4. Restart the printer and wait for it to fully initialize\n5. On your computer, open the printer queue and clear any stuck jobs\n6. Try printing a test page from the printer&apos;s control panel\n7. Reinstall or update the printer driver\n8. Verify you&apos;re connected to the correct network if using a network printer\n9. If using wireless printing, ensure your device is connected to the same network\n10. For scanning issues, make sure the scanner glass is clean\n\nFor specific printer models or persistent issues, consult your IT department&apos;s printer documentation or contact the helpdesk.",
       sources: ["Printer Troubleshooting Guide", "HP Support Documentation", "IT Support Handbook"],
       confidence: 0.92
     },
     email_issues: {
       keywords: ['email', 'outlook', 'mail', 'exchange', 'message', 'send', 'receive', 'inbox', 'attachment'],
-      answer: "To resolve common email issues:\n\n1. Check your internet connection\n2. Verify that you have sufficient inbox space (storage quota)\n3. For sending problems:\n   - Check if the recipient's email address is correct\n   - Ensure attachments don't exceed size limits (usually 25MB)\n   - Verify your outgoing mail server (SMTP) settings\n\n4. For receiving problems:\n   - Check your spam/junk folder\n   - Make sure email filters aren't blocking messages\n   - Verify incoming mail server settings\n\n5. If using Outlook:\n   - Restart Outlook in safe mode (hold CTRL while opening)\n   - Run Outlook's repair tool (from Control Panel > Programs)\n   - Check for updates\n   - Delete corrupt items from OST/PST files\n\n6. General fixes:\n   - Clear email cache and restart the application\n   - Test from webmail to determine if it's a client or server issue\n   - Restart your device\n\nFor persistent issues, contact IT support with specific error messages.",
+      answer: "To resolve common email issues:\n\n1. Check your internet connection\n2. Verify that you have sufficient inbox space (storage quota)\n3. For sending problems:\n   - Check if the recipient&apos;s email address is correct\n   - Ensure attachments don&apos;t exceed size limits (usually 25MB)\n   - Verify your outgoing mail server (SMTP) settings\n\n4. For receiving problems:\n   - Check your spam/junk folder\n   - Make sure email filters aren&apos;t blocking messages\n   - Verify incoming mail server settings\n\n5. If using Outlook:\n   - Restart Outlook in safe mode (hold CTRL while opening)\n   - Run Outlook&apos;s repair tool (from Control Panel > Programs)\n   - Check for updates\n   - Delete corrupt items from OST/PST files\n\n6. General fixes:\n   - Clear email cache and restart the application\n   - Test from webmail to determine if it&apos;s a client or server issue\n   - Restart your device\n\nFor persistent issues, contact IT support with specific error messages.",
       sources: ["Microsoft Outlook Support", "Exchange Server Guidelines", "Email Troubleshooting Handbook"],
       confidence: 0.93
     },
     network_connectivity: {
       keywords: ['network', 'internet', 'wifi', 'connection', 'ethernet', 'lan', 'wireless', 'router', 'connected'],
-      answer: "To troubleshoot network connectivity issues:\n\n1. Check physical connections (if applicable):\n   - Ensure Ethernet cables are securely connected\n   - Verify that network adapters are enabled\n\n2. For Wi-Fi issues:\n   - Confirm Wi-Fi is turned on (check physical switch if laptop has one)\n   - Verify you're connecting to the correct network\n   - Check signal strength - move closer to the access point if needed\n   - Forget the network and reconnect with correct credentials\n\n3. General troubleshooting:\n   - Restart your device\n   - Restart your router/modem (unplug for 30 seconds, then reconnect)\n   - Check if other devices can connect to the same network\n   - Run Windows Network Diagnostics (right-click on network icon)\n   - Use 'ipconfig /release' followed by 'ipconfig /renew' in Command Prompt\n\n4. Check for IP address conflicts or DHCP issues\n5. Verify proxy settings are correct if your organization uses them\n6. Test basic connectivity with 'ping 8.8.8.8' in Command Prompt\n\nIf problems persist, contact your network administrator with details of troubleshooting steps already taken.",
+      answer: "To troubleshoot network connectivity issues:\n\n1. Check physical connections (if applicable):\n   - Ensure Ethernet cables are securely connected\n   - Verify that network adapters are enabled\n\n2. For Wi-Fi issues:\n   - Confirm Wi-Fi is turned on (check physical switch if laptop has one)\n   - Verify you&apos;re connecting to the correct network\n   - Check signal strength - move closer to the access point if needed\n   - Forget the network and reconnect with correct credentials\n\n3. General troubleshooting:\n   - Restart your device\n   - Restart your router/modem (unplug for 30 seconds, then reconnect)\n   - Check if other devices can connect to the same network\n   - Run Windows Network Diagnostics (right-click on network icon)\n   - Use &apos;ipconfig /release&apos; followed by &apos;ipconfig /renew&apos; in Command Prompt\n\n4. Check for IP address conflicts or DHCP issues\n5. Verify proxy settings are correct if your organization uses them\n6. Test basic connectivity with &apos;ping 8.8.8.8&apos; in Command Prompt\n\nIf problems persist, contact your network administrator with details of troubleshooting steps already taken.",
       sources: ["Network Troubleshooting Guide", "Company Network Policy", "Wi-Fi Best Practices"],
       confidence: 0.94
     },
@@ -193,10 +193,10 @@ export default function QueryPage() {
     if (bestMatch.score < 0.1) {
       return {
         answer: type === 'it_knowledge' 
-          ? "I understand you're looking for IT assistance, but I need more specific information about your question. Please provide details about what specific IT issue or system you need help with. You might want to include:\n\n- The specific application or hardware you're using\n- Any error messages you're receiving\n- What you've already tried to resolve the issue\n- When the problem started occurring\n\nThis will help me provide you with more accurate and helpful information."
+          ? "I understand you&apos;re looking for IT assistance, but I need more specific information about your question. Please provide details about what specific IT issue or system you need help with. You might want to include:\n\n- The specific application or hardware you&apos;re using\n- Any error messages you&apos;re receiving\n- What you&apos;ve already tried to resolve the issue\n- When the problem started occurring\n\nThis will help me provide you with more accurate and helpful information."
           : type === 'conversation_analysis'
-            ? "I couldn't find specific information about that in our conversation data. Please try asking about sentiment analysis, agent performance, conversation topics, or conversation volume patterns."
-            : "I couldn't find specific information about that in our ticket data. Please try asking about common issues, resolution times, department analysis, or ticket priorities.",
+            ? "I couldn&apos;t find specific information about that in our conversation data. Please try asking about sentiment analysis, agent performance, conversation topics, or conversation volume patterns."
+            : "I couldn&apos;t find specific information about that in our ticket data. Please try asking about common issues, resolution times, department analysis, or ticket priorities.",
         confidence: 0.5,
         type: type
       };
