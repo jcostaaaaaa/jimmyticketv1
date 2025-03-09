@@ -34,7 +34,7 @@ export interface Ticket {
   network?: {
     type?: string;
   };
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 interface TicketContextType {
