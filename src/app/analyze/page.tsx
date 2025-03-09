@@ -480,7 +480,7 @@ export default function AnalyzePage() {
                   <div className="space-y-3">
                     <div className="flex items-start">
                       <div className="bg-white p-3 rounded-lg border border-purple-100 text-slate-700 text-sm italic mb-3 w-full">
-                        "{aiAnalysis.companyContext}"
+                        &quot;{aiAnalysis.companyContext}&quot;
                       </div>
                     </div>
                     <div className="text-slate-800 font-medium">
