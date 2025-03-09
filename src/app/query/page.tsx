@@ -505,11 +505,11 @@ export default function QueryPage() {
                 </li>
                 <li>
                   <button
-                    onClick={() => handleSuggestedQuery("How do I fix Outlook when it's not syncing emails?", 'it_knowledge')}
+                    onClick={() => handleSuggestedQuery("How do I fix Outlook when it&apos;s not syncing emails?", 'it_knowledge')}
                     className="text-left w-full p-2 hover:bg-gray-50 rounded text-gray-700 flex items-start"
                   >
                     <span className="text-green-500 mr-2 mt-1"><FaQuestion /></span>
-                    <span>How do I fix Outlook when it's not syncing emails?</span>
+                    <span>How do I fix Outlook when it&apos;s not syncing emails?</span>
                   </button>
                 </li>
                 <li>
