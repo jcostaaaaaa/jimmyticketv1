@@ -98,21 +98,27 @@ export default function AnalyzePage() {
       // For demo, we'll simulate a response after a delay
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // Simulate AI analysis results
+      // Enhanced AI analysis results with more in-depth insights
       const sampleAIAnalysis: AIAnalysis = {
         insights: [
-          "High-priority network issues take 42% longer to resolve than other categories",
-          "Satisfaction scores correlate strongly with response time rather than resolution time",
-          "The same 15% of users generate nearly 40% of all tickets",
-          "Browser-related issues could be reduced by 65% with proactive updates"
+          "High-priority network issues take 42% longer to resolve than other categories, particularly VPN connectivity issues which average 14.3 hours resolution time",
+          "Response time is the primary factor influencing satisfaction scores (87% correlation), while actual resolution time has only 23% correlation with satisfaction",
+          "A recurring pattern shows that 15% of users consistently generate 42% of all tickets, with 'Technical Operations' department being the most frequent submitter",
+          "Browser-related issues could be reduced by 65% with proactive update policies, as 78% of these tickets stem from outdated browser versions",
+          "Peak ticket submission occurs between 9-11am and 1-3pm, with a 37% decrease during lunch hours",
+          "Hardware failures follow a predictable lifecycle pattern, with 70% occurring either within the first month (manufacturing defects) or after 24+ months of use",
+          "Tickets categorized as 'Quick Resolution' still take an average of 3.2 hours to close, suggesting a bottleneck in the verification process"
         ],
         recommendations: [
-          "Consider dedicated staff for VPN issues which comprise 28% of critical tickets",
-          "Implement automated password reset system to reduce tier 1 support load by ~30%",
-          "Establish knowledge base articles for the top 5 recurring issues",
-          "Schedule maintenance during identified low-ticket periods (weekends, early mornings)"
+          "Implement a dedicated VPN support specialist team to address the 28% of critical tickets related to remote connectivity, potentially reducing resolution time by 35%",
+          "Develop an automated password reset system with multi-factor authentication to reduce tier 1 support load by approximately 30% and improve security compliance",
+          "Create detailed knowledge base articles for the top 5 recurring issues, with step-by-step resolution guides and video tutorials to enable self-service",
+          "Schedule system maintenance during statistically low-activity periods (weekends and early mornings) to minimize disruption, based on 12-month ticket submission patterns",
+          "Implement a proactive hardware replacement program for devices reaching 22+ months in service, potentially preventing 65% of failure-related downtime",
+          "Restructure the ticket assignment workflow to prioritize response speed for high-visibility issues, which could improve overall satisfaction scores by an estimated 22%",
+          "Deploy automatic browser update policies through group policy to address the significant portion of browser-related issues stemming from outdated software"
         ],
-        predictionText: "Based on current patterns, expect a 15-20% increase in network-related tickets in the next quarter, particularly from remote workers. Plan staffing accordingly."
+        predictionText: "Based on comprehensive analysis of historical patterns and trend modeling, we project a 15-20% increase in network-related tickets over the next quarter, with a particular concentration among remote workers using VPN services. This increase correlates strongly with the planned expansion of the remote workforce (r=0.89). Additionally, expect seasonal variation with a 30% spike in hardware-related tickets during the back-to-school period as equipment is redeployed. To mitigate these challenges, we recommend proactively scaling support resources by approximately 25% for network issues and implementing a structured hardware verification program 45 days before peak periods."
       };
       
       setAIAnalysis(sampleAIAnalysis);
@@ -445,33 +451,33 @@ export default function AnalyzePage() {
           
           {aiAnalysis && !isLoadingAI && (
             <div className="space-y-6">
-              <div>
-                <h3 className="text-md font-medium mb-3 text-blue-800">AI Insights</h3>
-                <ul className="space-y-2">
+              <div className="border border-blue-100 rounded-lg p-5 bg-blue-50">
+                <h3 className="text-md font-semibold mb-3 text-blue-900 border-b border-blue-200 pb-2">AI Insights</h3>
+                <ul className="space-y-3">
                   {aiAnalysis.insights.map((insight, index) => (
                     <li key={index} className="flex items-start">
-                      <span className="text-blue-500 mr-2">•</span>
-                      <span>{insight}</span>
+                      <span className="text-blue-600 mr-2 mt-1 text-lg font-bold">•</span>
+                      <span className="text-slate-800 font-medium">{insight}</span>
                     </li>
                   ))}
                 </ul>
               </div>
               
-              <div>
-                <h3 className="text-md font-medium mb-3 text-green-800">Recommendations</h3>
-                <ul className="space-y-2">
+              <div className="border border-green-100 rounded-lg p-5 bg-green-50">
+                <h3 className="text-md font-semibold mb-3 text-green-900 border-b border-green-200 pb-2">Recommendations</h3>
+                <ul className="space-y-3">
                   {aiAnalysis.recommendations.map((rec, index) => (
                     <li key={index} className="flex items-start">
-                      <span className="text-green-500 mr-2">•</span>
-                      <span>{rec}</span>
+                      <span className="text-green-600 mr-2 mt-1 text-lg font-bold">•</span>
+                      <span className="text-slate-800 font-medium">{rec}</span>
                     </li>
                   ))}
                 </ul>
               </div>
               
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <h3 className="text-md font-medium mb-2 text-blue-800">Predictive Analysis</h3>
-                <p className="text-gray-700">{aiAnalysis.predictionText}</p>
+              <div className="border border-indigo-100 bg-indigo-50 p-5 rounded-lg shadow-sm">
+                <h3 className="text-md font-semibold mb-3 text-indigo-900 border-b border-indigo-200 pb-2">Predictive Analysis</h3>
+                <p className="text-slate-800 font-medium leading-relaxed">{aiAnalysis.predictionText}</p>
               </div>
             </div>
           )}
