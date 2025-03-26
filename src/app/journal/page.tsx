@@ -186,16 +186,115 @@ export default function JournalPage() {
       mainContent = text.substring(0, 150) + "...";
     }
     
-    // Format the entry based on whether it's from description or resolution
-    const category = ticket.category || 'a system';
+    // Extract the specific technical issue from the text
+    const specificIssue = extractSpecificIssue(text, ticket);
     
+    // Format the entry based on whether it's from description or resolution
     if (isResolution) {
       // For resolutions, focus on what was learned from solving the issue
-      return `Today I learned how to resolve an issue with ${category}: ${mainContent} This knowledge will help when similar problems arise in the future.`;
+      return `Today I learned how to resolve ${specificIssue}: ${mainContent} This knowledge will help when similar problems arise in the future.`;
     } else {
       // For descriptions, focus on the technical aspects of the issue
-      return `Today I learned about a technical issue involving ${category}: ${mainContent} Understanding this problem helps build troubleshooting skills.`;
+      return `Today I learned about a technical issue involving ${specificIssue}: ${mainContent} Understanding this problem helps build troubleshooting skills.`;
     }
+  }
+
+  // Extract the specific technical issue from the text
+  function extractSpecificIssue(text: string, ticket: Ticket): string {
+    // Common technical issue patterns to look for
+    const issuePatterns = [
+      // Network issues
+      { regex: /(?:can'?t|unable to|not) (?:access|connect to|reach) (?:network|shared) (?:drive|folder|directory|resource)/i, issue: "network drive access problems" },
+      { regex: /(?:vpn|virtual private network) (?:connection|access) (?:issue|problem|error|fail)/i, issue: "VPN connectivity issues" },
+      { regex: /(?:wifi|wireless|internet) (?:connection|signal) (?:drop|weak|intermittent|unstable)/i, issue: "unstable WiFi connections" },
+      { regex: /(?:dns|domain name|name resolution) (?:error|issue|problem)/i, issue: "DNS resolution failures" },
+      
+      // Communication tools
+      { regex: /(?:teams|zoom|webex) (?:call|meeting) (?:drop|disconnect|crash|freeze)/i, issue: "video conferencing disconnections" },
+      { regex: /(?:teams|zoom|webex) (?:audio|video|camera|mic) (?:not working|issue|problem)/i, issue: "video conferencing audio/video problems" },
+      { regex: /(?:outlook|email) (?:sync|synchronization) (?:issue|problem|error|fail)/i, issue: "email synchronization problems" },
+      { regex: /(?:calendar|meeting|appointment) (?:sync|missing|not showing|disappear)/i, issue: "calendar synchronization issues" },
+      
+      // Hardware issues
+      { regex: /(?:printer|printing|scan) (?:not working|issue|problem|error|fail)/i, issue: "printer connectivity problems" },
+      { regex: /(?:monitor|display|screen) (?:blank|black|not working|flickering)/i, issue: "monitor display issues" },
+      { regex: /(?:keyboard|mouse|input device) (?:not working|unresponsive|lag)/i, issue: "input device malfunctions" },
+      { regex: /(?:battery|power) (?:drain|not charging|issue|problem)/i, issue: "battery and power problems" },
+      
+      // Software issues
+      { regex: /(?:application|program|software) (?:crash|freeze|hang|not responding)/i, issue: "application crashes and freezes" },
+      { regex: /(?:slow|performance|lag) (?:computer|laptop|pc|system)/i, issue: "system performance degradation" },
+      { regex: /(?:update|upgrade|patch) (?:fail|error|issue|problem)/i, issue: "software update failures" },
+      { regex: /(?:login|authentication|password) (?:fail|issue|problem|error|reset)/i, issue: "authentication problems" },
+      
+      // Data issues
+      { regex: /(?:file|document) (?:corrupt|missing|lost|can't open)/i, issue: "file corruption or loss" },
+      { regex: /(?:backup|restore) (?:fail|issue|problem|error)/i, issue: "backup and restore failures" },
+      { regex: /(?:permission|access denied|unauthorized)/i, issue: "permission and access control issues" },
+      
+      // Security issues
+      { regex: /(?:virus|malware|ransomware|phishing)/i, issue: "malware and security threats" },
+      { regex: /(?:suspicious|unusual|unauthorized) (?:activity|login|access)/i, issue: "unauthorized access attempts" }
+    ];
+    
+    // Check for specific issue patterns in the text
+    const lowerText = text.toLowerCase();
+    for (const pattern of issuePatterns) {
+      if (pattern.regex.test(lowerText)) {
+        return pattern.issue;
+      }
+    }
+    
+    // If no specific pattern is found, try to extract key terms
+    const shortDesc = ticket.short_description || '';
+    
+    // If short description contains a clear issue statement, use that
+    if (shortDesc.length > 10 && !isGenericText(shortDesc)) {
+      // Clean up the short description
+      const cleanShortDesc = shortDesc
+        .replace(/^(re:|fwd:)/i, '')
+        .trim();
+      
+      if (cleanShortDesc.length > 10) {
+        return `issues with ${cleanShortDesc.toLowerCase()}`;
+      }
+    }
+    
+    // Extract category and subcategory if available
+    const category = ticket.category ? ticket.category.toLowerCase() : '';
+    const subcategory = ticket.subcategory ? ticket.subcategory.toLowerCase() : '';
+    
+    if (subcategory && category) {
+      return `${subcategory} issues in ${category} systems`;
+    } else if (category) {
+      return `${category} system issues`;
+    }
+    
+    // Last resort: extract technical terms from the text
+    const technicalTerms = [
+      'network', 'server', 'database', 'security', 'authentication', 
+      'firewall', 'VPN', 'DNS', 'API', 'SQL', 'Windows', 'Linux', 'macOS',
+      'cloud', 'AWS', 'Azure', 'Docker', 'virtualization', 'backup',
+      'monitoring', 'incident', 'deployment', 'Office 365', 'Teams', 'Outlook',
+      'SharePoint', 'OneDrive', 'Exchange', 'Active Directory', 'printer',
+      'laptop', 'desktop', 'mobile', 'tablet', 'browser', 'Chrome', 'Firefox',
+      'Edge', 'Safari', 'Internet Explorer', 'password', 'account', 'email',
+      'file share', 'permissions', 'access', 'connectivity', 'bandwidth'
+    ];
+    
+    const foundTerms = technicalTerms.filter(term => lowerText.includes(term.toLowerCase()));
+    
+    if (foundTerms.length > 0) {
+      // Use the first two terms found
+      if (foundTerms.length >= 2) {
+        return `${foundTerms[0]} and ${foundTerms[1]} integration issues`;
+      } else {
+        return `${foundTerms[0]} configuration issues`;
+      }
+    }
+    
+    // If nothing specific found, return a generic but somewhat specific issue
+    return "technical system integration issues";
   }
 
   // Extract meaningful tags from a ticket
