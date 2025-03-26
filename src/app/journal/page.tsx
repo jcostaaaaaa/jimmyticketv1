@@ -26,7 +26,7 @@ export default function JournalPage() {
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
 
   // Function to generate learning entry from ticket description or resolution
-  const generateLearningEntryFromTicket = useCallback((text: string, ticket: Ticket, isResolution = false): string | null => {
+  const generateLearningEntryFromTicket = useCallback((text: string, ticket: Ticket): string | null => {
     // Check if text is generic/template text
     function isGenericText(text: string): boolean {
       const genericPhrases = [
@@ -302,7 +302,7 @@ export default function JournalPage() {
               .trim();
             
             // Create a learning entry from the resolution
-            const content = generateLearningEntryFromTicket(cleanResolution, ticket, true);
+            const content = generateLearningEntryFromTicket(cleanResolution, ticket);
             
             if (content) {
               // Use resolution date if available

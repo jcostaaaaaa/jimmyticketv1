@@ -384,7 +384,7 @@ export default function AnalyzePage() {
     const correlationStrength = 0.7 + (remoteWorkPercentage * 0.5) || 0.89;
     
     // Generate a truly dynamic prediction based on actual ticket data
-    let insights = [];
+    const insights = [];
     
     // Only include insights about categories if we have meaningful category data
     if (sortedCategories.length > 0) {
@@ -414,10 +414,8 @@ export default function AnalyzePage() {
       insights.push(`Your ticket volume shows seasonal variation with a ${seasonalIncrease}% spike during ${peakMonth}.`);
       
       // Suggest preparation based on when peak month occurs
-      const currentDate = new Date();
-      const currentMonth = months[currentDate.getMonth()];
       const monthIndex = months.indexOf(peakMonth);
-      const currentMonthIndex = currentDate.getMonth();
+      const currentMonthIndex = new Date().getMonth();
       
       // Calculate months until peak
       let monthsUntilPeak = monthIndex - currentMonthIndex;
@@ -444,7 +442,7 @@ export default function AnalyzePage() {
     }
     
     // Add mitigation strategies based on the actual insights
-    let mitigationStrategies = [];
+    const mitigationStrategies = [];
     
     // Category-specific mitigations
     if (sortedCategories.length > 0) {
