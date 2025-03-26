@@ -1128,7 +1128,7 @@ export default function AnalyzePage() {
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}
                   placeholder="Enter API key"
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800"
                 />
                 <button
                   onClick={runAIAnalysis}
@@ -1385,7 +1385,8 @@ function calculateMonthlyTrends(tickets: Ticket[]): { month: string; count: numb
       const [aMonth, aYear] = a.month.split(' ');
       const [bMonth, bYear] = b.month.split(' ');
       
-      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+                     'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
       
       if (aYear !== bYear) {
         return parseInt(aYear) - parseInt(bYear);

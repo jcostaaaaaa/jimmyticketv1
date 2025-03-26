@@ -616,7 +616,7 @@ export default function JournalPage() {
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
               placeholder="sk-..."
-              className="w-full p-2 border border-gray-300 rounded mb-4"
+              className="w-full p-2 border border-gray-300 rounded mb-4 text-gray-800"
             />
             <div className="flex justify-end space-x-2">
               <button
