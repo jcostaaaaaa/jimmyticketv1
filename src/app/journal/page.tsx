@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { FaArrowLeft, FaPlus, FaRobot, FaSearch, FaCalendarAlt, FaTag, FaKey } from 'react-icons/fa';
+import { FaArrowLeft, FaPlus, FaRobot, FaSearch, FaKey } from 'react-icons/fa';
 import { useTickets } from '@/context/TicketContext';
 import type { Ticket } from '@/context/TicketContext';
 
@@ -269,7 +269,7 @@ export default function JournalPage() {
       console.error('Error generating AI entry:', error);
       toast({
         title: 'AI Processing Error',
-        description: `Failed to generate entry: ${(error as Error).message}`,
+        description: `Failed to generate entry: ${error instanceof Error ? error.message : String(error)}`,
         status: 'error'
       });
       return null;
@@ -335,8 +335,6 @@ export default function JournalPage() {
 
   // Function to extract meaningful tags from a ticket
   function extractMeaningfulTags(ticket: Ticket): string[] {
-    const tags: string[] = [];
-    
     // Extract text from ticket
     let text = '';
     if (ticket.description && typeof ticket.description === 'string') {
@@ -422,7 +420,7 @@ export default function JournalPage() {
       console.error('Error in AI processing:', error);
       toast({
         title: 'AI Processing Error',
-        description: `An error occurred: ${(error as Error).message}`,
+        description: `An error occurred: ${error instanceof Error ? error.message : String(error)}`,
         status: 'error'
       });
     } finally {
@@ -432,151 +430,140 @@ export default function JournalPage() {
 
   // Load entries from localStorage on component mount
   useEffect(() => {
-    // Only run on client-side
-    if (typeof window === 'undefined') return;
-
     try {
-      // Initialize with default entries if none exist
-      const defaultEntries: JournalEntry[] = [
-        {
-          id: '1',
-          date: 'March 26, 2025',
-          originalDate: new Date('2025-03-26'),
-          content: "Today I learned about ports and protocols. These are essentials for ensuring data sent between devices is in a consistent format that allows any devices to communicate quickly and without error.",
-          tags: ['networking', 'protocols'],
-          source: 'manual'
-        }
-      ];
-
-      // Check for saved API key
+      // Get API key from localStorage
       const savedApiKey = localStorage.getItem('openai_api_key');
       if (savedApiKey) {
         setApiKey(savedApiKey);
       }
+      
+      // Get entries from localStorage
+      const savedEntries = localStorage.getItem('journal_entries');
+      if (savedEntries) {
+        const parsedEntries = JSON.parse(savedEntries);
+        
+        // Convert string dates to Date objects
+        const entriesWithDates = parsedEntries.map((entry: JournalEntry) => ({
+          ...entry,
+          originalDate: new Date(entry.originalDate)
+        }));
+        
+        setEntries(entriesWithDates);
+      }
+    } catch (error) {
+      console.error('Error loading from localStorage:', error);
+    }
+  }, []);
 
-      // Process tickets to extract meaningful learning entries
-      if (tickets.length > 0) {
-        const processedTickets = new Set<string>();
-        const journalEntries: JournalEntry[] = [...defaultEntries];
-
-        tickets.forEach((ticket: Ticket) => {
-          // Skip if we've already processed this ticket
-          const ticketId = typeof ticket.number === 'string' ? ticket.number : 
-                          typeof ticket.sys_id === 'string' ? ticket.sys_id : '';
-          if (processedTickets.has(ticketId) || !ticketId) return;
-          processedTickets.add(ticketId);
-
-          // Get the ticket date (try multiple possible date fields)
-          let dateValue: string | Date = new Date();
-          if (typeof ticket.created_at === 'string') dateValue = ticket.created_at;
-          else if (typeof ticket.created === 'string') dateValue = ticket.created;
-          else if (typeof ticket.opened_at === 'string') dateValue = ticket.opened_at;
-          else if (typeof ticket.sys_created_on === 'string') dateValue = ticket.sys_created_on;
-
-          const ticketDate = new Date(dateValue);
-
-          // Format the date for display
-          const formattedDate = ticketDate.toLocaleDateString('en-US', { 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric' 
-          });
-
-          // Process description if it exists and is meaningful
-          if (ticket.description && typeof ticket.description === 'string' && ticket.description.length > 30) {
-            // Clean up the description
-            const cleanDescription = ticket.description
-              .replace(/\\n/g, ' ')
-              .replace(/\\r/g, ' ')
-              .replace(/\s+/g, ' ')
-              .trim();
-
-            // Create a learning entry from the description
-            const content = generateLearningEntryLegacy(cleanDescription);
-
-            if (content) {
-              journalEntries.push({
-                id: `desc_${ticketId}`,
-                date: formattedDate,
-                originalDate: ticketDate,
-                content,
-                tags: extractMeaningfulTags(ticket),
-                ticketNumber: ticketId,
-                source: 'description'
-              });
-            }
-          }
-
-          // Process resolution if it exists and is meaningful
-          if (ticket.resolution && typeof ticket.resolution === 'string' && ticket.resolution.length > 30) {
-            // Clean up the resolution
-            const cleanResolution = ticket.resolution
-              .replace(/\\n/g, ' ')
-              .replace(/\\r/g, ' ')
-              .replace(/\s+/g, ' ')
-              .trim();
-
-            // Create a learning entry from the resolution
-            const content = generateLearningEntryLegacy(cleanResolution);
-
-            if (content) {
-              // Use resolution date if available
-              let resolutionValue: string | Date = ticketDate;
-              if (typeof ticket.resolved_at === 'string') resolutionValue = ticket.resolved_at;
-              else if (typeof ticket.closed_at === 'string') resolutionValue = ticket.closed_at;
-
-              const resolutionDate = new Date(resolutionValue);
-
-              // Format the resolution date
-              const formattedResolutionDate = resolutionDate.toLocaleDateString('en-US', { 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
-              });
-
-              journalEntries.push({
-                id: `res_${ticketId}`,
-                date: formattedResolutionDate,
-                originalDate: resolutionDate,
-                content,
-                tags: extractMeaningfulTags(ticket),
-                ticketNumber: ticketId,
-                source: 'resolution'
-              });
-            }
-          }
+  // Process tickets when they are loaded
+  useEffect(() => {
+    if (tickets.length === 0) return;
+    
+    try {
+      const newEntries: JournalEntry[] = [];
+      const processedTickets = new Set<string>();
+      
+      tickets.forEach(ticket => {
+        // Skip if we've already processed this ticket
+        const ticketId = typeof ticket.number === 'string' ? ticket.number : 
+                        typeof ticket.sys_id === 'string' ? ticket.sys_id : '';
+        if (processedTickets.has(ticketId) || !ticketId) return;
+        processedTickets.add(ticketId);
+        
+        // Get the ticket date
+        let dateValue: string | Date = new Date();
+        if (typeof ticket.created_at === 'string') dateValue = ticket.created_at;
+        else if (typeof ticket.created === 'string') dateValue = ticket.created;
+        else if (typeof ticket.opened_at === 'string') dateValue = ticket.opened_at;
+        else if (typeof ticket.sys_created_on === 'string') dateValue = ticket.sys_created_on;
+        
+        const ticketDate = new Date(dateValue);
+        const formattedDate = ticketDate.toLocaleDateString('en-US', { 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric' 
         });
-
-        // Sort entries by date (newest first by default)
-        journalEntries.sort((a: JournalEntry, b: JournalEntry) => b.originalDate.getTime() - a.originalDate.getTime());
-
-        setEntries(journalEntries);
-
-        // Save to localStorage
-        localStorage.setItem('journal_entries', JSON.stringify(journalEntries));
-      } else {
-        // Load from localStorage if no tickets
-        const savedEntries = localStorage.getItem('journal_entries');
-        if (savedEntries) {
-          try {
-            const parsedEntries = JSON.parse(savedEntries);
-            // Convert string dates back to Date objects
-            parsedEntries.forEach((entry: any) => {
-              entry.originalDate = new Date(entry.originalDate);
+        
+        // Generate a learning entry from the ticket description
+        if (ticket.description && typeof ticket.description === 'string') {
+          const cleanDescription = ticket.description
+            .replace(/\\n/g, ' ')
+            .replace(/\\r/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+          
+          // Legacy approach - will be replaced by AI in the future
+          const content = generateLearningEntryLegacy(cleanDescription);
+          
+          if (content) {
+            const tags = extractMeaningfulTags(ticket);
+            
+            newEntries.push({
+              id: `desc_${ticketId}`,
+              date: formattedDate,
+              originalDate: ticketDate,
+              content: content,
+              tags,
+              ticketNumber: ticketId,
+              source: 'description'
             });
-            setEntries(parsedEntries);
-          } catch (error) {
-            console.error('Error parsing saved entries:', error);
-            setEntries(defaultEntries);
           }
-        } else {
-          setEntries(defaultEntries);
+        }
+        
+        // Generate a learning entry from the ticket resolution
+        if (ticket.resolution && typeof ticket.resolution === 'string') {
+          const cleanResolution = ticket.resolution
+            .replace(/\\n/g, ' ')
+            .replace(/\\r/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+          
+          // Legacy approach - will be replaced by AI in the future
+          const content = generateLearningEntryLegacy(cleanResolution);
+          
+          if (content) {
+            const tags = extractMeaningfulTags(ticket);
+            
+            // Use resolution date if available
+            let resolutionValue: string | Date = ticketDate;
+            if (typeof ticket.resolved_at === 'string') resolutionValue = ticket.resolved_at;
+            else if (typeof ticket.closed_at === 'string') resolutionValue = ticket.closed_at;
+            
+            const resolutionDate = new Date(resolutionValue);
+            const formattedResolutionDate = resolutionDate.toLocaleDateString('en-US', { 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric' 
+            });
+            
+            newEntries.push({
+              id: `res_${ticketId}`,
+              date: formattedResolutionDate,
+              originalDate: resolutionDate,
+              content: content,
+              tags,
+              ticketNumber: ticketId,
+              source: 'resolution'
+            });
+          }
+        }
+      });
+      
+      if (newEntries.length > 0) {
+        // Only add entries that don't already exist
+        const existingIds = entries.map(entry => entry.id);
+        const uniqueNewEntries = newEntries.filter(entry => !existingIds.includes(entry.id));
+        
+        if (uniqueNewEntries.length > 0) {
+          const updatedEntries = [...entries, ...uniqueNewEntries];
+          setEntries(updatedEntries);
+          localStorage.setItem('journal_entries', JSON.stringify(updatedEntries));
         }
       }
     } catch (error) {
       console.error('Error in journal entries processing:', error);
     }
-  }, [tickets]);
+  }, [tickets, entries, extractMeaningfulTags]);
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
