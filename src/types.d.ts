@@ -1,9 +1,8 @@
-import React from 'react';
-
 declare global {
   namespace JSX {
     interface IntrinsicElements {
-      [elemName: string]: any;
+      // Use Record with specific property types instead of any
+      [elemName: string]: Record<string, unknown>;
     }
   }
 }
