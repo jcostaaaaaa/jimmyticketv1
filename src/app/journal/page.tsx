@@ -2,14 +2,17 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { FaArrowLeft, FaPlus } from 'react-icons/fa';
-import { useTickets } from '@/context/TicketContext';
+import { FaArrowLeft, FaPlus, FaSearch, FaCalendarAlt, FaTag } from 'react-icons/fa';
+import { useTickets, Ticket } from '@/context/TicketContext';
 
 interface JournalEntry {
   id: string;
   date: string;
+  originalDate: Date;
   content: string;
   tags: string[];
+  ticketNumber?: string;
+  source: 'description' | 'resolution' | 'manual';
 }
 
 export default function JournalPage() {
@@ -19,6 +22,8 @@ export default function JournalPage() {
   const [newEntry, setNewEntry] = useState('');
   const [newTags, setNewTags] = useState('');
   const [isAddingEntry, setIsAddingEntry] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
 
   // Load entries from localStorage on component mount
   useEffect(() => {
@@ -26,103 +31,215 @@ export default function JournalPage() {
     if (typeof window === 'undefined') return;
     
     try {
-      const storedEntries = localStorage.getItem('learningJournal');
-      if (storedEntries) {
-        setEntries(JSON.parse(storedEntries));
-      } else {
-        // Initialize with default entries if none exist
-        const defaultEntries: JournalEntry[] = [
-          {
-            id: '1',
-            date: new Date().toLocaleDateString('en-US', { 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric' 
-            }),
-            content: "Today I learned about ports and protocols. These are essentials for ensuring data sent between devices is in a consistent format that allows any devices to communicate quickly and without error.",
-            tags: ['networking', 'protocols']
-          },
-          {
-            id: '2',
-            date: new Date().toLocaleDateString('en-US', { 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric' 
-            }),
-            content: "Today I learned about the importance of consistent ticket categorization. When tickets are properly categorized, it becomes much easier to identify trends and recurring issues, which helps in proactive problem management.",
-            tags: ['ticketing', 'categorization']
-          }
-        ];
-        setEntries(defaultEntries);
-        localStorage.setItem('learningJournal', JSON.stringify(defaultEntries));
-      }
+      // Initialize with default entries if none exist
+      const defaultEntries: JournalEntry[] = [
+        {
+          id: '1',
+          date: 'March 26, 2025',
+          originalDate: new Date('2025-03-26'),
+          content: "Today I learned about ports and protocols. These are essentials for ensuring data sent between devices is in a consistent format that allows any devices to communicate quickly and without error.",
+          tags: ['networking', 'protocols'],
+          source: 'manual'
+        }
+      ];
 
-      // Analyze tickets for potential learning opportunities
+      // Process tickets to extract meaningful learning entries
       if (tickets.length > 0) {
-        const uniqueIssues = new Set<string>();
+        const processedTickets = new Set<string>();
+        const journalEntries: JournalEntry[] = [...defaultEntries];
         
-        // Extract unique issues from problem descriptions and resolutions
-        tickets.forEach(ticket => {
-          if (ticket.description && typeof ticket.description === 'string' && ticket.description.length > 20) {
-            uniqueIssues.add(ticket.description);
+        tickets.forEach((ticket: Ticket) => {
+          // Skip if we've already processed this ticket
+          const ticketId = typeof ticket.number === 'string' ? ticket.number : 
+                          typeof ticket.sys_id === 'string' ? ticket.sys_id : '';
+          if (processedTickets.has(ticketId) || !ticketId) return;
+          processedTickets.add(ticketId);
+          
+          // Get the ticket date (try multiple possible date fields)
+          let dateValue: string | Date = new Date();
+          if (typeof ticket.created_at === 'string') dateValue = ticket.created_at;
+          else if (typeof ticket.created === 'string') dateValue = ticket.created;
+          else if (typeof ticket.opened_at === 'string') dateValue = ticket.opened_at;
+          else if (typeof ticket.sys_created_on === 'string') dateValue = ticket.sys_created_on;
+          
+          const ticketDate = new Date(dateValue);
+          
+          // Format the date for display
+          const formattedDate = ticketDate.toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+          });
+          
+          // Process description if it exists and is meaningful
+          if (ticket.description && typeof ticket.description === 'string' && ticket.description.length > 30) {
+            // Clean up the description
+            const cleanDescription = ticket.description
+              .replace(/\\n/g, ' ')
+              .replace(/\\r/g, ' ')
+              .replace(/\s+/g, ' ')
+              .trim();
+            
+            if (cleanDescription.length > 30 && !isGenericText(cleanDescription)) {
+              // Create a learning entry from the description
+              const content = generateLearningEntryFromTicket(cleanDescription, ticket);
+              
+              if (content) {
+                journalEntries.push({
+                  id: `desc_${ticketId}`,
+                  date: formattedDate,
+                  originalDate: ticketDate,
+                  content,
+                  tags: extractMeaningfulTags(ticket),
+                  ticketNumber: ticketId,
+                  source: 'description'
+                });
+              }
+            }
           }
           
-          if (ticket.resolution && typeof ticket.resolution === 'string' && ticket.resolution.length > 20) {
-            uniqueIssues.add(ticket.resolution);
-          }
-        });
-        
-        // Generate learning entries from unique issues
-        const storedIssueHashes = JSON.parse(localStorage.getItem('processedIssueHashes') || '[]');
-        const newEntries: JournalEntry[] = [];
-        
-        uniqueIssues.forEach(issue => {
-          // Create a simple hash of the issue to avoid duplicates - using a safer method than btoa
-          const issueHash = createSimpleHash(issue.substring(0, 50));
-          
-          if (!storedIssueHashes.includes(issueHash)) {
-            // Generate a learning entry
-            const learningEntry = generateLearningEntry(issue);
-            if (learningEntry) {
-              newEntries.push({
-                id: Date.now().toString() + Math.random().toString(36).substring(2, 9),
-                date: new Date().toLocaleDateString('en-US', { 
+          // Process resolution if it exists and is meaningful
+          if (ticket.resolution && typeof ticket.resolution === 'string' && ticket.resolution.length > 30) {
+            // Clean up the resolution
+            const cleanResolution = ticket.resolution
+              .replace(/\\n/g, ' ')
+              .replace(/\\r/g, ' ')
+              .replace(/\s+/g, ' ')
+              .trim();
+            
+            if (cleanResolution.length > 30 && !isGenericText(cleanResolution)) {
+              // Create a learning entry from the resolution
+              const content = generateLearningEntryFromTicket(cleanResolution, ticket, true);
+              
+              if (content) {
+                // Use resolution date if available
+                let resolutionValue: string | Date = ticketDate;
+                if (typeof ticket.resolved_at === 'string') resolutionValue = ticket.resolved_at;
+                else if (typeof ticket.closed_at === 'string') resolutionValue = ticket.closed_at;
+                
+                const resolutionDate = new Date(resolutionValue);
+                const formattedResolutionDate = resolutionDate.toLocaleDateString('en-US', { 
                   year: 'numeric', 
                   month: 'long', 
                   day: 'numeric' 
-                }),
-                content: learningEntry,
-                tags: extractTags(issue)
-              });
-              
-              // Add to processed hashes
-              storedIssueHashes.push(issueHash);
+                });
+                
+                journalEntries.push({
+                  id: `res_${ticketId}`,
+                  date: formattedResolutionDate,
+                  originalDate: resolutionDate,
+                  content,
+                  tags: extractMeaningfulTags(ticket),
+                  ticketNumber: ticketId,
+                  source: 'resolution'
+                });
+              }
             }
           }
         });
         
-        if (newEntries.length > 0) {
-          // Update entries with new ones
-          const updatedEntries = [...entries, ...newEntries];
-          setEntries(updatedEntries);
-          localStorage.setItem('learningJournal', JSON.stringify(updatedEntries));
-          localStorage.setItem('processedIssueHashes', JSON.stringify(storedIssueHashes));
-        }
+        // Sort entries by date (newest first by default)
+        const sortedEntries = journalEntries.sort((a, b) => 
+          b.originalDate.getTime() - a.originalDate.getTime()
+        );
+        
+        setEntries(sortedEntries);
+        localStorage.setItem('learningJournal', JSON.stringify(sortedEntries));
+      } else {
+        // If no tickets, just use default entries
+        setEntries(defaultEntries);
+        localStorage.setItem('learningJournal', JSON.stringify(defaultEntries));
       }
     } catch (error) {
       console.error("Error initializing journal:", error);
+      // Fallback to empty entries
+      setEntries([]);
     }
   }, [tickets]);
 
-  // Simple hash function that works on both client and server
-  function createSimpleHash(str: string): string {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-      const char = str.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash; // Convert to 32bit integer
+  // Check if text is generic/template text
+  function isGenericText(text: string): boolean {
+    const genericPhrases = [
+      'please fill out', 'template', 'n/a', 'not applicable',
+      'see above', 'no description provided', 'no details', 'none',
+      'please describe', 'please provide', 'pending', 'to be determined',
+      'to be filled', 'will be updated', 'see attachment', 'see attached'
+    ];
+    
+    const lowercaseText = text.toLowerCase();
+    return genericPhrases.some(phrase => lowercaseText.includes(phrase)) ||
+           text.length < 40 || // Too short
+           (text.split(' ').length < 8); // Too few words
+  }
+
+  // Generate a meaningful learning entry from ticket content
+  function generateLearningEntryFromTicket(text: string, ticket: Ticket, isResolution = false): string | null {
+    // Skip if text is too short or generic
+    if (text.length < 40 || isGenericText(text)) return null;
+    
+    // Extract key sentences (first sentence, or first 150 chars if no sentence end found)
+    let mainContent = text;
+    const sentenceEnd = text.search(/[.!?](\s|$)/);
+    if (sentenceEnd > 20) {
+      mainContent = text.substring(0, sentenceEnd + 1);
+    } else if (text.length > 150) {
+      mainContent = text.substring(0, 150) + "...";
     }
-    return hash.toString(36);
+    
+    // Format the entry based on whether it's from description or resolution
+    const category = ticket.category || 'a system';
+    
+    if (isResolution) {
+      // For resolutions, focus on what was learned from solving the issue
+      return `Today I learned how to resolve an issue with ${category}: ${mainContent} This knowledge will help when similar problems arise in the future.`;
+    } else {
+      // For descriptions, focus on the technical aspects of the issue
+      return `Today I learned about a technical issue involving ${category}: ${mainContent} Understanding this problem helps build troubleshooting skills.`;
+    }
+  }
+
+  // Extract meaningful tags from a ticket
+  function extractMeaningfulTags(ticket: Ticket): string[] {
+    const tags: string[] = [];
+    
+    // Add category if available
+    if (ticket.category) {
+      tags.push(ticket.category.toLowerCase());
+    }
+    
+    // Add subcategory if available
+    if (ticket.subcategory) {
+      tags.push(ticket.subcategory.toLowerCase());
+    }
+    
+    // Add priority if available
+    if (ticket.priority) {
+      const priorityTag = `priority-${ticket.priority}`;
+      tags.push(priorityTag);
+    }
+    
+    // Extract technical terms from description or resolution
+    const technicalTerms = [
+      'network', 'server', 'database', 'security', 'authentication', 
+      'firewall', 'VPN', 'DNS', 'API', 'SQL', 'Windows', 'Linux', 'macOS',
+      'cloud', 'AWS', 'Azure', 'Docker', 'virtualization', 'backup',
+      'monitoring', 'incident', 'deployment'
+    ];
+    
+    const textToSearch = [
+      ticket.short_description || '', 
+      ticket.description || '', 
+      ticket.resolution || ''
+    ].filter(Boolean).join(' ').toLowerCase();
+    
+    technicalTerms.forEach(term => {
+      if (textToSearch.includes(term.toLowerCase())) {
+        tags.push(term.toLowerCase());
+      }
+    });
+    
+    // Remove duplicates and limit to 5 tags
+    return [...new Set(tags)].slice(0, 5);
   }
 
   const handleAddEntry = () => {
@@ -135,11 +252,13 @@ export default function JournalPage() {
         month: 'long', 
         day: 'numeric' 
       }),
+      originalDate: new Date(),
       content: newEntry.startsWith("Today I learned") ? newEntry : `Today I learned ${newEntry}`,
-      tags: newTags.split(',').map(tag => tag.trim()).filter(tag => tag !== '')
+      tags: newTags.split(',').map(tag => tag.trim()).filter(tag => tag !== ''),
+      source: 'manual'
     };
     
-    const updatedEntries = [...entries, entry];
+    const updatedEntries = [entry, ...entries];
     setEntries(updatedEntries);
     localStorage.setItem('learningJournal', JSON.stringify(updatedEntries));
     
@@ -155,60 +274,30 @@ export default function JournalPage() {
     localStorage.setItem('learningJournal', JSON.stringify(updatedEntries));
   };
 
-  // Helper function to generate a learning entry from an issue
-  function generateLearningEntry(issue: string): string | null {
-    // Skip if issue is too short
-    if (issue.length < 30) return null;
+  const handleSort = () => {
+    const newOrder = sortOrder === 'newest' ? 'oldest' : 'newest';
+    setSortOrder(newOrder);
     
-    // Extract key technical terms
-    const technicalTerms = [
-      'network', 'server', 'database', 'security', 'authentication', 
-      'authorization', 'encryption', 'firewall', 'VPN', 'DNS', 'DHCP',
-      'API', 'REST', 'SOAP', 'JSON', 'XML', 'HTTP', 'HTTPS', 'SSL', 'TLS',
-      'SQL', 'NoSQL', 'MongoDB', 'PostgreSQL', 'MySQL', 'Oracle',
-      'Windows', 'Linux', 'macOS', 'Unix', 'Ubuntu', 'CentOS', 'Debian',
-      'cloud', 'AWS', 'Azure', 'GCP', 'Docker', 'Kubernetes', 'container',
-      'virtualization', 'VM', 'hypervisor', 'microservice', 'serverless',
-      'backup', 'recovery', 'disaster', 'redundancy', 'high availability',
-      'load balancing', 'scaling', 'monitoring', 'logging', 'alerting',
-      'incident', 'problem', 'change', 'release', 'deployment', 'CI/CD',
-      'DevOps', 'SRE', 'ITIL', 'ServiceNow', 'Jira', 'ticketing'
-    ];
+    const sortedEntries = [...entries].sort((a, b) => {
+      return newOrder === 'newest' 
+        ? b.originalDate.getTime() - a.originalDate.getTime()
+        : a.originalDate.getTime() - b.originalDate.getTime();
+    });
     
-    // Find technical terms in the issue
-    const foundTerms = technicalTerms.filter(term => 
-      issue.toLowerCase().includes(term.toLowerCase())
-    );
-    
-    if (foundTerms.length === 0) return null;
-    
-    // Generate a learning entry based on the found terms
-    const term = foundTerms[Math.floor(Math.random() * foundTerms.length)];
-    
-    // Different templates for learning entries
-    const templates = [
-      `Today I learned about ${term} and its importance in IT infrastructure. Understanding ${term} helps in diagnosing and resolving issues more efficiently.`,
-      `Today I learned how ${term} plays a critical role in system stability. Proper configuration of ${term} can prevent many common issues.`,
-      `Today I learned that ${term} requires regular maintenance and monitoring. Neglecting ${term} can lead to unexpected downtime and service degradation.`,
-      `Today I learned the best practices for managing ${term} in enterprise environments. Implementing these practices can significantly reduce incident frequency.`,
-      `Today I learned about common misconceptions regarding ${term}. Having a clear understanding helps in troubleshooting related issues more effectively.`
-    ];
-    
-    return templates[Math.floor(Math.random() * templates.length)];
-  }
+    setEntries(sortedEntries);
+  };
 
-  // Helper function to extract tags from an issue
-  function extractTags(issue: string): string[] {
-    const commonTags = [
-      'networking', 'security', 'hardware', 'software', 'database',
-      'cloud', 'authentication', 'performance', 'storage', 'backup',
-      'monitoring', 'configuration', 'deployment', 'integration'
-    ];
+  // Filter entries based on search term
+  const filteredEntries = entries.filter(entry => {
+    if (!searchTerm) return true;
+    const searchLower = searchTerm.toLowerCase();
     
-    return commonTags.filter(tag => 
-      issue.toLowerCase().includes(tag.toLowerCase())
-    ).slice(0, 3); // Limit to 3 tags
-  }
+    return (
+      entry.content.toLowerCase().includes(searchLower) ||
+      entry.tags.some(tag => tag.toLowerCase().includes(searchLower)) ||
+      (entry.ticketNumber && entry.ticketNumber.toLowerCase().includes(searchLower))
+    );
+  });
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -229,6 +318,27 @@ export default function JournalPage() {
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
           >
             <FaPlus /> New Entry
+          </button>
+        </div>
+        
+        <div className="flex justify-between items-center mb-6">
+          <div className="relative flex-1 max-w-md">
+            <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search entries..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          
+          <button
+            onClick={handleSort}
+            className="flex items-center gap-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors"
+          >
+            <FaCalendarAlt />
+            Sort: {sortOrder === 'newest' ? 'Newest First' : 'Oldest First'}
           </button>
         </div>
         
@@ -272,29 +382,53 @@ export default function JournalPage() {
           </div>
         )}
         
-        <div className="space-y-6">
-          {entries.map((entry) => (
-            <div key={entry.id} className="bg-white rounded-lg shadow-md p-6">
-              <div className="flex justify-between items-start mb-3">
-                <span className="text-sm text-gray-500">{entry.date}</span>
-                <button 
-                  onClick={() => handleDeleteEntry(entry.id)}
-                  className="text-red-500 hover:text-red-700"
-                >
-                  Delete
-                </button>
+        {filteredEntries.length === 0 ? (
+          <div className="bg-white rounded-lg shadow-md p-6 text-center">
+            <p className="text-gray-500">No journal entries found. {searchTerm ? 'Try a different search term.' : 'Add your first entry!'}</p>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {filteredEntries.map((entry) => (
+              <div key={entry.id} className="bg-white rounded-lg shadow-md p-6">
+                <div className="flex justify-between items-start mb-3">
+                  <div className="flex items-center gap-2">
+                    <FaCalendarAlt className="text-gray-400" />
+                    <span className="text-sm text-gray-500">{entry.date}</span>
+                    {entry.ticketNumber && (
+                      <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                        Ticket #{entry.ticketNumber}
+                      </span>
+                    )}
+                    <span className={`text-xs px-2 py-1 rounded ${
+                      entry.source === 'resolution' 
+                        ? 'bg-green-100 text-green-800' 
+                        : entry.source === 'description'
+                          ? 'bg-yellow-100 text-yellow-800'
+                          : 'bg-purple-100 text-purple-800'
+                    }`}>
+                      {entry.source === 'resolution' ? 'Resolution' : entry.source === 'description' ? 'Issue' : 'Manual'}
+                    </span>
+                  </div>
+                  <button 
+                    onClick={() => handleDeleteEntry(entry.id)}
+                    className="text-red-500 hover:text-red-700"
+                  >
+                    Delete
+                  </button>
+                </div>
+                <p className="text-gray-800 mb-4">{entry.content}</p>
+                <div className="flex flex-wrap gap-2">
+                  {entry.tags.map((tag, index) => (
+                    <span key={index} className="flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-600 text-sm rounded-md">
+                      <FaTag className="text-gray-400 text-xs" />
+                      {tag}
+                    </span>
+                  ))}
+                </div>
               </div>
-              <p className="text-gray-800 mb-4">{entry.content}</p>
-              <div className="flex flex-wrap gap-2">
-                {entry.tags.map((tag, index) => (
-                  <span key={index} className="px-2 py-1 bg-gray-100 text-gray-600 text-sm rounded-md">
-                    #{tag}
-                  </span>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
