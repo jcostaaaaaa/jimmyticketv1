@@ -13,10 +13,11 @@ const Toast = ({ title, description, status, onClose }: {
   status: 'success' | 'error' | 'info' | 'warning'; 
   onClose: () => void;
 }) => {
+  // Add effect to auto-close the toast after 5 seconds
   useEffect(() => {
     const timer = setTimeout(() => {
       onClose();
-    }, 3000);
+    }, 5000);
     
     return () => clearTimeout(timer);
   }, [onClose]);
@@ -26,13 +27,22 @@ const Toast = ({ title, description, status, onClose }: {
                   status === 'warning' ? 'bg-yellow-500' : 'bg-blue-500';
   
   return (
-    <div className={`fixed top-4 right-4 p-4 rounded-md shadow-lg ${bgColor} text-white z-50 max-w-md`}>
+    <div className={`p-4 rounded-md shadow-lg ${bgColor} text-white max-w-md mb-4`}>
       <div className="flex justify-between items-start">
         <div>
           <h3 className="font-bold">{title}</h3>
           <p>{description}</p>
         </div>
-        <button onClick={onClose} className="ml-4 text-white">×</button>
+        <button 
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onClose();
+          }} 
+          className="ml-4 text-white font-bold text-xl"
+        >
+          ×
+        </button>
       </div>
     </div>
   );
@@ -47,52 +57,46 @@ const useToast = () => {
     status: 'success' | 'error' | 'info' | 'warning';
   }>>([]);
   
+  // Function to add a toast
   const toast = ({ 
     title, 
     description, 
-    status, 
-    duration = 5000 
+    status
   }: { 
     title: string; 
     description: string; 
-    status: 'success' | 'error' | 'info' | 'warning'; 
-    duration?: number; 
+    status: 'success' | 'error' | 'info' | 'warning';
   }) => {
-    const id = Date.now().toString();
+    const id = Math.random().toString(36).substring(2, 9);
     
-    // Clear any existing toasts with the same title to prevent stacking
+    // Remove any existing toasts with the same title
     setToasts(prev => {
       const filtered = prev.filter(t => t.title !== title);
       return [...filtered, { id, title, description, status }];
     });
-    
-    if (duration) {
-      setTimeout(() => {
-        setToasts(prev => prev.filter(toast => toast.id !== id));
-      }, duration);
-    }
   };
   
+  // Function to close a toast
   const closeToast = (id: string) => {
     setToasts(prev => prev.filter(toast => toast.id !== id));
   };
   
-  return {
-    toast,
-    ToastContainer: () => (
-      <div className="fixed top-4 right-4 z-50 space-y-4">
-        {toasts.map(t => (
-          <Toast 
-            key={t.id} 
-            title={t.title} 
-            description={t.description} 
-            status={t.status} 
-            onClose={() => closeToast(t.id)} 
-          />
-        ))}
-      </div>
-    )
-  };
+  // Toast container component
+  const ToastContainer = () => (
+    <div className="fixed top-4 right-4 z-50 flex flex-col items-end">
+      {toasts.map(t => (
+        <Toast 
+          key={t.id} 
+          title={t.title} 
+          description={t.description} 
+          status={t.status} 
+          onClose={() => closeToast(t.id)} 
+        />
+      ))}
+    </div>
+  );
+  
+  return { toast, ToastContainer };
 };
 
 interface JournalEntry {
@@ -430,65 +434,54 @@ export default function JournalPage() {
   // Load entries from localStorage on component mount
   useEffect(() => {
     try {
-      // Get entries from localStorage
-      const savedEntries = localStorage.getItem('journal_entries');
-      if (savedEntries) {
-        const parsedEntries = JSON.parse(savedEntries);
-        
-        // Convert string dates to Date objects
-        const entriesWithDates = parsedEntries.map((entry: JournalEntry) => ({
-          ...entry,
-          originalDate: new Date(entry.originalDate)
-        }));
-        
-        setEntries(entriesWithDates);
+      const storedEntries = localStorage.getItem('journal_entries');
+      if (storedEntries) {
+        const parsedEntries = JSON.parse(storedEntries);
+        setEntries(parsedEntries);
       }
     } catch (error) {
-      console.error('Error loading from localStorage:', error);
+      console.error('Error loading journal entries:', error);
     }
   }, []);
 
-  // Process tickets when they are loaded - first with legacy approach, then with AI
+  // Process tickets to generate entries when tickets change
   useEffect(() => {
-    if (tickets.length === 0) return;
-    
+    if (!tickets || tickets.length === 0) return;
+
     try {
       const newEntries: JournalEntry[] = [];
-      const processedTickets = new Set<string>();
       
+      // Process each ticket
       tickets.forEach(ticket => {
-        // Skip if we've already processed this ticket
+        // Skip if ticket doesn't have necessary data
+        if (!ticket) return;
+        
+        // Get ticket ID
         const ticketId = typeof ticket.number === 'string' ? ticket.number : 
                         typeof ticket.sys_id === 'string' ? ticket.sys_id : '';
-        if (processedTickets.has(ticketId) || !ticketId) return;
-        processedTickets.add(ticketId);
         
-        // Get the ticket date
-        let dateValue: string | Date = new Date();
-        if (typeof ticket.created_at === 'string') dateValue = ticket.created_at;
-        else if (typeof ticket.created === 'string') dateValue = ticket.created;
-        else if (typeof ticket.opened_at === 'string') dateValue = ticket.opened_at;
-        else if (typeof ticket.sys_created_on === 'string') dateValue = ticket.sys_created_on;
+        if (!ticketId) return;
         
-        const ticketDate = new Date(dateValue);
-        const formattedDate = ticketDate.toLocaleDateString('en-US', { 
-          year: 'numeric', 
-          month: 'long', 
-          day: 'numeric' 
-        });
-        
-        // Generate a learning entry from the ticket description
+        // Process description
         if (ticket.description && typeof ticket.description === 'string') {
-          const cleanDescription = ticket.description
-            .replace(/\\n/g, ' ')
-            .replace(/\\r/g, ' ')
-            .replace(/\s+/g, ' ')
-            .trim();
-          
-          // Legacy approach - will be replaced by AI in the future
-          const content = generateLearningEntryLegacy(cleanDescription);
+          const content = generateLearningEntryLegacy(ticket.description);
           
           if (content) {
+            // Get the ticket date
+            let dateValue: string | Date = new Date();
+            if (typeof ticket.created_at === 'string') dateValue = ticket.created_at;
+            else if (typeof ticket.created === 'string') dateValue = ticket.created;
+            else if (typeof ticket.opened_at === 'string') dateValue = ticket.opened_at;
+            else if (typeof ticket.sys_created_on === 'string') dateValue = ticket.sys_created_on;
+            
+            const ticketDate = new Date(dateValue);
+            const formattedDate = ticketDate.toLocaleDateString('en-US', { 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric' 
+            });
+            
+            // Extract tags
             const tags = extractMeaningfulTags(ticket);
             
             newEntries.push({
@@ -503,31 +496,28 @@ export default function JournalPage() {
           }
         }
         
-        // Generate a learning entry from the ticket resolution
+        // Process resolution
         if (ticket.resolution && typeof ticket.resolution === 'string') {
-          const cleanResolution = ticket.resolution
-            .replace(/\\n/g, ' ')
-            .replace(/\\r/g, ' ')
-            .replace(/\s+/g, ' ')
-            .trim();
-          
-          // Legacy approach - will be replaced by AI in the future
-          const content = generateLearningEntryLegacy(cleanResolution);
+          const content = generateLearningEntryLegacy(ticket.resolution);
           
           if (content) {
-            const tags = extractMeaningfulTags(ticket);
+            // Get the resolution date (or ticket date if no resolution date)
+            let dateValue: string | Date = new Date();
+            if (typeof ticket.resolved_at === 'string') dateValue = ticket.resolved_at;
+            else if (typeof ticket.closed_at === 'string') dateValue = ticket.closed_at;
+            else if (typeof ticket.sys_updated_on === 'string') dateValue = ticket.sys_updated_on;
+            else if (typeof ticket.created_at === 'string') dateValue = ticket.created_at;
+            else if (typeof ticket.created === 'string') dateValue = ticket.created;
             
-            // Use resolution date if available
-            let resolutionValue: string | Date = ticketDate;
-            if (typeof ticket.resolved_at === 'string') resolutionValue = ticket.resolved_at;
-            else if (typeof ticket.closed_at === 'string') resolutionValue = ticket.closed_at;
-            
-            const resolutionDate = new Date(resolutionValue);
+            const resolutionDate = new Date(dateValue);
             const formattedResolutionDate = resolutionDate.toLocaleDateString('en-US', { 
               year: 'numeric', 
               month: 'long', 
               day: 'numeric' 
             });
+            
+            // Extract tags
+            const tags = extractMeaningfulTags(ticket);
             
             newEntries.push({
               id: `res_${ticketId}`,
@@ -554,12 +544,20 @@ export default function JournalPage() {
         }
       }
       
-      // After generating legacy entries, process with AI
-      processTicketsWithAI();
+      // Auto-process with AI on initial load if we have tickets and no AI entries yet
+      const hasAiEntries = entries.some(entry => entry.source === 'ai');
+      if (tickets.length > 0 && !hasAiEntries && !isProcessingAI) {
+        processTicketsWithAI();
+      }
     } catch (error) {
       console.error('Error in journal entries processing:', error);
     }
-  }, [tickets, entries, extractMeaningfulTags, processTicketsWithAI]);
+  }, [tickets, entries, extractMeaningfulTags, generateLearningEntryLegacy, isProcessingAI, processTicketsWithAI]);
+
+  // Process tickets with AI when the button is clicked
+  const handleProcessTicketsWithAI = () => {
+    processTicketsWithAI();
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
@@ -583,6 +581,13 @@ export default function JournalPage() {
             >
               <FaPlus className="mr-2" />
               <span>Add Entry</span>
+            </button>
+            <button
+              onClick={handleProcessTicketsWithAI}
+              className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
+            >
+              <FaPlus className="mr-2" />
+              <span>Generate AI Entries</span>
             </button>
           </div>
         </div>
