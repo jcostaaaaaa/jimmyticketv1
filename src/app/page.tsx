@@ -222,6 +222,11 @@ export default function Home() {
             <FaFileUpload /> Get Started
           </Link>
         </div>
+        
+        {/* Version indicator */}
+        <div className="fixed bottom-2 right-2 text-slate-400 text-sm font-mono">
+          v1
+        </div>
       </main>
       
       <footer className="bg-slate-900 text-slate-300 py-8 mt-auto">
