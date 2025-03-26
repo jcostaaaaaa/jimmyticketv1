@@ -603,9 +603,40 @@ function MetricCard({ title, value, icon, color }: {
 
 // Helper functions
 function calculateAverageResolutionTime(tickets: Ticket[]): string {
-  const resolvedTickets = tickets.filter(t => 
-    (t.status === 'Closed' || t.status === 'Resolved') && t.created_at && t.closed_at
-  );
+  // Use the same logic for identifying closed tickets as in the main filtering
+  const resolvedTickets = tickets.filter(t => {
+    // Check status, state, and close_code fields with case-insensitive comparison
+    const status = (t.status || '').toLowerCase();
+    const state = (t.state || '').toLowerCase();
+    const closeCode = (typeof t.close_code === 'string' ? t.close_code : '').toLowerCase();
+    
+    // Check for common closed status values
+    const closedStatusValues = [
+      'closed', 
+      'resolved', 
+      'complete', 
+      'completed',
+      'fixed',
+      'done',
+      'cancelled',
+      'canceled',
+      'rejected',
+      'solved',
+      'finished'
+    ];
+    
+    // Check if any of the closed status values match in any of the fields
+    const isClosed = closedStatusValues.some(value => 
+      status.includes(value) || 
+      state.includes(value) || 
+      closeCode.includes(value)
+    ) || 
+    // Also consider a ticket closed if it has any value in close_code
+    (closeCode !== '');
+    
+    // Only include tickets that are closed AND have both created_at and closed_at dates
+    return isClosed && t.created_at && t.closed_at;
+  });
 
   if (resolvedTickets.length === 0) return 'N/A';
 
@@ -616,7 +647,14 @@ function calculateAverageResolutionTime(tickets: Ticket[]): string {
   }, 0);
 
   const avgTimeInHours = totalTime / (resolvedTickets.length * 1000 * 60 * 60);
-  return `${Math.round(avgTimeInHours)} hours`;
+  
+  // Format the output based on the duration
+  if (avgTimeInHours < 24) {
+    return `${Math.round(avgTimeInHours)} hours`;
+  } else {
+    const days = avgTimeInHours / 24;
+    return `${Math.round(days)} days`;
+  }
 }
 
 function calculateDistribution(tickets: Ticket[], field: string): { [key: string]: number } {
