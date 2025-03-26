@@ -50,9 +50,6 @@ export default function AnalyzePage() {
   // Add company context state for the context tab
   const [companyContext, setCompanyContext] = useState<string>('');
   
-  // Use environment variable for API key - no need for state since we're using env var
-  const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY || '';
-  
   const router = useRouter();
 
   useEffect(() => {
