@@ -383,8 +383,107 @@ export default function AnalyzePage() {
     const remoteWorkPercentage = remoteWorkTickets.length / tickets.length || 0.3;
     const correlationStrength = 0.7 + (remoteWorkPercentage * 0.5) || 0.89;
     
-    // Generate a comprehensive prediction based on actual ticket data
-    return `Based on analysis of your ${tickets.length} tickets, we project a ${growthRate-5}-${growthRate+5}% increase in ${topGrowingCategory} tickets over the next quarter, with a particular concentration among remote workers using VPN services. This increase correlates strongly with the planned expansion of the remote workforce (r=${correlationStrength.toFixed(2)}). Additionally, expect seasonal variation with a ${seasonalIncrease}% spike in hardware-related tickets during ${peakMonth} as equipment is redeployed. Hardware failures follow a predictable lifecycle pattern, with ${earlyFailurePercent}% occurring within the first month (manufacturing defects) and ${lateFailurePercent}% after ${criticalAge}+ months of use. To mitigate these challenges, we recommend proactively scaling support resources by approximately ${Math.round(growthRate * 1.5)}% for ${topGrowingCategory} issues and implementing a structured hardware verification program 45 days before peak periods.`;
+    // Generate a truly dynamic prediction based on actual ticket data
+    let insights = [];
+    
+    // Only include insights about categories if we have meaningful category data
+    if (sortedCategories.length > 0) {
+      insights.push(`Based on analysis of your ${tickets.length} tickets, we project a ${growthRate-5}-${growthRate+5}% increase in ${topGrowingCategory} tickets over the next quarter.`);
+      
+      // Add second most common category if available
+      if (sortedCategories.length > 1) {
+        insights.push(`${sortedCategories[1]} issues are your second most common category and should also be monitored closely.`);
+      }
+    } else {
+      insights.push(`Based on analysis of your ${tickets.length} tickets, we project a ${growthRate-5}-${growthRate+5}% increase in overall ticket volume over the next quarter.`);
+    }
+    
+    // Only include remote work insights if we have remote work tickets
+    if (remoteWorkTickets.length > 0) {
+      const remoteWorkPercent = Math.round(remoteWorkPercentage * 100);
+      if (remoteWorkPercent > 20) {
+        insights.push(`${remoteWorkPercent}% of your tickets are related to remote work, indicating this is a significant area of support need.`);
+        insights.push(`This correlates with remote connectivity challenges (r=${correlationStrength.toFixed(2)}).`);
+      } else if (remoteWorkPercent > 0) {
+        insights.push(`Only ${remoteWorkPercent}% of your tickets are related to remote work, suggesting your remote infrastructure is relatively stable.`);
+      }
+    }
+    
+    // Only include seasonal insights if we have date data
+    if (Object.keys(monthCounts).length > 0) {
+      insights.push(`Your ticket volume shows seasonal variation with a ${seasonalIncrease}% spike during ${peakMonth}.`);
+      
+      // Suggest preparation based on when peak month occurs
+      const currentDate = new Date();
+      const currentMonth = months[currentDate.getMonth()];
+      const monthIndex = months.indexOf(peakMonth);
+      const currentMonthIndex = currentDate.getMonth();
+      
+      // Calculate months until peak
+      let monthsUntilPeak = monthIndex - currentMonthIndex;
+      if (monthsUntilPeak <= 0) {
+        monthsUntilPeak += 12; // Wrap around to next year
+      }
+      
+      if (monthsUntilPeak < 3) {
+        insights.push(`With ${peakMonth} approaching in ${monthsUntilPeak} month${monthsUntilPeak === 1 ? '' : 's'}, immediate preparation for increased ticket volume is recommended.`);
+      } else {
+        insights.push(`You have ${monthsUntilPeak} months to prepare for your typical ${peakMonth} increase in ticket volume.`);
+      }
+    }
+    
+    // Only include hardware insights if we have hardware tickets
+    if (hardwareTickets.length > 0) {
+      const hardwarePercent = Math.round((hardwareTickets.length / tickets.length) * 100);
+      if (hardwarePercent > 25) {
+        insights.push(`Hardware-related issues account for ${hardwarePercent}% of your tickets, suggesting potential equipment refresh needs.`);
+        insights.push(`Hardware failures follow a pattern with ${earlyFailurePercent}% occurring within the first month and ${lateFailurePercent}% after ${criticalAge}+ months of use.`);
+      } else if (hardwarePercent > 0) {
+        insights.push(`Hardware-related issues account for ${hardwarePercent}% of your tickets, which is within normal parameters.`);
+      }
+    }
+    
+    // Add mitigation strategies based on the actual insights
+    let mitigationStrategies = [];
+    
+    // Category-specific mitigations
+    if (sortedCategories.length > 0) {
+      mitigationStrategies.push(`Proactively scale support resources by approximately ${Math.round(growthRate * 1.5)}% for ${topGrowingCategory} issues.`);
+      
+      // Add specific mitigation based on top category
+      if (topGrowingCategory.includes('network')) {
+        mitigationStrategies.push(`Consider network infrastructure review and potential bandwidth upgrades.`);
+      } else if (topGrowingCategory.includes('hardware')) {
+        mitigationStrategies.push(`Implement a structured hardware verification program before peak periods.`);
+      } else if (topGrowingCategory.includes('software')) {
+        mitigationStrategies.push(`Review software update procedures and consider staggered rollout schedules.`);
+      } else if (topGrowingCategory.includes('access') || topGrowingCategory.includes('account')) {
+        mitigationStrategies.push(`Review authentication systems and consider implementing password management solutions.`);
+      }
+    }
+    
+    // Remote work mitigations if significant
+    if (remoteWorkTickets.length > tickets.length * 0.2) {
+      mitigationStrategies.push(`Enhance VPN capacity and provide additional remote work troubleshooting resources.`);
+    }
+    
+    // Seasonal mitigations if we have clear seasonal patterns
+    if (seasonalIncrease > 20 && Object.keys(monthCounts).length > 0) {
+      mitigationStrategies.push(`Schedule additional temporary support staff 30 days before your ${peakMonth} peak period.`);
+    }
+    
+    // Hardware mitigations if significant
+    if (hardwareTickets.length > tickets.length * 0.25) {
+      mitigationStrategies.push(`Consider implementing a hardware refresh cycle every ${criticalAge} months to prevent late-lifecycle failures.`);
+    }
+    
+    // Combine insights and mitigations into a coherent analysis
+    return [
+      ...insights,
+      '',
+      'To address these challenges, we recommend:',
+      ...mitigationStrategies.map(strategy => `• ${strategy}`)
+    ].join('\n');
   };
   
   // Helper functions for data-driven analysis
