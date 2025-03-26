@@ -399,8 +399,6 @@ export default function AnalyzePage() {
     }
     
     // Only calculate these if we have hardware tickets
-    const earlyFailurePercent = hardwareTickets.length > 0 ? Math.round(hardwareTickets.length * 0.2) : 20;
-    const lateFailurePercent = hardwareTickets.length > 0 ? Math.round(hardwareTickets.length * 0.5) : 50;
     const criticalAge = hardwareTickets.length > 0 ? 18 + Math.round(hardwareTickets.length / 10) : 22;
     
     // Remote work impact analysis
