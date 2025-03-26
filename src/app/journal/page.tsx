@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { FaArrowLeft, FaPlus, FaRobot, FaSearch, FaKey } from 'react-icons/fa';
+import { FaArrowLeft, FaPlus, FaRobot, FaSearch } from 'react-icons/fa';
 import { useTickets } from '@/context/TicketContext';
 import type { Ticket } from '@/context/TicketContext';
 
@@ -100,44 +100,6 @@ interface JournalEntry {
   source: 'description' | 'resolution' | 'manual' | 'ai';
 }
 
-// Function to generate a learning entry from a ticket description or resolution
-function generateLearningEntryLegacy(text: string): string | null {
-  // Remove generic phrases
-  const genericPhrases = [
-    'please fill out', 'template', 'n/a', 'not applicable',
-    'see above', 'no description provided', 'no details', 'none',
-    'please describe', 'please provide', 'pending', 'to be determined',
-    'to be filled', 'will be updated', 'see attachment', 'see attached'
-  ];
-
-  let cleanedText = text;
-  genericPhrases.forEach(phrase => {
-    cleanedText = cleanedText.replace(new RegExp(phrase, 'gi'), '');
-  });
-
-  // If text is too short or generic, return null
-  if (cleanedText.length < 40 || genericPhrases.some(phrase => cleanedText.toLowerCase().includes(phrase))) {
-    return null;
-  }
-
-  // Try to extract meaningful information
-  const meaningfulInfo = cleanedText.replace(/\\n/g, ' ').replace(/\\r/g, ' ').replace(/\s+/g, ' ').trim();
-
-  // If still too short, return null
-  if (meaningfulInfo.length < 40) {
-    return null;
-  }
-
-  // Legacy approach: Use the first sentence as the learning entry
-  const sentences = meaningfulInfo.split('. ');
-  const firstSentence = sentences[0];
-
-  // Capitalize the first letter
-  const capitalizedSentence = firstSentence.charAt(0).toUpperCase() + firstSentence.slice(1);
-
-  return `Today I learned ${capitalizedSentence}.`;
-}
-
 export default function JournalPage() {
   const router = useRouter();
   const { tickets } = useTickets();
@@ -147,137 +109,13 @@ export default function JournalPage() {
   const [isAddingEntry, setIsAddingEntry] = useState(false);
   const [newEntry, setNewEntry] = useState('');
   const [newTags, setNewTags] = useState('');
-  const [apiKey, setApiKey] = useState('');
-  const [showApiKeyInput, setShowApiKeyInput] = useState(false);
   const [isProcessingAI, setIsProcessingAI] = useState(false);
   
   // Custom toast hook
   const { toast, ToastContainer } = useToast();
 
-  // Function to generate learning entry with AI
-  async function generateLearningEntryWithAI(ticket: Ticket): Promise<JournalEntry | null> {
-    if (!apiKey) {
-      toast({
-        title: 'API Key Required',
-        description: 'Please set your OpenAI API key first.',
-        status: 'error'
-      });
-      return null;
-    }
-
-    try {
-      // Extract text from ticket
-      let text = '';
-      if (ticket.description && typeof ticket.description === 'string') {
-        text = ticket.description
-          .replace(/\\n/g, ' ')
-          .replace(/\\r/g, ' ')
-          .replace(/\s+/g, ' ')
-          .trim();
-      }
-
-      // If no usable text, try resolution
-      if (text.length < 40 && ticket.resolution && typeof ticket.resolution === 'string') {
-        text = ticket.resolution
-          .replace(/\\n/g, ' ')
-          .replace(/\\r/g, ' ')
-          .replace(/\s+/g, ' ')
-          .trim();
-      }
-
-      // If still no usable text, return null
-      if (text.length < 40) {
-        return null;
-      }
-
-      // Prepare the API request
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
-        },
-        body: JSON.stringify({
-          model: 'gpt-3.5-turbo',
-          messages: [
-            {
-              role: 'system',
-              content: `You are a technical IT specialist who helps create specific and detailed learning journal entries from IT support tickets.
-              
-              Your task is to:
-              1. Identify the SPECIFIC technical issue described in the ticket (avoid generic terms like "computer issues" or "technical difficulties")
-              2. Extract the EXACT components or systems that were problematic (e.g., specific hardware parts, software applications, network components)
-              3. Create a detailed, technical learning entry that precisely describes what was learned from this ticket
-              4. Format the entry as "Today I learned [specific technical insight]."
-              5. Include technical details that would be valuable for an IT professional to know
-              
-              IMPORTANT: Be extremely specific about the technical components involved. Never use generic terms.`
-            },
-            {
-              role: 'user',
-              content: `Create a specific, technical learning journal entry based on this IT support ticket: "${text}"`
-            }
-          ],
-          temperature: 0.7,
-          max_tokens: 200
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error(`API request failed with status ${response.status}`);
-      }
-
-      const data = await response.json();
-      const content = data.choices[0]?.message?.content?.trim();
-
-      if (!content) {
-        throw new Error('No content returned from API');
-      }
-
-      // Get the ticket date
-      let dateValue: string | Date = new Date();
-      if (typeof ticket.created_at === 'string') dateValue = ticket.created_at;
-      else if (typeof ticket.created === 'string') dateValue = ticket.created;
-      else if (typeof ticket.opened_at === 'string') dateValue = ticket.opened_at;
-      else if (typeof ticket.sys_created_on === 'string') dateValue = ticket.sys_created_on;
-      
-      const ticketDate = new Date(dateValue);
-      const formattedDate = ticketDate.toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-      });
-
-      // Extract tags from the content
-      const tags = extractKeywordsAsTags(content);
-
-      // Create the journal entry
-      const ticketId = typeof ticket.number === 'string' ? ticket.number : 
-                      typeof ticket.sys_id === 'string' ? ticket.sys_id : 
-                      Date.now().toString();
-
-      return {
-        id: `ai_${ticketId}_${Date.now()}`,
-        date: formattedDate,
-        originalDate: ticketDate,
-        content,
-        tags,
-        ticketNumber: ticketId,
-        source: 'ai'
-      };
-    } catch (error) {
-      console.error('Error generating AI entry:', error);
-      toast({
-        title: 'AI Processing Error',
-        description: `Failed to generate entry: ${error instanceof Error ? error.message : String(error)}`,
-        status: 'error'
-      });
-      return null;
-    }
-  }
-
   // Function to extract keywords as tags from text
-  const extractKeywordsAsTags = React.useCallback((text: string): string[] => {
+  const extractKeywordsAsTags = useCallback((text: string): string[] => {
     // Hardware components
     const hardwareComponents = [
       'printer', 'laptop', 'desktop', 'monitor', 'keyboard', 'mouse', 'server',
@@ -325,7 +163,7 @@ export default function JournalPage() {
   }, []);
 
   // Function to extract meaningful tags from a ticket
-  const extractMeaningfulTags = React.useCallback((ticket: Ticket): string[] => {
+  const extractMeaningfulTags = useCallback((ticket: Ticket): string[] => {
     // Extract text from ticket
     let text = '';
     if (ticket.description && typeof ticket.description === 'string') {
@@ -341,70 +179,225 @@ export default function JournalPage() {
     return extractKeywordsAsTags(text);
   }, [extractKeywordsAsTags]);
 
+  // Legacy function to generate learning entries from ticket text
+  function generateLearningEntryLegacy(text: string): string | null {
+    // Check if the text is too short to be meaningful
+    if (text.length < 30) {
+      return null;
+    }
+    
+    // Normalize text for pattern matching
+    const normalizedText = text.toLowerCase();
+    
+    // Common patterns for hardware issues
+    const hardwarePatterns = [
+      /(\w+) (not|isn'?t) (working|functioning|responding|powering on)/i,
+      /(\w+) (failed|broken|damaged|faulty)/i,
+      /(\w+) (error|issue|problem)/i,
+      /replace (\w+)/i,
+      /(\w+) needs (replacement|repair)/i
+    ];
+    
+    // Common patterns for software issues
+    const softwarePatterns = [
+      /(application|program|software) (crash|error|not responding)/i,
+      /(can'?t|cannot|unable to) (access|login|connect to) (\w+)/i,
+      /(\w+) (not|isn'?t) (loading|opening|starting)/i,
+      /error message/i,
+      /blue screen/i
+    ];
+    
+    // Check for hardware issues
+    for (const pattern of hardwarePatterns) {
+      const match = normalizedText.match(pattern);
+      if (match) {
+        const component = match[1];
+        return `Today I learned about diagnosing and resolving issues with ${component} hardware. I identified specific symptoms, troubleshooting steps, and repair procedures that will help me resolve similar issues more efficiently in the future.`;
+      }
+    }
+    
+    // Check for software issues
+    for (const pattern of softwarePatterns) {
+      const match = normalizedText.match(pattern);
+      if (match) {
+        const software = match[3] || 'software';
+        return `Today I learned about troubleshooting ${software} issues. I discovered specific error patterns, diagnostic approaches, and resolution techniques that will improve my ability to quickly resolve similar problems.`;
+      }
+    }
+    
+    // Generic fallback for when no specific pattern is matched
+    return `Today I learned about resolving technical issues through systematic troubleshooting. I applied a structured approach to identify the root cause and implement an effective solution.`;
+  }
+
+  // Function to generate a learning entry with AI
+  async function generateLearningEntryWithAI(ticket: Ticket): Promise<string | null> {
+    try {
+      const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY;
+      
+      if (!apiKey) {
+        console.error('OpenAI API key not found in environment variables');
+        return null;
+      }
+
+      // Extract text from ticket
+      let ticketText = '';
+      if (ticket.description && typeof ticket.description === 'string') {
+        ticketText += 'Description: ' + ticket.description + '\n\n';
+      }
+      if (ticket.resolution && typeof ticket.resolution === 'string') {
+        ticketText += 'Resolution: ' + ticket.resolution;
+      }
+
+      // Clean up the text
+      const cleanText = ticketText
+        .replace(/\\n/g, ' ')
+        .replace(/\\r/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+      if (cleanText.length < 30) {
+        return null; // Not enough meaningful content
+      }
+
+      // Prepare the prompt
+      const prompt = `
+        You are an IT professional creating a learning journal entry based on the following ticket information.
+        Extract the specific technical issue, components involved, and resolution steps.
+        Focus on being precise about what exactly failed or malfunctioned.
+        Avoid generic descriptions like "experiencing technical difficulties" and instead identify the exact component or system that failed.
+        Format your response as a concise learning journal entry starting with "Today I learned about..."
+        
+        Ticket Information:
+        ${cleanText}
+      `;
+
+      // Make the API call
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: 'gpt-3.5-turbo',
+          messages: [
+            { role: 'system', content: 'You are a helpful assistant that creates specific technical learning journal entries from IT support tickets.' },
+            { role: 'user', content: prompt }
+          ],
+          max_tokens: 300,
+          temperature: 0.7
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`API error: ${errorData.error?.message || response.statusText}`);
+      }
+
+      const data = await response.json();
+      const content = data.choices[0]?.message?.content?.trim();
+
+      if (!content) {
+        throw new Error('No content returned from API');
+      }
+
+      return content;
+    } catch (error) {
+      console.error('Error generating AI entry:', error);
+      toast({
+        title: 'AI Processing Error',
+        description: `Failed to generate entry: ${error instanceof Error ? error.message : String(error)}`,
+        status: 'error'
+      });
+      return null;
+    }
+  }
+
   // Function to process tickets with AI
   async function processTicketsWithAI() {
-    if (!apiKey) {
-      setShowApiKeyInput(true);
-      return;
-    }
-    
-    if (tickets.length === 0) {
-      toast({
-        title: 'No Tickets Found',
-        description: 'Please import tickets first.',
-        status: 'warning'
-      });
-      return;
-    }
+    if (tickets.length === 0) return;
     
     setIsProcessingAI(true);
+    toast({
+      title: 'AI Processing',
+      description: 'Generating AI-powered journal entries...',
+      status: 'info'
+    });
     
     try {
       const processedTickets = new Set<string>();
-      const newEntries: JournalEntry[] = [];
+      const aiEntries: JournalEntry[] = [];
       
-      // Process each ticket
+      // Process tickets sequentially to avoid rate limiting
       for (const ticket of tickets) {
         // Skip if we've already processed this ticket
         const ticketId = typeof ticket.number === 'string' ? ticket.number : 
                         typeof ticket.sys_id === 'string' ? ticket.sys_id : '';
+        
         if (processedTickets.has(ticketId) || !ticketId) continue;
         processedTickets.add(ticketId);
         
-        // Generate an AI entry
-        const entry = await generateLearningEntryWithAI(ticket);
-        if (entry) {
-          newEntries.push(entry);
+        // Generate AI entry
+        const content = await generateLearningEntryWithAI(ticket);
+        
+        if (content) {
+          // Get the ticket date
+          let dateValue: string | Date = new Date();
+          if (typeof ticket.created_at === 'string') dateValue = ticket.created_at;
+          else if (typeof ticket.created === 'string') dateValue = ticket.created;
+          else if (typeof ticket.opened_at === 'string') dateValue = ticket.opened_at;
+          else if (typeof ticket.sys_created_on === 'string') dateValue = ticket.sys_created_on;
+          
+          const ticketDate = new Date(dateValue);
+          const formattedDate = ticketDate.toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+          });
+          
+          // Extract tags
+          const tags = extractMeaningfulTags(ticket);
+          
+          // Create the entry
+          aiEntries.push({
+            id: `ai_${ticketId}`,
+            date: formattedDate,
+            originalDate: ticketDate,
+            content,
+            tags,
+            ticketNumber: ticketId,
+            source: 'ai'
+          });
         }
       }
       
-      if (newEntries.length > 0) {
+      if (aiEntries.length > 0) {
         // Only add entries that don't already exist
         const existingIds = entries.map(entry => entry.id);
-        const uniqueNewEntries = newEntries.filter(entry => !existingIds.includes(entry.id));
+        const uniqueAiEntries = aiEntries.filter(entry => !existingIds.includes(entry.id));
         
-        if (uniqueNewEntries.length > 0) {
-          const updatedEntries = [...entries, ...uniqueNewEntries];
+        if (uniqueAiEntries.length > 0) {
+          const updatedEntries = [...entries, ...uniqueAiEntries];
           setEntries(updatedEntries);
           localStorage.setItem('journal_entries', JSON.stringify(updatedEntries));
           
           toast({
             title: 'AI Processing Complete',
-            description: `Generated ${uniqueNewEntries.length} new journal entries.`,
+            description: `Generated ${uniqueAiEntries.length} new journal entries`,
             status: 'success'
           });
         } else {
           toast({
-            title: 'No New Entries',
-            description: 'All entries already exist in your journal.',
+            title: 'AI Processing Complete',
+            description: 'No new entries were generated',
             status: 'info'
           });
         }
       } else {
         toast({
-          title: 'No Entries Generated',
-          description: 'Could not generate any entries from the tickets.',
-          status: 'warning'
+          title: 'AI Processing Complete',
+          description: 'No entries were generated',
+          status: 'info'
         });
       }
     } catch (error) {
@@ -422,12 +415,6 @@ export default function JournalPage() {
   // Load entries from localStorage on component mount
   useEffect(() => {
     try {
-      // Get API key from localStorage
-      const savedApiKey = localStorage.getItem('openai_api_key');
-      if (savedApiKey) {
-        setApiKey(savedApiKey);
-      }
-      
       // Get entries from localStorage
       const savedEntries = localStorage.getItem('journal_entries');
       if (savedEntries) {
@@ -446,7 +433,7 @@ export default function JournalPage() {
     }
   }, []);
 
-  // Process tickets when they are loaded
+  // Process tickets when they are loaded - first with legacy approach, then with AI
   useEffect(() => {
     if (tickets.length === 0) return;
     
@@ -551,6 +538,9 @@ export default function JournalPage() {
           localStorage.setItem('journal_entries', JSON.stringify(updatedEntries));
         }
       }
+      
+      // After generating legacy entries, process with AI
+      processTicketsWithAI();
     } catch (error) {
       console.error('Error in journal entries processing:', error);
     }
@@ -573,25 +563,6 @@ export default function JournalPage() {
           </div>
           <div className="flex items-center space-x-2">
             <button
-              onClick={() => setShowApiKeyInput(true)}
-              className="flex items-center px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors"
-            >
-              <FaKey className="mr-2" />
-              <span>Set API Key</span>
-            </button>
-            <button
-              onClick={processTicketsWithAI}
-              disabled={isProcessingAI || !apiKey}
-              className={`flex items-center px-4 py-2 rounded-md transition-colors ${
-                isProcessingAI || !apiKey 
-                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
-                  : 'bg-indigo-600 text-white hover:bg-indigo-700'
-              }`}
-            >
-              <FaRobot className="mr-2" />
-              <span>{isProcessingAI ? 'Processing...' : 'Generate AI Entries'}</span>
-            </button>
-            <button
               onClick={() => setIsAddingEntry(true)}
               className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
             >
@@ -602,51 +573,6 @@ export default function JournalPage() {
         </div>
       </div>
 
-      {/* API Key Input Modal */}
-      {showApiKeyInput && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-xl font-semibold mb-4">Enter OpenAI API Key</h2>
-            <p className="text-gray-600 mb-4">
-              Your API key is required to generate AI-powered journal entries. 
-              The key will be stored locally in your browser and is never sent to our servers.
-            </p>
-            <input
-              type="password"
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              placeholder="sk-..."
-              className="w-full p-2 border border-gray-300 rounded mb-4 text-gray-800"
-            />
-            <div className="flex justify-end space-x-2">
-              <button
-                onClick={() => setShowApiKeyInput(false)}
-                className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-100"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => {
-                  if (apiKey) {
-                    localStorage.setItem('openai_api_key', apiKey);
-                    setShowApiKeyInput(false);
-                    toast({
-                      title: 'API Key Saved',
-                      description: 'Your OpenAI API key has been saved.',
-                      status: 'success',
-                      duration: 3000,
-                    });
-                  }
-                }}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-              >
-                Save
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-      
       {/* New entry form */}
       {isAddingEntry && (
         <div className="mb-6 p-4 bg-white rounded-lg shadow">
