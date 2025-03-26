@@ -145,7 +145,7 @@ export default function AnalyzePage() {
       // Generate insights based on actual ticket data
       const ticketInsights = generateDataDrivenInsights(tickets, analytics);
       const ticketRecommendations = generateDataDrivenRecommendations(tickets, analytics);
-      const ticketPredictions = generateDataDrivenPredictions(tickets);
+      const ticketPredictions = generateDataDrivenPredictions();
       
       // Enhanced AI analysis results with data-driven insights
       const aiAnalysisResults: AIAnalysis = {
@@ -289,7 +289,7 @@ export default function AnalyzePage() {
   };
   
   // Generate predictions based on actual ticket data
-  const generateDataDrivenPredictions = (tickets: Ticket[]): string => {
+  const generateDataDrivenPredictions = (): string => {
     // Analyze ticket trends over time
     const trends = analyzeTrends();
     const topGrowingCategory = trends.categories.length > 0 ? trends.categories[0].category : "network-related";
