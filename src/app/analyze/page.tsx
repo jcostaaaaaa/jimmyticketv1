@@ -330,7 +330,7 @@ export default function AnalyzePage() {
           const date = new Date(createdDate);
           const month = date.getMonth();
           monthCounts[months[month]] = (monthCounts[months[month]] || 0) + 1;
-        } catch (e) {
+        } catch {
           // Skip invalid dates
         }
       }
@@ -713,48 +713,6 @@ export default function AnalyzePage() {
         };
       })
       .sort((a, b) => b.percentage - a.percentage);
-  };
-  
-  // Analyze trends over time
-  const analyzeTrends = (): {overall: number, categories: {category: string, growthRate: number}[]} => {
-    // This would normally involve time-series analysis
-    // For demo purposes, we'll return simulated results based on actual categories
-    const categoryTrends = analyzeCategoryTrends();
-    
-    return {
-      overall: 12, // Overall growth rate
-      categories: categoryTrends
-    };
-  };
-  
-  // Analyze seasonal patterns
-  const analyzeSeasonalPatterns = (): {peak: string, percentage: number} => {
-    // This would normally involve seasonal decomposition
-    // For demo purposes, we'll return simulated results
-    return {
-      peak: "back-to-school period",
-      percentage: 30
-    };
-  };
-  
-  // Analyze hardware lifecycle patterns
-  const analyzeHardwareLifecycle = (): {earlyFailurePercent: number, lateFailurePercent: number, criticalAge: number} => {
-    // This would normally involve survival analysis
-    // For demo purposes, we'll return simulated results
-    return {
-      earlyFailurePercent: 20,
-      lateFailurePercent: 50,
-      criticalAge: 22
-    };
-  };
-  
-  // Analyze remote work impact
-  const analyzeRemoteWorkImpact = (): {correlation: number} => {
-    // This would normally involve correlation analysis
-    // For demo purposes, we'll return simulated results
-    return {
-      correlation: 0.89
-    };
   };
   
   if (tickets.length === 0) {
@@ -1252,8 +1210,8 @@ function calculateMonthlyTrends(tickets: Ticket[]): { month: string; count: numb
       
       const monthYear = date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
       acc[monthYear] = (acc[monthYear] || 0) + 1;
-    } catch (error) {
-      console.error(`Error processing date: ${createdDate}`, error);
+    } catch {
+      // Skip invalid dates
     }
     
     return acc;
