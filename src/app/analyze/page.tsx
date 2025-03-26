@@ -55,6 +55,18 @@ export default function AnalyzePage() {
     console.log("Processing tickets for analytics:", tickets.length);
     console.log("Sample ticket:", tickets[0]);
 
+    // DEBUG: Log all unique status and state values
+    const uniqueStatuses = new Set();
+    const uniqueStates = new Set();
+    
+    tickets.forEach(ticket => {
+      if (ticket.status) uniqueStatuses.add(ticket.status);
+      if (ticket.state) uniqueStates.add(ticket.state);
+    });
+    
+    console.log("Unique status values:", Array.from(uniqueStatuses));
+    console.log("Unique state values:", Array.from(uniqueStates));
+    
     // Calculate analytics
     
     // Correctly identify open vs closed tickets based on the status field
@@ -63,26 +75,31 @@ export default function AnalyzePage() {
       const status = (t.status || '').toLowerCase();
       const state = (t.state || '').toLowerCase();
       
-      return status === 'closed' || 
-             status === 'resolved' || 
-             state === 'closed' || 
-             state === 'resolved' ||
-             status === 'complete' ||
-             state === 'complete';
+      // Check for common closed status values
+      const closedStatusValues = [
+        'closed', 
+        'resolved', 
+        'complete', 
+        'completed',
+        'fixed',
+        'done',
+        'cancelled',
+        'canceled',
+        'rejected',
+        'solved',
+        'finished'
+      ];
+      
+      // Check if any of the closed status values match
+      return closedStatusValues.some(value => 
+        status.includes(value) || state.includes(value)
+      );
     });
     
-    const openTickets = tickets.filter(t => {
-      // Check both status and state fields with case-insensitive comparison
-      const status = (t.status || '').toLowerCase();
-      const state = (t.state || '').toLowerCase();
-      
-      return status !== 'closed' && 
-             status !== 'resolved' && 
-             state !== 'closed' && 
-             state !== 'resolved' &&
-             status !== 'complete' &&
-             state !== 'complete';
-    });
+    // Open tickets are simply those that aren't closed
+    const openTickets = tickets.filter(ticket => 
+      !closedTickets.includes(ticket)
+    );
     
     console.log(`Found ${openTickets.length} open tickets and ${closedTickets.length} closed tickets`);
     
