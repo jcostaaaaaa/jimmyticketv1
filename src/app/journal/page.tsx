@@ -217,8 +217,139 @@ export default function JournalPage() {
     // Get the workflow impact
     const workflowImpact = getWorkflowImpactStatement(specificIssue);
     
-    // Create the learning entry
-    return `Today I learned about a technical issue involving ${specificIssue}: ${text.substring(0, 100).trim()}${text.length > 100 ? '...' : ''} ${workflowImpact}`;
+    // Identify the affected system/software/hardware
+    function identifyAffectedSystem(text: string, specificIssue: string): string {
+      const lowercaseText = text.toLowerCase();
+      
+      // Check for specific software systems
+      if (lowercaseText.includes('outlook')) return 'Microsoft Outlook';
+      if (lowercaseText.includes('teams')) return 'Microsoft Teams';
+      if (lowercaseText.includes('zoom')) return 'Zoom';
+      if (lowercaseText.includes('office') || lowercaseText.includes('word') || 
+          lowercaseText.includes('excel') || lowercaseText.includes('powerpoint')) return 'Microsoft Office';
+      if (lowercaseText.includes('chrome')) return 'Google Chrome';
+      if (lowercaseText.includes('firefox')) return 'Firefox';
+      if (lowercaseText.includes('edge')) return 'Microsoft Edge';
+      if (lowercaseText.includes('adobe') || lowercaseText.includes('pdf')) return 'Adobe software';
+      if (lowercaseText.includes('vpn')) return 'VPN client';
+      if (lowercaseText.includes('sharepoint')) return 'SharePoint';
+      if (lowercaseText.includes('onedrive')) return 'OneDrive';
+      if (lowercaseText.includes('windows')) return 'Windows OS';
+      if (lowercaseText.includes('mac') || lowercaseText.includes('macos')) return 'macOS';
+      if (lowercaseText.includes('linux') || lowercaseText.includes('ubuntu')) return 'Linux OS';
+      
+      // Check for specific hardware
+      if (lowercaseText.includes('dell')) return 'Dell hardware';
+      if (lowercaseText.includes('hp')) return 'HP hardware';
+      if (lowercaseText.includes('lenovo')) return 'Lenovo hardware';
+      if (lowercaseText.includes('apple') || lowercaseText.includes('macbook')) return 'Apple hardware';
+      if (lowercaseText.includes('logitech')) return 'Logitech peripherals';
+      if (lowercaseText.includes('cisco')) return 'Cisco networking equipment';
+      
+      // Generic hardware types
+      if (lowercaseText.includes('laptop')) return 'laptop';
+      if (lowercaseText.includes('desktop')) return 'desktop computer';
+      if (lowercaseText.includes('monitor')) return 'monitor';
+      if (lowercaseText.includes('printer')) return 'printer';
+      if (lowercaseText.includes('keyboard')) return 'keyboard';
+      if (lowercaseText.includes('mouse')) return 'mouse';
+      if (lowercaseText.includes('headset') || lowercaseText.includes('headphone')) return 'audio headset';
+      if (lowercaseText.includes('camera') || lowercaseText.includes('webcam')) return 'webcam';
+      if (lowercaseText.includes('microphone')) return 'microphone';
+      if (lowercaseText.includes('speaker')) return 'speakers';
+      
+      // Generic software types
+      if (lowercaseText.includes('browser')) return 'web browser';
+      if (lowercaseText.includes('email')) return 'email client';
+      if (lowercaseText.includes('antivirus')) return 'antivirus software';
+      if (lowercaseText.includes('database')) return 'database system';
+      
+      // Network systems
+      if (lowercaseText.includes('wifi') || lowercaseText.includes('wireless')) return 'wireless network';
+      if (lowercaseText.includes('ethernet') || lowercaseText.includes('lan')) return 'wired network';
+      if (lowercaseText.includes('router')) return 'network router';
+      if (lowercaseText.includes('server')) return 'server';
+      
+      // Default based on issue type
+      if (specificIssue.includes('email')) return 'email system';
+      if (specificIssue.includes('network')) return 'network infrastructure';
+      if (specificIssue.includes('vpn')) return 'VPN service';
+      if (specificIssue.includes('video')) return 'video conferencing system';
+      if (specificIssue.includes('printer')) return 'printing system';
+      if (specificIssue.includes('authentication')) return 'authentication system';
+      
+      return '';
+    }
+    
+    // Summarize the issue
+    function summarizeIssue(text: string, specificIssue: string): string {
+      const lowercaseText = text.toLowerCase();
+      
+      // Extract key details
+      let summary = '';
+      
+      // Check for error messages
+      const errorMatch = text.match(/error:?\s+([^\.]+)/i) || text.match(/message:?\s+([^\.]+)/i);
+      if (errorMatch && errorMatch[1]) {
+        summary += `received error "${errorMatch[1].trim()}" `;
+      }
+      
+      // Check for timing of issue
+      if (lowercaseText.includes('after update') || lowercaseText.includes('after upgrading')) {
+        summary += 'after a recent update ';
+      } else if (lowercaseText.includes('suddenly') || lowercaseText.includes('unexpectedly')) {
+        summary += 'suddenly stopped working ';
+      } else if (lowercaseText.includes('intermittent')) {
+        summary += 'experiencing intermittent issues ';
+      } else if (lowercaseText.includes('slow') || lowercaseText.includes('performance')) {
+        summary += 'experiencing performance degradation ';
+      }
+      
+      // Check for specific symptoms
+      if (lowercaseText.includes('blue screen') || lowercaseText.includes('bsod')) {
+        summary += 'resulting in blue screen errors ';
+      } else if (lowercaseText.includes('freeze') || lowercaseText.includes('freezing')) {
+        summary += 'causing the system to freeze ';
+      } else if (lowercaseText.includes('crash') || lowercaseText.includes('crashing')) {
+        summary += 'leading to application crashes ';
+      } else if (lowercaseText.includes('not responding')) {
+        summary += 'becoming unresponsive ';
+      }
+      
+      // If we couldn't extract specific details, provide a generic summary
+      if (!summary) {
+        if (specificIssue.includes('failure') || specificIssue.includes('problem')) {
+          summary = 'not functioning properly ';
+        } else if (specificIssue.includes('access') || specificIssue.includes('connection')) {
+          summary = 'unable to connect properly ';
+        } else if (specificIssue.includes('sync') || specificIssue.includes('update')) {
+          summary = 'failing to synchronize correctly ';
+        } else {
+          summary = 'experiencing technical difficulties ';
+        }
+      }
+      
+      return summary.trim();
+    }
+    
+    // Identify the affected system
+    const affectedSystem = identifyAffectedSystem(text, specificIssue);
+    
+    // Summarize the issue
+    const issueSummary = summarizeIssue(text, specificIssue);
+    
+    // Create the learning entry with a summary instead of the ticket text
+    let entry = `Today I learned about a technical issue involving ${specificIssue}`;
+    
+    // Add the affected system if identified
+    if (affectedSystem) {
+      entry += ` with ${affectedSystem}`;
+    }
+    
+    // Add the issue summary
+    entry += `. The system was ${issueSummary}. ${workflowImpact}`;
+    
+    return entry;
   }, []);
 
   // Load entries from localStorage on component mount

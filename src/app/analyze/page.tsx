@@ -364,9 +364,44 @@ export default function AnalyzePage() {
              description.includes('device');
     });
     
-    const earlyFailurePercent = Math.round(hardwareTickets.length * 0.2) || 20;
-    const lateFailurePercent = Math.round(hardwareTickets.length * 0.5) || 50;
-    const criticalAge = 18 + Math.round(hardwareTickets.length / 10) || 22;
+    // Analyze hardware types from tickets
+    const hardwareTypes: Record<string, number> = {};
+    hardwareTickets.forEach(ticket => {
+      const description = typeof ticket.description === 'string' ? ticket.description.toLowerCase() : '';
+      
+      if (description.includes('laptop')) {
+        hardwareTypes['laptop'] = (hardwareTypes['laptop'] || 0) + 1;
+      } else if (description.includes('desktop')) {
+        hardwareTypes['desktop'] = (hardwareTypes['desktop'] || 0) + 1;
+      } else if (description.includes('monitor')) {
+        hardwareTypes['monitor'] = (hardwareTypes['monitor'] || 0) + 1;
+      } else if (description.includes('printer')) {
+        hardwareTypes['printer'] = (hardwareTypes['printer'] || 0) + 1;
+      } else if (description.includes('keyboard')) {
+        hardwareTypes['keyboard'] = (hardwareTypes['keyboard'] || 0) + 1;
+      } else if (description.includes('mouse')) {
+        hardwareTypes['mouse'] = (hardwareTypes['mouse'] || 0) + 1;
+      } else if (description.includes('headset') || description.includes('headphone')) {
+        hardwareTypes['audio devices'] = (hardwareTypes['audio devices'] || 0) + 1;
+      } else if (description.includes('camera') || description.includes('webcam')) {
+        hardwareTypes['cameras'] = (hardwareTypes['cameras'] || 0) + 1;
+      }
+    });
+    
+    // Find the most problematic hardware type
+    let topHardwareType = '';
+    let hardwareMaxCount = 0;
+    for (const [type, count] of Object.entries(hardwareTypes)) {
+      if (count > hardwareMaxCount) {
+        hardwareMaxCount = count;
+        topHardwareType = type;
+      }
+    }
+    
+    // Only calculate these if we have hardware tickets
+    const earlyFailurePercent = hardwareTickets.length > 0 ? Math.round(hardwareTickets.length * 0.2) : 20;
+    const lateFailurePercent = hardwareTickets.length > 0 ? Math.round(hardwareTickets.length * 0.5) : 50;
+    const criticalAge = hardwareTickets.length > 0 ? 18 + Math.round(hardwareTickets.length / 10) : 22;
     
     // Remote work impact analysis
     const remoteWorkTickets = tickets.filter(ticket => {
@@ -435,7 +470,11 @@ export default function AnalyzePage() {
       const hardwarePercent = Math.round((hardwareTickets.length / tickets.length) * 100);
       if (hardwarePercent > 25) {
         insights.push(`Hardware-related issues account for ${hardwarePercent}% of your tickets, suggesting potential equipment refresh needs.`);
-        insights.push(`Hardware failures follow a pattern with ${earlyFailurePercent}% occurring within the first month and ${lateFailurePercent}% after ${criticalAge}+ months of use.`);
+        
+        // Add insight about specific hardware type if available
+        if (topHardwareType) {
+          insights.push(`${topHardwareType.charAt(0).toUpperCase() + topHardwareType.slice(1)} issues are particularly common, representing ${Math.round((hardwareTypes[topHardwareType] / hardwareTickets.length) * 100)}% of your hardware tickets.`);
+        }
       } else if (hardwarePercent > 0) {
         insights.push(`Hardware-related issues account for ${hardwarePercent}% of your tickets, which is within normal parameters.`);
       }
@@ -472,7 +511,23 @@ export default function AnalyzePage() {
     
     // Hardware mitigations if significant
     if (hardwareTickets.length > tickets.length * 0.25) {
-      mitigationStrategies.push(`Consider implementing a hardware refresh cycle every ${criticalAge} months to prevent late-lifecycle failures.`);
+      // Generic hardware refresh recommendation
+      if (!topHardwareType) {
+        mitigationStrategies.push(`Consider implementing a hardware refresh cycle every ${criticalAge} months to prevent late-lifecycle failures.`);
+      } else {
+        // Specific recommendation based on the most problematic hardware type
+        if (topHardwareType === 'laptop' || topHardwareType === 'desktop') {
+          mitigationStrategies.push(`Prioritize ${topHardwareType} replacements on a ${criticalAge}-month cycle, focusing on units used by teams with high computing demands.`);
+        } else if (topHardwareType === 'monitor') {
+          mitigationStrategies.push(`Evaluate monitor quality and consider upgrading to higher quality displays to reduce the ${Math.round((hardwareTypes[topHardwareType] / hardwareTickets.length) * 100)}% of hardware issues related to monitors.`);
+        } else if (topHardwareType === 'printer') {
+          mitigationStrategies.push(`Review printer maintenance schedules and consider managed print services to address the high volume of printer-related issues.`);
+        } else if (topHardwareType === 'keyboard' || topHardwareType === 'mouse') {
+          mitigationStrategies.push(`Stock additional ${topHardwareType} peripherals for quick replacements to minimize downtime from these common failures.`);
+        } else if (topHardwareType === 'audio devices' || topHardwareType === 'cameras') {
+          mitigationStrategies.push(`Standardize on higher quality ${topHardwareType} for video conferencing to reduce the frequent issues with these peripherals.`);
+        }
+      }
     }
     
     // Combine insights and mitigations into a coherent analysis
