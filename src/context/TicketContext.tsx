@@ -9,6 +9,7 @@ export interface Ticket {
   priority?: string | number;
   status?: string;
   state?: string;
+  close_code?: string;
   category?: string;
   subcategory?: string;
   assigned_to?: string;
@@ -60,4 +61,4 @@ export function useTickets() {
     throw new Error('useTickets must be used within a TicketProvider');
   }
   return context;
-} 
+}

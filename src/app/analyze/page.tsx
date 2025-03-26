@@ -58,22 +58,26 @@ export default function AnalyzePage() {
     // DEBUG: Log all unique status and state values
     const uniqueStatuses = new Set();
     const uniqueStates = new Set();
+    const uniqueCloseCodes = new Set();
     
     tickets.forEach(ticket => {
       if (ticket.status) uniqueStatuses.add(ticket.status);
       if (ticket.state) uniqueStates.add(ticket.state);
+      if (ticket.close_code) uniqueCloseCodes.add(ticket.close_code);
     });
     
     console.log("Unique status values:", Array.from(uniqueStatuses));
     console.log("Unique state values:", Array.from(uniqueStates));
+    console.log("Unique close_code values:", Array.from(uniqueCloseCodes));
     
     // Calculate analytics
     
     // Correctly identify open vs closed tickets based on the status field
     const closedTickets = tickets.filter(t => {
-      // Check both status and state fields with case-insensitive comparison
+      // Check status, state, and close_code fields with case-insensitive comparison
       const status = (t.status || '').toLowerCase();
       const state = (t.state || '').toLowerCase();
+      const closeCode = (typeof t.close_code === 'string' ? t.close_code : '').toLowerCase();
       
       // Check for common closed status values
       const closedStatusValues = [
@@ -90,10 +94,14 @@ export default function AnalyzePage() {
         'finished'
       ];
       
-      // Check if any of the closed status values match
+      // Check if any of the closed status values match in any of the fields
       return closedStatusValues.some(value => 
-        status.includes(value) || state.includes(value)
-      );
+        status.includes(value) || 
+        state.includes(value) || 
+        closeCode.includes(value)
+      ) || 
+      // Also consider a ticket closed if it has any value in close_code
+      (closeCode !== '');
     });
     
     // Open tickets are simply those that aren't closed
