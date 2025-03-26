@@ -58,13 +58,31 @@ export default function AnalyzePage() {
     // Calculate analytics
     
     // Correctly identify open vs closed tickets based on the status field
-    const closedTickets = tickets.filter(t => 
-      (t.status === 'Closed' || t.status === 'Resolved')
-    );
+    const closedTickets = tickets.filter(t => {
+      // Check both status and state fields with case-insensitive comparison
+      const status = (t.status || '').toLowerCase();
+      const state = (t.state || '').toLowerCase();
+      
+      return status === 'closed' || 
+             status === 'resolved' || 
+             state === 'closed' || 
+             state === 'resolved' ||
+             status === 'complete' ||
+             state === 'complete';
+    });
     
-    const openTickets = tickets.filter(t => 
-      t.status !== 'Closed' && t.status !== 'Resolved'
-    );
+    const openTickets = tickets.filter(t => {
+      // Check both status and state fields with case-insensitive comparison
+      const status = (t.status || '').toLowerCase();
+      const state = (t.state || '').toLowerCase();
+      
+      return status !== 'closed' && 
+             status !== 'resolved' && 
+             state !== 'closed' && 
+             state !== 'resolved' &&
+             status !== 'complete' &&
+             state !== 'complete';
+    });
     
     console.log(`Found ${openTickets.length} open tickets and ${closedTickets.length} closed tickets`);
     
