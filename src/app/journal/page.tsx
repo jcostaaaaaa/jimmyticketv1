@@ -22,90 +22,108 @@ export default function JournalPage() {
 
   // Load entries from localStorage on component mount
   useEffect(() => {
-    const storedEntries = localStorage.getItem('learningJournal');
-    if (storedEntries) {
-      setEntries(JSON.parse(storedEntries));
-    } else {
-      // Initialize with default entries if none exist
-      const defaultEntries: JournalEntry[] = [
-        {
-          id: '1',
-          date: new Date().toLocaleDateString('en-US', { 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric' 
-          }),
-          content: "Today I learned about ports and protocols. These are essentials for ensuring data sent between devices is in a consistent format that allows any devices to communicate quickly and without error.",
-          tags: ['networking', 'protocols']
-        },
-        {
-          id: '2',
-          date: new Date().toLocaleDateString('en-US', { 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric' 
-          }),
-          content: "Today I learned about the importance of consistent ticket categorization. When tickets are properly categorized, it becomes much easier to identify trends and recurring issues, which helps in proactive problem management.",
-          tags: ['ticketing', 'categorization']
-        }
-      ];
-      setEntries(defaultEntries);
-      localStorage.setItem('learningJournal', JSON.stringify(defaultEntries));
-    }
-
-    // Analyze tickets for potential learning opportunities
-    if (tickets.length > 0) {
-      const uniqueIssues = new Set<string>();
-      
-      // Extract unique issues from problem descriptions and resolutions
-      tickets.forEach(ticket => {
-        if (ticket.description && typeof ticket.description === 'string' && ticket.description.length > 20) {
-          uniqueIssues.add(ticket.description);
-        }
-        
-        if (ticket.resolution && typeof ticket.resolution === 'string' && ticket.resolution.length > 20) {
-          uniqueIssues.add(ticket.resolution);
-        }
-      });
-      
-      // Generate learning entries from unique issues
-      const storedIssueHashes = JSON.parse(localStorage.getItem('processedIssueHashes') || '[]');
-      const newEntries: JournalEntry[] = [];
-      
-      uniqueIssues.forEach(issue => {
-        // Create a simple hash of the issue to avoid duplicates
-        const issueHash = btoa(issue.substring(0, 50)).replace(/=/g, '');
-        
-        if (!storedIssueHashes.includes(issueHash)) {
-          // Generate a learning entry
-          const learningEntry = generateLearningEntry(issue);
-          if (learningEntry) {
-            newEntries.push({
-              id: Date.now().toString() + Math.random().toString(36).substring(2, 9),
-              date: new Date().toLocaleDateString('en-US', { 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
-              }),
-              content: learningEntry,
-              tags: extractTags(issue)
-            });
-            
-            // Add to processed hashes
-            storedIssueHashes.push(issueHash);
+    // Only run on client-side
+    if (typeof window === 'undefined') return;
+    
+    try {
+      const storedEntries = localStorage.getItem('learningJournal');
+      if (storedEntries) {
+        setEntries(JSON.parse(storedEntries));
+      } else {
+        // Initialize with default entries if none exist
+        const defaultEntries: JournalEntry[] = [
+          {
+            id: '1',
+            date: new Date().toLocaleDateString('en-US', { 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric' 
+            }),
+            content: "Today I learned about ports and protocols. These are essentials for ensuring data sent between devices is in a consistent format that allows any devices to communicate quickly and without error.",
+            tags: ['networking', 'protocols']
+          },
+          {
+            id: '2',
+            date: new Date().toLocaleDateString('en-US', { 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric' 
+            }),
+            content: "Today I learned about the importance of consistent ticket categorization. When tickets are properly categorized, it becomes much easier to identify trends and recurring issues, which helps in proactive problem management.",
+            tags: ['ticketing', 'categorization']
           }
-        }
-      });
-      
-      if (newEntries.length > 0) {
-        // Update entries with new ones
-        const updatedEntries = [...entries, ...newEntries];
-        setEntries(updatedEntries);
-        localStorage.setItem('learningJournal', JSON.stringify(updatedEntries));
-        localStorage.setItem('processedIssueHashes', JSON.stringify(storedIssueHashes));
+        ];
+        setEntries(defaultEntries);
+        localStorage.setItem('learningJournal', JSON.stringify(defaultEntries));
       }
+
+      // Analyze tickets for potential learning opportunities
+      if (tickets.length > 0) {
+        const uniqueIssues = new Set<string>();
+        
+        // Extract unique issues from problem descriptions and resolutions
+        tickets.forEach(ticket => {
+          if (ticket.description && typeof ticket.description === 'string' && ticket.description.length > 20) {
+            uniqueIssues.add(ticket.description);
+          }
+          
+          if (ticket.resolution && typeof ticket.resolution === 'string' && ticket.resolution.length > 20) {
+            uniqueIssues.add(ticket.resolution);
+          }
+        });
+        
+        // Generate learning entries from unique issues
+        const storedIssueHashes = JSON.parse(localStorage.getItem('processedIssueHashes') || '[]');
+        const newEntries: JournalEntry[] = [];
+        
+        uniqueIssues.forEach(issue => {
+          // Create a simple hash of the issue to avoid duplicates - using a safer method than btoa
+          const issueHash = createSimpleHash(issue.substring(0, 50));
+          
+          if (!storedIssueHashes.includes(issueHash)) {
+            // Generate a learning entry
+            const learningEntry = generateLearningEntry(issue);
+            if (learningEntry) {
+              newEntries.push({
+                id: Date.now().toString() + Math.random().toString(36).substring(2, 9),
+                date: new Date().toLocaleDateString('en-US', { 
+                  year: 'numeric', 
+                  month: 'long', 
+                  day: 'numeric' 
+                }),
+                content: learningEntry,
+                tags: extractTags(issue)
+              });
+              
+              // Add to processed hashes
+              storedIssueHashes.push(issueHash);
+            }
+          }
+        });
+        
+        if (newEntries.length > 0) {
+          // Update entries with new ones
+          const updatedEntries = [...entries, ...newEntries];
+          setEntries(updatedEntries);
+          localStorage.setItem('learningJournal', JSON.stringify(updatedEntries));
+          localStorage.setItem('processedIssueHashes', JSON.stringify(storedIssueHashes));
+        }
+      }
+    } catch (error) {
+      console.error("Error initializing journal:", error);
     }
   }, [tickets]);
+
+  // Simple hash function that works on both client and server
+  function createSimpleHash(str: string): string {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32bit integer
+    }
+    return hash.toString(36);
+  }
 
   const handleAddEntry = () => {
     if (newEntry.trim() === '') return;
