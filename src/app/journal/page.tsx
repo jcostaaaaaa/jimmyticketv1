@@ -143,7 +143,7 @@ export default function JournalPage() {
   const { tickets } = useTickets();
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
+  const [sortOrder] = useState<'newest' | 'oldest'>('newest');
   const [isAddingEntry, setIsAddingEntry] = useState(false);
   const [newEntry, setNewEntry] = useState('');
   const [newTags, setNewTags] = useState('');
@@ -276,65 +276,56 @@ export default function JournalPage() {
     }
   }
 
-  // Function to extract keywords as tags
-  function extractKeywordsAsTags(text: string): string[] {
+  // Function to extract keywords as tags from text
+  const extractKeywordsAsTags = React.useCallback((text: string): string[] => {
+    // Hardware components
+    const hardwareComponents = [
+      'printer', 'laptop', 'desktop', 'monitor', 'keyboard', 'mouse', 'server',
+      'network', 'router', 'switch', 'access point', 'firewall', 'hard drive',
+      'ssd', 'ram', 'memory', 'cpu', 'processor', 'motherboard', 'battery',
+      'power supply', 'ups', 'scanner', 'projector', 'camera', 'microphone',
+      'headset', 'dock', 'docking station', 'cable', 'adapter', 'port'
+    ];
+    
+    // Software applications
+    const softwareApplications = [
+      'windows', 'office', 'word', 'excel', 'powerpoint', 'outlook', 'teams',
+      'sharepoint', 'onedrive', 'chrome', 'firefox', 'edge', 'browser',
+      'adobe', 'acrobat', 'photoshop', 'illustrator', 'indesign', 'premiere',
+      'zoom', 'skype', 'slack', 'discord', 'vpn', 'antivirus', 'security',
+      'database', 'sql', 'oracle', 'mysql', 'postgresql', 'mongodb', 'api',
+      'cloud', 'aws', 'azure', 'google cloud', 'saas', 'erp', 'crm'
+    ];
+    
+    // Issue types
+    const issueTypes = [
+      'login', 'password', 'authentication', 'access', 'permission', 'error',
+      'crash', 'freeze', 'slow', 'performance', 'update', 'upgrade', 'install',
+      'uninstall', 'configuration', 'settings', 'backup', 'restore', 'data loss',
+      'connectivity', 'internet', 'wifi', 'bluetooth', 'driver', 'firmware',
+      'boot', 'startup', 'shutdown', 'blue screen', 'bsod', 'virus', 'malware',
+      'spam', 'phishing', 'security breach', 'data breach', 'encryption'
+    ];
+    
+    const allKeywords = [...hardwareComponents, ...softwareApplications, ...issueTypes];
     const tags: string[] = [];
     
-    // Common hardware components
-    const hardwareKeywords = [
-      'laptop', 'desktop', 'printer', 'scanner', 'monitor', 'keyboard', 'mouse',
-      'server', 'hard drive', 'ssd', 'ram', 'memory', 'cpu', 'processor', 'motherboard',
-      'network card', 'router', 'switch', 'access point', 'cable', 'port', 'usb',
-      'hdmi', 'display', 'battery', 'power supply', 'cooling', 'fan'
-    ];
-    
-    // Common software applications and systems
-    const softwareKeywords = [
-      'windows', 'macos', 'linux', 'office', 'word', 'excel', 'powerpoint', 'outlook',
-      'email', 'browser', 'chrome', 'firefox', 'edge', 'safari', 'teams', 'zoom',
-      'sharepoint', 'onedrive', 'database', 'sql', 'oracle', 'active directory',
-      'vpn', 'remote desktop', 'antivirus', 'security', 'update', 'patch',
-      'driver', 'software', 'application', 'system', 'operating system'
-    ];
-    
-    // Common issue types
-    const issueKeywords = [
-      'error', 'crash', 'freeze', 'slow', 'performance', 'boot', 'startup',
-      'shutdown', 'login', 'password', 'access', 'permission', 'network',
-      'internet', 'connection', 'wifi', 'wireless', 'bluetooth', 'printing',
-      'scan', 'email', 'data', 'file', 'folder', 'backup', 'restore',
-      'update', 'upgrade', 'install', 'uninstall', 'configuration'
-    ];
-    
-    const textLower = text.toLowerCase();
-    
-    // Extract hardware tags
-    hardwareKeywords.forEach(keyword => {
-      if (textLower.includes(keyword)) {
-        tags.push(keyword);
+    // Check for each keyword in the text
+    allKeywords.forEach(keyword => {
+      if (text.includes(keyword)) {
+        // Avoid duplicates
+        if (!tags.includes(keyword)) {
+          tags.push(keyword);
+        }
       }
     });
     
-    // Extract software tags
-    softwareKeywords.forEach(keyword => {
-      if (textLower.includes(keyword)) {
-        tags.push(keyword);
-      }
-    });
-    
-    // Extract issue tags
-    issueKeywords.forEach(keyword => {
-      if (textLower.includes(keyword)) {
-        tags.push(keyword);
-      }
-    });
-    
-    // Remove duplicates and return
-    return [...new Set(tags)];
-  }
+    // Limit to 5 most relevant tags
+    return tags.slice(0, 5);
+  }, []);
 
   // Function to extract meaningful tags from a ticket
-  function extractMeaningfulTags(ticket: Ticket): string[] {
+  const extractMeaningfulTags = React.useCallback((ticket: Ticket): string[] => {
     // Extract text from ticket
     let text = '';
     if (ticket.description && typeof ticket.description === 'string') {
@@ -348,7 +339,7 @@ export default function JournalPage() {
     
     // Extract tags using the same logic as extractKeywordsAsTags
     return extractKeywordsAsTags(text);
-  }
+  }, [extractKeywordsAsTags]);
 
   // Function to process tickets with AI
   async function processTicketsWithAI() {
