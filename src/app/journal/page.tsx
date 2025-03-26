@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { FaArrowLeft, FaPlus, FaRobot, FaSearch } from 'react-icons/fa';
+import { FaArrowLeft, FaPlus, FaSearch } from 'react-icons/fa';
 import { useTickets } from '@/context/TicketContext';
 import type { Ticket } from '@/context/TicketContext';
 
@@ -544,7 +544,7 @@ export default function JournalPage() {
     } catch (error) {
       console.error('Error in journal entries processing:', error);
     }
-  }, [tickets, entries, extractMeaningfulTags]);
+  }, [tickets, entries, extractMeaningfulTags, processTicketsWithAI]);
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
