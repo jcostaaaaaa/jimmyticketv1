@@ -1,8 +1,9 @@
+// This file provides JSX element type definitions
 declare global {
   namespace JSX {
     interface IntrinsicElements {
-      // Use Record with specific property types instead of any
-      [elemName: string]: Record<string, unknown>;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      [elemName: string]: any;
     }
   }
 }
