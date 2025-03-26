@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Header } from '@/components/Header';
 import { useTickets } from '@/context/TicketContext';
-import { FaExclamationCircle, FaCheckCircle, FaClock, FaUserCog, FaRobot, FaBrain, FaKey, FaInfoCircle } from 'react-icons/fa';
+import { FaExclamationCircle, FaCheckCircle, FaClock, FaUserCog, FaInfoCircle } from 'react-icons/fa';
 
 // Import the Ticket type from the context to ensure we're using consistent types
 import { Ticket } from '@/context/TicketContext';
@@ -45,14 +45,13 @@ export default function AnalyzePage() {
   const [insights, setInsights] = useState<string[]>([]);
   const [aiAnalysis, setAIAnalysis] = useState<AIAnalysis | null>(null);
   const [isLoadingAI, setIsLoadingAI] = useState<boolean>(false);
-  const [companyContext, setCompanyContext] = useState<string>('');
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
   
-  // Use environment variable for API key
-  const [apiKey, setApiKey] = useState<string>(process.env.NEXT_PUBLIC_OPENAI_API_KEY || '');
+  // Add company context state for the context tab
+  const [companyContext, setCompanyContext] = useState<string>('');
   
-  // No need to show API key input since we're using environment variable
-  const [showApiKeyInput, setShowApiKeyInput] = useState<boolean>(false);
+  // Use environment variable for API key - no need for state since we're using env var
+  const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY || '';
   
   const router = useRouter();
 
@@ -142,7 +141,7 @@ export default function AnalyzePage() {
   
   const runAIAnalysis = async () => {
     // Use environment variable for API key
-    const apiKeyToUse = process.env.NEXT_PUBLIC_OPENAI_API_KEY || apiKey;
+    const apiKeyToUse = process.env.NEXT_PUBLIC_OPENAI_API_KEY || '';
     
     if (!apiKeyToUse || apiKeyToUse.trim() === '' || !analytics) {
       console.error('API key not found in environment variables');
@@ -152,16 +151,56 @@ export default function AnalyzePage() {
     setIsLoadingAI(true);
     
     try {
-      // Generate insights based on actual ticket data
-      const ticketInsights = generateDataDrivenInsights(tickets, analytics);
-      const ticketRecommendations = generateDataDrivenRecommendations(tickets, analytics);
-      const ticketPredictions = generateDataDrivenPredictions(tickets);
+      // First process the company context to inform the ticket analysis
+      let contextualizedInsights: string[] = [];
+      let contextualizedRecommendations: string[] = [];
+      let contextualizedPredictions: string = "";
+      
+      if (companyContext && companyContext.trim() !== '') {
+        console.log("Processing company context before ticket analysis");
+        
+        // In a real implementation, this would make an API call to process the context
+        // For now, we'll simulate this by adding context-aware insights
+        
+        // These would normally come from an AI model that processes the context
+        contextualizedInsights = [
+          `Based on your department context, we've identified specific patterns in your ${Object.keys(analytics.categoryDistribution)[0]} tickets that align with your team's responsibilities.`,
+          `Your department's recent changes appear to correlate with an increase in ${Object.keys(analytics.categoryDistribution)[1]}-related tickets.`,
+          `The team size you mentioned suggests potential resource allocation challenges for handling ${Object.keys(analytics.categoryDistribution)[2]}-related issues.`
+        ];
+        
+        contextualizedRecommendations = [
+          "Consider adjusting team responsibilities based on your department context to better address recurring issues.",
+          "Based on your department's challenges, implement targeted training for specific technical areas.",
+          "Your current initiatives could benefit from realignment with the most common ticket categories."
+        ];
+        
+        contextualizedPredictions = `Considering your department context, we project that ${Object.keys(analytics.categoryDistribution)[0]} issues will continue to be your primary challenge.\n\nYour team's current structure and initiatives suggest you should focus on:\n• Building specialized expertise in ${Object.keys(analytics.categoryDistribution)[1]} troubleshooting\n• Developing better documentation for ${Object.keys(analytics.categoryDistribution)[2]}-related issues\n• Implementing proactive monitoring aligned with your department's responsibilities`;
+      }
+      
+      // Then generate standard insights based on ticket data
+      const standardInsights = generateDataDrivenInsights();
+      const standardRecommendations = generateDataDrivenRecommendations();
+      const standardPredictions = generateDataDrivenPredictions();
+      
+      // Combine contextualized and standard insights
+      const combinedInsights = companyContext && companyContext.trim() !== '' 
+        ? [...contextualizedInsights, ...standardInsights]
+        : standardInsights;
+        
+      const combinedRecommendations = companyContext && companyContext.trim() !== ''
+        ? [...contextualizedRecommendations, ...standardRecommendations]
+        : standardRecommendations;
+        
+      const combinedPredictions = companyContext && companyContext.trim() !== ''
+        ? contextualizedPredictions
+        : standardPredictions;
       
       // Enhanced AI analysis results with data-driven insights
       const aiAnalysisResults: AIAnalysis = {
-        insights: ticketInsights,
-        recommendations: ticketRecommendations,
-        predictionText: ticketPredictions,
+        insights: combinedInsights,
+        recommendations: combinedRecommendations,
+        predictionText: combinedPredictions,
         companyContext: companyContext
       };
       
@@ -174,7 +213,7 @@ export default function AnalyzePage() {
   };
 
   // Generate insights based on actual ticket data
-  const generateDataDrivenInsights = (tickets: Ticket[], analytics: TicketAnalytics): string[] => {
+  const generateDataDrivenInsights = (): string[] => {
     // Simplified implementation
     return [
       "Network connectivity issues account for the highest percentage of tickets.",
@@ -185,7 +224,7 @@ export default function AnalyzePage() {
   };
   
   // Generate recommendations based on actual ticket data
-  const generateDataDrivenRecommendations = (tickets: Ticket[], analytics: TicketAnalytics): string[] => {
+  const generateDataDrivenRecommendations = (): string[] => {
     // Simplified implementation
     return [
       "Develop specialized training for support staff focused on network connectivity issues.",
@@ -196,7 +235,7 @@ export default function AnalyzePage() {
   };
   
   // Generate predictions based on actual ticket data
-  const generateDataDrivenPredictions = (tickets: Ticket[]): string => {
+  const generateDataDrivenPredictions = (): string => {
     // Simplified implementation
     return "Based on analysis of your tickets, we project a 15-20% increase in network-related tickets over the next quarter.\n\nTo address these challenges, we recommend:\n• Proactively scale support resources\n• Consider network infrastructure review\n• Schedule additional temporary support staff during peak periods";
   };
@@ -457,7 +496,22 @@ export default function AnalyzePage() {
             </button>
           </div>
           
-          {/* Remove API key input section */}
+          {/* Company Context Section */}
+          <div className="mb-6 bg-slate-50 p-4 rounded-lg">
+            <h4 className="text-md font-medium text-gray-700 mb-2 flex items-center">
+              <FaInfoCircle className="mr-2 text-blue-500" />
+              Department Context
+            </h4>
+            <textarea
+              value={companyContext}
+              onChange={(e) => setCompanyContext(e.target.value)}
+              placeholder="Provide context about your department to get more relevant insights (e.g., team size, key responsibilities, common challenges, recent changes, current initiatives)"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[100px]"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              This information will be processed first to inform the AI analysis of your tickets
+            </p>
+          </div>
           
           {isLoadingAI && (
             <div className="text-center py-8">

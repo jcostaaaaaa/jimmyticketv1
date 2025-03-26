@@ -189,7 +189,7 @@ export default function JournalPage() {
   }, [extractKeywordsAsTags]);
 
   // Legacy function to generate learning entries from ticket text
-  function generateLearningEntryLegacy(text: string): string | null {
+  const generateLearningEntryLegacy = useCallback((text: string): string | null => {
     // Check if the text is too short to be meaningful
     if (text.length < 30) {
       return null;
@@ -236,10 +236,10 @@ export default function JournalPage() {
     
     // Generic fallback for when no specific pattern is matched
     return `Today I learned about resolving technical issues through systematic troubleshooting. I applied a structured approach to identify the root cause and implement an effective solution.`;
-  }
+  }, []);
 
   // Function to generate a learning entry with AI
-  async function generateLearningEntryWithAI(ticket: Ticket): Promise<string | null> {
+  const generateLearningEntryWithAI = useCallback(async (ticket: Ticket): Promise<string | null> => {
     try {
       const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY;
       
@@ -330,10 +330,10 @@ export default function JournalPage() {
       });
       return null;
     }
-  }
+  }, [toast]);
 
   // Function to process tickets with AI
-  async function processTicketsWithAI() {
+  const processTicketsWithAI = useCallback(async () => {
     if (tickets.length === 0) return;
     
     setIsProcessingAI(true);
@@ -429,7 +429,7 @@ export default function JournalPage() {
     } finally {
       setIsProcessingAI(false);
     }
-  }
+  }, [tickets, entries, extractMeaningfulTags, generateLearningEntryWithAI, toast]);
 
   // Load entries from localStorage on component mount
   useEffect(() => {
@@ -488,7 +488,7 @@ export default function JournalPage() {
               id: `desc_${ticketId}`,
               date: formattedDate,
               originalDate: ticketDate,
-              content: content,
+              content,
               tags,
               ticketNumber: ticketId,
               source: 'description'
@@ -523,7 +523,7 @@ export default function JournalPage() {
               id: `res_${ticketId}`,
               date: formattedResolutionDate,
               originalDate: resolutionDate,
-              content: content,
+              content,
               tags,
               ticketNumber: ticketId,
               source: 'resolution'
@@ -555,9 +555,9 @@ export default function JournalPage() {
   }, [tickets, entries, extractMeaningfulTags, generateLearningEntryLegacy, isProcessingAI, processTicketsWithAI]);
 
   // Process tickets with AI when the button is clicked
-  const handleProcessTicketsWithAI = () => {
+  const handleProcessTicketsWithAI = useCallback(() => {
     processTicketsWithAI();
-  };
+  }, [processTicketsWithAI]);
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
