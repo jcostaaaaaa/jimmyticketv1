@@ -51,7 +51,7 @@ const useToast = () => {
     title, 
     description, 
     status, 
-    duration = 3000 
+    duration = 5000 
   }: { 
     title: string; 
     description: string; 
@@ -59,7 +59,12 @@ const useToast = () => {
     duration?: number; 
   }) => {
     const id = Date.now().toString();
-    setToasts(prev => [...prev, { id, title, description, status }]);
+    
+    // Clear any existing toasts with the same title to prevent stacking
+    setToasts(prev => {
+      const filtered = prev.filter(t => t.title !== title);
+      return [...filtered, { id, title, description, status }];
+    });
     
     if (duration) {
       setTimeout(() => {
@@ -262,10 +267,20 @@ export default function JournalPage() {
       // Prepare the prompt
       const prompt = `
         You are an IT professional creating a learning journal entry based on the following ticket information.
-        Extract the specific technical issue, components involved, and resolution steps.
-        Focus on being precise about what exactly failed or malfunctioned.
-        Avoid generic descriptions like "experiencing technical difficulties" and instead identify the exact component or system that failed.
-        Format your response as a concise learning journal entry starting with "Today I learned about..."
+        
+        Your task is to create a highly specific technical journal entry that follows this format:
+        1. Start with "Today I learned about..." followed by the EXACT technical issue (be very specific)
+        2. Identify the precise hardware components or software systems involved
+        3. Include 1-2 sentences about how the issue was resolved based on the resolution information
+        
+        Guidelines:
+        - Be extremely specific about what component failed (e.g., "corrupted registry keys in Windows" instead of just "Windows issue")
+        - Mention exact hardware components when relevant (e.g., "failed network switch port" not just "network issue")
+        - For software, identify the specific component that failed (e.g., "Outlook PST file corruption" not just "email problem")
+        - Include specific technical details about the nature of the failure
+        - Describe the resolution approach briefly but technically
+        - Keep the entire entry concise (2-3 sentences total)
+        - ALWAYS start with "Today I learned about..."
         
         Ticket Information:
         ${cleanText}
