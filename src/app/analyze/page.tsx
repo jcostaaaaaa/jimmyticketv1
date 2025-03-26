@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Header } from '@/components/Header';
 import { useTickets } from '@/context/TicketContext';
 import { FaExclamationCircle, FaCheckCircle, FaClock, FaUserCog, FaRobot, FaBrain, FaKey, FaInfoCircle } from 'react-icons/fa';
@@ -48,6 +49,8 @@ export default function AnalyzePage() {
   const [showApiKeyInput, setShowApiKeyInput] = useState<boolean>(false);
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
   const [companyContext, setCompanyContext] = useState<string>('');
+
+  const router = useRouter();
 
   useEffect(() => {
     if (tickets.length === 0) return;
@@ -419,7 +422,11 @@ export default function AnalyzePage() {
                     }}
                   />
                   <div className="w-32 h-32 bg-white rounded-full flex items-center justify-center z-10">
-                    <span className="text-3xl font-bold text-gray-800">
+                    <span 
+                      className="text-3xl font-bold text-gray-800 cursor-pointer hover:text-blue-600 transition-colors"
+                      onClick={() => router.push('/journal')}
+                      title="View Learning Journal"
+                    >
                       {analytics?.resolutionEfficiency || 0}%
                     </span>
                   </div>
