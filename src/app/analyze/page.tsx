@@ -626,22 +626,13 @@ function calculateAverageResolutionTime(tickets: Ticket[]): string {
     ];
     
     // Check if any of the closed status values match in any of the fields
-    const isClosed = closedStatusValues.some(value => 
+    return closedStatusValues.some(value => 
       status.includes(value) || 
       state.includes(value) || 
       closeCode.includes(value)
     ) || 
     // Also consider a ticket closed if it has any value in close_code
     (closeCode !== '');
-    
-    // Check if the ticket has valid start and end dates
-    const hasValidDates = (
-      // Check for standard date fields
-      (t.created_at || t.created || t.opened_at || t.sys_created_on) && 
-      (t.closed_at || t.resolved_at)
-    );
-    
-    return isClosed && hasValidDates;
   });
 
   if (resolvedTickets.length === 0) return 'N/A';
@@ -699,12 +690,37 @@ function calculateTopAssignees(tickets: Ticket[]): { name: string; count: number
 
 function calculateMonthlyTrends(tickets: Ticket[]): { month: string; count: number }[] {
   const monthCounts = tickets.reduce((acc, ticket) => {
-    if (!ticket.created_at) return acc;
-    const date = new Date(ticket.created_at);
-    const monthYear = date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
-    acc[monthYear] = (acc[monthYear] || 0) + 1;
+    // Try multiple possible date fields
+    const createdDate = ticket.created_at || ticket.created || ticket.opened_at || ticket.sys_created_on;
+    if (!createdDate) return acc;
+    
+    try {
+      const date = new Date(createdDate);
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        console.log(`Invalid date found: ${createdDate}`);
+        return acc;
+      }
+      
+      const monthYear = date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+      acc[monthYear] = (acc[monthYear] || 0) + 1;
+    } catch (error) {
+      console.error(`Error processing date: ${createdDate}`, error);
+    }
+    
     return acc;
   }, {} as Record<string, number>);
+
+  // If no data, add some sample data to avoid empty chart
+  if (Object.keys(monthCounts).length === 0) {
+    const currentDate = new Date();
+    for (let i = 0; i < 6; i++) {
+      const date = new Date(currentDate);
+      date.setMonth(date.getMonth() - i);
+      const monthYear = date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+      monthCounts[monthYear] = 0;
+    }
+  }
 
   return Object.entries(monthCounts)
     .map(([month, count]) => ({ month, count }))
@@ -753,7 +769,38 @@ function extractCommonIssues(tickets: Ticket[]): string[] {
 function calculateResolutionEfficiency(tickets: Ticket[]): number {
   if (tickets.length === 0) return 0;
   
-  const resolvedTickets = tickets.filter(t => t.status === 'Closed' || t.status === 'Resolved');
+  // Use the same logic for identifying closed tickets as in the main filtering
+  const resolvedTickets = tickets.filter(t => {
+    // Check status, state, and close_code fields with case-insensitive comparison
+    const status = (t.status || '').toLowerCase();
+    const state = (t.state || '').toLowerCase();
+    const closeCode = (typeof t.close_code === 'string' ? t.close_code : '').toLowerCase();
+    
+    // Check for common closed status values
+    const closedStatusValues = [
+      'closed', 
+      'resolved', 
+      'complete', 
+      'completed',
+      'fixed',
+      'done',
+      'cancelled',
+      'canceled',
+      'rejected',
+      'solved',
+      'finished'
+    ];
+    
+    // Check if any of the closed status values match in any of the fields
+    return closedStatusValues.some(value => 
+      status.includes(value) || 
+      state.includes(value) || 
+      closeCode.includes(value)
+    ) || 
+    // Also consider a ticket closed if it has any value in close_code
+    (closeCode !== '');
+  });
+  
   if (resolvedTickets.length === 0) return 0;
   
   // Calculate various metrics and their contributions to efficiency
@@ -820,18 +867,42 @@ function generateInsights(analytics: TicketAnalytics, tickets: Ticket[]): string
   if (analytics.totalTickets > 0 && analytics.resolvedTickets > 0) {
     const categoriesWithResolutionTimes: {[key: string]: {total: number, count: number}} = {};
     
-    tickets.filter(t => t.status === 'Closed' || t.status === 'Resolved').forEach(ticket => {
-      if (ticket.category && ticket.created_at && ticket.closed_at) {
-        const created = new Date(ticket.created_at);
-        const closed = new Date(ticket.closed_at);
-        const resolutionTimeHours = (closed.getTime() - created.getTime()) / (1000 * 60 * 60);
+    // Use the same logic for identifying closed tickets
+    const resolvedTickets = tickets.filter(t => {
+      const status = (t.status || '').toLowerCase();
+      const state = (t.state || '').toLowerCase();
+      const closeCode = (typeof t.close_code === 'string' ? t.close_code : '').toLowerCase();
+      
+      const closedStatusValues = ['closed', 'resolved', 'complete', 'completed', 'fixed', 'done', 
+                                 'cancelled', 'canceled', 'rejected', 'solved', 'finished'];
+      
+      return closedStatusValues.some(value => 
+        status.includes(value) || state.includes(value) || closeCode.includes(value)
+      ) || (closeCode !== '');
+    });
+    
+    resolvedTickets.forEach(ticket => {
+      if (ticket.category) {
+        // Get creation and resolution dates using multiple possible fields
+        const createdDate = ticket.created_at || ticket.created || ticket.opened_at || ticket.sys_created_on;
+        const closedDate = ticket.closed_at || ticket.resolved_at;
         
-        if (!categoriesWithResolutionTimes[ticket.category]) {
-          categoriesWithResolutionTimes[ticket.category] = { total: 0, count: 0 };
+        if (createdDate && closedDate) {
+          const created = new Date(createdDate);
+          const closed = new Date(closedDate);
+          
+          // Ensure dates are valid
+          if (!isNaN(created.getTime()) && !isNaN(closed.getTime())) {
+            const resolutionTimeHours = (closed.getTime() - created.getTime()) / (1000 * 60 * 60);
+            
+            if (!categoriesWithResolutionTimes[ticket.category]) {
+              categoriesWithResolutionTimes[ticket.category] = { total: 0, count: 0 };
+            }
+            
+            categoriesWithResolutionTimes[ticket.category].total += resolutionTimeHours;
+            categoriesWithResolutionTimes[ticket.category].count += 1;
+          }
         }
-        
-        categoriesWithResolutionTimes[ticket.category].total += resolutionTimeHours;
-        categoriesWithResolutionTimes[ticket.category].count += 1;
       }
     });
     
@@ -904,9 +975,13 @@ function generateInsights(analytics: TicketAnalytics, tickets: Ticket[]): string
   
   // 5. Check for possible ticket bottlenecks
   const openByPriority = tickets
-    .filter(t => t.status !== 'Closed' && t.status !== 'Resolved')
+    .filter(t => {
+      const status = (t.status || '').toLowerCase();
+      const state = (t.state || '').toLowerCase();
+      return status !== 'closed' && status !== 'resolved' && state !== 'closed' && state !== 'resolved';
+    })
     .reduce<Record<string, number>>((acc, ticket) => {
-      const priority = ticket.priority || 'Unspecified';
+      const priority = String(ticket.priority || 'Unspecified');
       acc[priority] = (acc[priority] || 0) + 1;
       return acc;
     }, {});
