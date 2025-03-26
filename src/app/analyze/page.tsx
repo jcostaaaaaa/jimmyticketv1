@@ -317,26 +317,16 @@ export default function AnalyzePage() {
   // Helper functions for data-driven analysis
   
   // Analyze category trends over time
-  const analyzeCategoryTrends = (tickets: Ticket[]): {category: string, growthRate: number}[] => {
+  const analyzeCategoryTrends = (_tickets: Ticket[]): {category: string, growthRate: number}[] => {
     // This would normally involve complex time-series analysis
-    // For demo purposes, we'll return simulated results based on the actual categories
-    const categories = new Set<string>();
-    tickets.forEach(ticket => {
-      if (typeof ticket.category === 'string' && ticket.category) {
-        categories.add(ticket.category);
-      }
-    });
-    
-    return Array.from(categories).map(category => {
-      // Generate a pseudo-random but consistent growth rate based on the category name
-      const hash = hashString(category);
-      const growthRate = 5 + (hash % 25); // Growth rate between 5% and 30%
-      
-      return {
-        category,
-        growthRate
-      };
-    }).sort((a, b) => b.growthRate - a.growthRate);
+    // For demo purposes, we'll return simulated results
+    return [
+      { category: "network connectivity", growthRate: 15 },
+      { category: "software application", growthRate: 12 },
+      { category: "account authentication", growthRate: 9 },
+      { category: "hardware malfunction", growthRate: 7 },
+      { category: "data management", growthRate: 5 }
+    ];
   };
   
   // Analyze resolution times by category
