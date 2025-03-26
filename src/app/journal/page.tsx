@@ -298,106 +298,158 @@ export default function JournalPage() {
       // Extract key details
       let summary = '';
       
+      // Check for specific hardware components that failed
+      if (lowercaseText.includes('hard drive') || lowercaseText.includes('hdd') || lowercaseText.includes('ssd')) {
+        summary += 'with storage drive failure ';
+      } else if (lowercaseText.includes('ram') || lowercaseText.includes('memory')) {
+        summary += 'with memory module malfunction ';
+      } else if (lowercaseText.includes('motherboard')) {
+        summary += 'with motherboard failure ';
+      } else if (lowercaseText.includes('power supply') || lowercaseText.includes('psu')) {
+        summary += 'with power supply unit failure ';
+      } else if (lowercaseText.includes('cpu') || lowercaseText.includes('processor')) {
+        summary += 'with processor malfunction ';
+      } else if (lowercaseText.includes('graphics card') || lowercaseText.includes('gpu')) {
+        summary += 'with graphics processing unit failure ';
+      } else if (lowercaseText.includes('fan')) {
+        summary += 'with cooling fan malfunction ';
+      } else if (lowercaseText.includes('battery')) {
+        summary += 'with battery degradation or failure ';
+      }
+      
+      // Check for specific software components that failed
+      if (lowercaseText.includes('driver')) {
+        summary += 'with device driver corruption or incompatibility ';
+      } else if (lowercaseText.includes('registry')) {
+        summary += 'with Windows registry corruption ';
+      } else if (lowercaseText.includes('dll')) {
+        summary += 'with missing or corrupted DLL files ';
+      } else if (lowercaseText.includes('service')) {
+        summary += 'with system service failure ';
+      } else if (lowercaseText.includes('update') || lowercaseText.includes('patch')) {
+        summary += 'after failed or incomplete system update ';
+      }
+      
       // Check for error messages
       const errorMatch = text.match(/error:?\s+([^\.]+)/i) || text.match(/message:?\s+([^\.]+)/i);
       if (errorMatch && errorMatch[1]) {
-        summary += `received error "${errorMatch[1].trim()}" `;
+        summary += `displaying specific error "${errorMatch[1].trim()}" `;
       }
       
       // Check for timing of issue
       if (lowercaseText.includes('after update') || lowercaseText.includes('after upgrading')) {
-        summary += 'after a recent update ';
+        summary += 'following a recent system update ';
       } else if (lowercaseText.includes('suddenly') || lowercaseText.includes('unexpectedly')) {
-        summary += 'suddenly stopped working ';
+        summary += 'that suddenly ceased functioning ';
       } else if (lowercaseText.includes('intermittent')) {
-        summary += 'experiencing intermittent issues ';
+        summary += 'with intermittent functionality problems ';
       } else if (lowercaseText.includes('slow') || lowercaseText.includes('performance')) {
-        summary += 'experiencing performance degradation ';
+        summary += 'exhibiting significant performance degradation ';
       }
       
       // Check for specific symptoms
       if (lowercaseText.includes('blue screen') || lowercaseText.includes('bsod')) {
-        summary += 'resulting in blue screen errors ';
+        summary += 'triggering system-level blue screen errors ';
       } else if (lowercaseText.includes('freeze') || lowercaseText.includes('freezing')) {
-        summary += 'causing the system to freeze ';
+        summary += 'causing complete system freezes requiring hard reboot ';
       } else if (lowercaseText.includes('crash') || lowercaseText.includes('crashing')) {
-        summary += 'leading to application crashes ';
+        summary += 'leading to application termination without warning ';
       } else if (lowercaseText.includes('not responding')) {
-        summary += 'becoming unresponsive ';
+        summary += 'becoming completely unresponsive to user input ';
       } else if (lowercaseText.includes('not connecting') || lowercaseText.includes('cannot connect')) {
-        summary += 'unable to establish connection ';
+        summary += 'failing to establish required network connections ';
       } else if (lowercaseText.includes('missing file') || lowercaseText.includes('file not found')) {
-        summary += 'with missing or inaccessible files ';
+        summary += 'reporting critical missing system or application files ';
       } else if (lowercaseText.includes('corrupt') || lowercaseText.includes('damaged')) {
-        summary += 'with corrupted data or files ';
+        summary += 'with corrupted data structures or configuration files ';
       } else if (lowercaseText.includes('login failed') || lowercaseText.includes('password incorrect')) {
-        summary += 'preventing successful authentication ';
+        summary += 'rejecting valid authentication credentials ';
       } else if (lowercaseText.includes('no sound') || lowercaseText.includes('audio not working')) {
-        summary += 'with non-functional audio ';
+        summary += 'with completely non-functional audio output ';
       } else if (lowercaseText.includes('no display') || lowercaseText.includes('black screen')) {
-        summary += 'with no visual output ';
+        summary += 'failing to produce any visual output on the display ';
       } else if (lowercaseText.includes('overheating') || lowercaseText.includes('too hot')) {
-        summary += 'experiencing thermal issues ';
-      } else if (lowercaseText.includes('battery') || lowercaseText.includes('power issue')) {
-        summary += 'with power or battery problems ';
+        summary += 'reaching unsafe operating temperatures causing shutdowns ';
       }
       
       // Extract more specific details based on the issue type
       if (specificIssue.includes('email')) {
         if (lowercaseText.includes('cannot send')) {
-          summary += 'preventing sending of emails ';
+          summary += 'preventing outbound email transmission despite network connectivity ';
         } else if (lowercaseText.includes('cannot receive')) {
-          summary += 'blocking incoming emails ';
+          summary += 'failing to retrieve incoming messages from mail server ';
         } else if (lowercaseText.includes('attachment')) {
-          summary += 'with problems handling attachments ';
+          summary += 'corrupting or blocking email attachments ';
         } else if (lowercaseText.includes('sync')) {
-          summary += 'failing to synchronize mailbox content ';
+          summary += 'failing to synchronize mailbox content with server ';
+        } else if (lowercaseText.includes('outlook.pst') || lowercaseText.includes('data file')) {
+          summary += 'with corrupted PST/OST data files ';
+        } else if (lowercaseText.includes('profile')) {
+          summary += 'with damaged Outlook profile configuration ';
         }
       } else if (specificIssue.includes('network')) {
         if (lowercaseText.includes('slow connection')) {
-          summary += 'with extremely slow data transfer ';
+          summary += 'with severely degraded network throughput ';
         } else if (lowercaseText.includes('dropping')) {
-          summary += 'with frequent connection drops ';
+          summary += 'experiencing frequent connection termination ';
         } else if (lowercaseText.includes('limited access')) {
-          summary += 'providing only limited connectivity ';
+          summary += 'establishing only partial network connectivity ';
+        } else if (lowercaseText.includes('dns')) {
+          summary += 'failing to resolve domain names correctly ';
+        } else if (lowercaseText.includes('ip address')) {
+          summary += 'with IP address configuration errors ';
+        } else if (lowercaseText.includes('gateway')) {
+          summary += 'unable to communicate with network gateway ';
         }
       } else if (specificIssue.includes('printer')) {
         if (lowercaseText.includes('paper jam')) {
-          summary += 'with recurring paper jams ';
+          summary += 'with mechanical paper feed mechanism failures ';
         } else if (lowercaseText.includes('quality')) {
-          summary += 'producing poor quality printouts ';
+          summary += 'producing streaked or faded printouts ';
         } else if (lowercaseText.includes('offline')) {
-          summary += 'appearing offline despite being powered on ';
+          summary += 'failing to maintain connection with print server ';
+        } else if (lowercaseText.includes('cartridge')) {
+          summary += 'reporting ink/toner cartridge errors ';
+        } else if (lowercaseText.includes('driver')) {
+          summary += 'with incompatible or corrupted printer drivers ';
+        } else if (lowercaseText.includes('spooler')) {
+          summary += 'with print spooler service failures ';
         }
       } else if (specificIssue.includes('hardware')) {
         if (lowercaseText.includes('fan')) {
-          summary += 'with noisy or non-functional cooling fans ';
+          summary += 'with cooling fan bearing or motor failure ';
         } else if (lowercaseText.includes('keyboard key')) {
-          summary += 'with unresponsive or sticky keys ';
+          summary += 'with specific keyboard key mechanical failures ';
         } else if (lowercaseText.includes('screen flicker')) {
-          summary += 'with display flickering issues ';
+          summary += 'with display panel or cable connection issues ';
+        } else if (lowercaseText.includes('usb port')) {
+          summary += 'with damaged USB port connections ';
+        } else if (lowercaseText.includes('hinge')) {
+          summary += 'with broken laptop hinge mechanism ';
+        } else if (lowercaseText.includes('touchpad')) {
+          summary += 'with malfunctioning touchpad sensors ';
         }
       }
       
       // If we still couldn't extract specific details, provide a more specific summary based on issue type
       if (!summary) {
         if (specificIssue.includes('failure') || specificIssue.includes('problem')) {
-          summary = 'not functioning properly due to hardware malfunction ';
+          summary = 'experiencing critical component failure preventing normal operation ';
         } else if (specificIssue.includes('access') || specificIssue.includes('connection')) {
-          summary = 'unable to establish proper network connection ';
+          summary = 'unable to establish connection due to network interface issues ';
         } else if (specificIssue.includes('sync') || specificIssue.includes('update')) {
-          summary = 'failing to properly update or synchronize data ';
+          summary = 'failing to synchronize data due to communication protocol errors ';
         } else if (specificIssue.includes('camera') || specificIssue.includes('video')) {
-          summary = 'not capturing or displaying video correctly ';
+          summary = 'with malfunctioning camera sensor or video processing hardware ';
         } else if (specificIssue.includes('audio') || specificIssue.includes('sound')) {
-          summary = 'not producing or capturing audio correctly ';
+          summary = 'with damaged audio processing hardware or driver incompatibility ';
         } else if (specificIssue.includes('print')) {
-          summary = 'failing to complete print jobs correctly ';
+          summary = 'with print processor errors preventing job completion ';
         } else if (specificIssue.includes('login') || specificIssue.includes('authentication')) {
-          summary = 'preventing user login despite correct credentials ';
+          summary = 'rejecting valid credentials due to corrupted user profile ';
         } else {
           // Last resort fallback
-          summary = 'presenting operational issues that prevented normal use ';
+          summary = 'exhibiting functional defects that prevented normal operation ';
         }
       }
       
@@ -559,41 +611,94 @@ export default function JournalPage() {
   function extractMeaningfulTags(ticket: Ticket): string[] {
     const tags: string[] = [];
     
-    // Add category if available
-    if (ticket.category) {
-      tags.push(ticket.category.toLowerCase());
-    }
-    
-    // Add subcategory if available
-    if (ticket.subcategory) {
-      tags.push(ticket.subcategory.toLowerCase());
-    }
-    
-    // Add priority if available
-    if (ticket.priority) {
-      const priorityTag = `priority-${ticket.priority}`;
-      tags.push(priorityTag);
-    }
-    
-    // Extract technical terms from description or resolution
-    const technicalTerms = [
-      'network', 'server', 'database', 'security', 'authentication', 
-      'firewall', 'VPN', 'DNS', 'API', 'SQL', 'Windows', 'Linux', 'macOS',
-      'cloud', 'AWS', 'Azure', 'Docker', 'virtualization', 'backup',
-      'monitoring', 'incident', 'deployment'
-    ];
-    
+    // Get text to analyze for tags
     const textToSearch = [
       ticket.short_description || '', 
       ticket.description || '', 
       ticket.resolution || ''
     ].filter(Boolean).join(' ').toLowerCase();
     
-    technicalTerms.forEach(term => {
-      if (textToSearch.includes(term.toLowerCase())) {
-        tags.push(term.toLowerCase());
-      }
-    });
+    // First identify the affected system from the ticket text
+    // Software systems
+    if (textToSearch.includes('outlook')) tags.push('outlook');
+    if (textToSearch.includes('teams')) tags.push('teams');
+    if (textToSearch.includes('zoom')) tags.push('zoom');
+    if (textToSearch.includes('word')) tags.push('word');
+    if (textToSearch.includes('excel')) tags.push('excel');
+    if (textToSearch.includes('powerpoint')) tags.push('powerpoint');
+    if (textToSearch.includes('office') && !tags.some(t => ['word', 'excel', 'powerpoint', 'outlook'].includes(t))) {
+      tags.push('office');
+    }
+    if (textToSearch.includes('chrome')) tags.push('chrome');
+    if (textToSearch.includes('firefox')) tags.push('firefox');
+    if (textToSearch.includes('edge')) tags.push('edge');
+    if (textToSearch.includes('adobe') || textToSearch.includes('acrobat')) tags.push('adobe');
+    if (textToSearch.includes('vpn')) tags.push('vpn');
+    if (textToSearch.includes('sharepoint')) tags.push('sharepoint');
+    if (textToSearch.includes('onedrive')) tags.push('onedrive');
+    
+    // Operating systems
+    if (textToSearch.includes('windows')) tags.push('windows');
+    if (textToSearch.includes('mac') || textToSearch.includes('macos')) tags.push('macos');
+    if (textToSearch.includes('linux') || textToSearch.includes('ubuntu')) tags.push('linux');
+    
+    // Hardware manufacturers
+    if (textToSearch.includes('dell')) tags.push('dell');
+    if (textToSearch.includes('hp')) tags.push('hp');
+    if (textToSearch.includes('lenovo')) tags.push('lenovo');
+    if (textToSearch.includes('apple') || textToSearch.includes('macbook')) tags.push('apple');
+    if (textToSearch.includes('logitech')) tags.push('logitech');
+    if (textToSearch.includes('cisco')) tags.push('cisco');
+    
+    // Hardware components
+    if (textToSearch.includes('laptop')) tags.push('laptop');
+    if (textToSearch.includes('desktop')) tags.push('desktop');
+    if (textToSearch.includes('monitor')) tags.push('monitor');
+    if (textToSearch.includes('printer')) tags.push('printer');
+    if (textToSearch.includes('keyboard')) tags.push('keyboard');
+    if (textToSearch.includes('mouse')) tags.push('mouse');
+    if (textToSearch.includes('headset') || textToSearch.includes('headphone')) tags.push('audio-device');
+    if (textToSearch.includes('camera') || textToSearch.includes('webcam')) tags.push('camera');
+    if (textToSearch.includes('microphone')) tags.push('microphone');
+    if (textToSearch.includes('speaker')) tags.push('speaker');
+    if (textToSearch.includes('hard drive') || textToSearch.includes('hdd') || textToSearch.includes('ssd')) tags.push('storage');
+    if (textToSearch.includes('ram') || textToSearch.includes('memory')) tags.push('memory');
+    if (textToSearch.includes('motherboard')) tags.push('motherboard');
+    if (textToSearch.includes('power supply') || textToSearch.includes('psu')) tags.push('power-supply');
+    if (textToSearch.includes('cpu') || textToSearch.includes('processor')) tags.push('cpu');
+    if (textToSearch.includes('graphics') || textToSearch.includes('gpu')) tags.push('graphics');
+    if (textToSearch.includes('battery')) tags.push('battery');
+    if (textToSearch.includes('fan') || textToSearch.includes('cooling')) tags.push('cooling');
+    
+    // Network components
+    if (textToSearch.includes('wifi') || textToSearch.includes('wireless')) tags.push('wifi');
+    if (textToSearch.includes('ethernet') || textToSearch.includes('lan')) tags.push('ethernet');
+    if (textToSearch.includes('router')) tags.push('router');
+    if (textToSearch.includes('server')) tags.push('server');
+    if (textToSearch.includes('network') && !tags.some(t => ['wifi', 'ethernet', 'router', 'vpn'].includes(t))) {
+      tags.push('network');
+    }
+    
+    // Issue types
+    if (textToSearch.includes('email') && !tags.includes('outlook')) tags.push('email');
+    if (textToSearch.includes('authentication') || textToSearch.includes('login')) tags.push('authentication');
+    if (textToSearch.includes('driver')) tags.push('driver');
+    if (textToSearch.includes('update') || textToSearch.includes('upgrade')) tags.push('update');
+    if (textToSearch.includes('virus') || textToSearch.includes('malware')) tags.push('security');
+    if (textToSearch.includes('backup') || textToSearch.includes('restore')) tags.push('backup');
+    if (textToSearch.includes('password')) tags.push('password');
+    if (textToSearch.includes('performance') || textToSearch.includes('slow')) tags.push('performance');
+    if (textToSearch.includes('crash') || textToSearch.includes('blue screen')) tags.push('crash');
+    
+    // Add category if available and not already covered
+    if (ticket.category && !tags.includes(ticket.category.toLowerCase())) {
+      tags.push(ticket.category.toLowerCase());
+    }
+    
+    // Add subcategory if available and not already covered
+    if (ticket.subcategory && !tags.includes(ticket.subcategory.toLowerCase())) {
+      tags.push(ticket.subcategory.toLowerCase());
+    }
     
     // Remove duplicates and limit to 5 tags
     return [...new Set(tags)].slice(0, 5);
