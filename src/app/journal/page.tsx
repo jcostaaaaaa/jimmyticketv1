@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { FaArrowLeft, FaPlus, FaSearch, FaCalendarAlt, FaTag } from 'react-icons/fa';
 import { useTickets, Ticket } from '@/context/TicketContext';
@@ -24,6 +24,51 @@ export default function JournalPage() {
   const [isAddingEntry, setIsAddingEntry] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
+
+  // Check if text is generic/template text
+  function isGenericText(text: string): boolean {
+    const genericPhrases = [
+      'please fill out', 'template', 'n/a', 'not applicable',
+      'see above', 'no description provided', 'no details', 'none',
+      'please describe', 'please provide', 'pending', 'to be determined',
+      'to be filled', 'will be updated', 'see attachment', 'see attached'
+    ];
+    
+    const lowercaseText = text.toLowerCase();
+    return genericPhrases.some(phrase => lowercaseText.includes(phrase)) ||
+           text.length < 40 || // Too short
+           (text.split(' ').length < 8); // Too few words
+  }
+
+  // Function to generate learning entry from ticket description or resolution
+  const generateLearningEntryFromTicket = useCallback((text: string, ticket: Ticket, isResolution = false): string | null => {
+    // Skip if text is too short or generic
+    if (text.length < 40 || isGenericText(text)) return null;
+    
+    // Extract key sentences (first sentence, or first 150 chars if no sentence end found)
+    let mainContent = text;
+    const sentenceEnd = text.search(/[.!?](\s|$)/);
+    if (sentenceEnd > 20) {
+      mainContent = text.substring(0, sentenceEnd + 1);
+    } else if (text.length > 150) {
+      mainContent = text.substring(0, 150) + "...";
+    }
+    
+    // Extract the specific technical issue from the text
+    const specificIssue = extractSpecificIssue(text, ticket);
+    
+    // Get workflow impact statement
+    const workflowImpact = getWorkflowImpactStatement(specificIssue, text, ticket);
+    
+    // Format the entry based on whether it's from description or resolution
+    if (isResolution) {
+      // For resolutions, focus on what was learned from solving the issue
+      return `Today I learned how to resolve ${specificIssue}: ${mainContent} ${workflowImpact}`;
+    } else {
+      // For descriptions, focus on the technical aspects of the issue
+      return `Today I learned about a technical issue involving ${specificIssue}: ${mainContent} ${workflowImpact}`;
+    }
+  }, []);
 
   // Load entries from localStorage on component mount
   useEffect(() => {
@@ -156,51 +201,6 @@ export default function JournalPage() {
       setEntries([]);
     }
   }, [tickets, generateLearningEntryFromTicket]);
-
-  // Check if text is generic/template text
-  function isGenericText(text: string): boolean {
-    const genericPhrases = [
-      'please fill out', 'template', 'n/a', 'not applicable',
-      'see above', 'no description provided', 'no details', 'none',
-      'please describe', 'please provide', 'pending', 'to be determined',
-      'to be filled', 'will be updated', 'see attachment', 'see attached'
-    ];
-    
-    const lowercaseText = text.toLowerCase();
-    return genericPhrases.some(phrase => lowercaseText.includes(phrase)) ||
-           text.length < 40 || // Too short
-           (text.split(' ').length < 8); // Too few words
-  }
-
-  // Generate a meaningful learning entry from ticket content
-  function generateLearningEntryFromTicket(text: string, ticket: Ticket, isResolution = false): string | null {
-    // Skip if text is too short or generic
-    if (text.length < 40 || isGenericText(text)) return null;
-    
-    // Extract key sentences (first sentence, or first 150 chars if no sentence end found)
-    let mainContent = text;
-    const sentenceEnd = text.search(/[.!?](\s|$)/);
-    if (sentenceEnd > 20) {
-      mainContent = text.substring(0, sentenceEnd + 1);
-    } else if (text.length > 150) {
-      mainContent = text.substring(0, 150) + "...";
-    }
-    
-    // Extract the specific technical issue from the text
-    const specificIssue = extractSpecificIssue(text, ticket);
-    
-    // Get workflow impact statement
-    const workflowImpact = getWorkflowImpactStatement(specificIssue, text, ticket);
-    
-    // Format the entry based on whether it's from description or resolution
-    if (isResolution) {
-      // For resolutions, focus on what was learned from solving the issue
-      return `Today I learned how to resolve ${specificIssue}: ${mainContent} ${workflowImpact}`;
-    } else {
-      // For descriptions, focus on the technical aspects of the issue
-      return `Today I learned about a technical issue involving ${specificIssue}: ${mainContent} ${workflowImpact}`;
-    }
-  }
 
   // Generate a statement about how the issue impacts workflow
   function getWorkflowImpactStatement(issueType: string, text: string, ticket: Ticket): string {

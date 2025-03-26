@@ -145,7 +145,7 @@ export default function AnalyzePage() {
       // Generate insights based on actual ticket data
       const ticketInsights = generateDataDrivenInsights(tickets, analytics);
       const ticketRecommendations = generateDataDrivenRecommendations(tickets, analytics);
-      const ticketPredictions = generateDataDrivenPredictions(tickets, analytics);
+      const ticketPredictions = generateDataDrivenPredictions(tickets);
       
       // Enhanced AI analysis results with data-driven insights
       const aiAnalysisResults: AIAnalysis = {
@@ -289,26 +289,25 @@ export default function AnalyzePage() {
   };
   
   // Generate predictions based on actual ticket data
-  const generateDataDrivenPredictions = (tickets: Ticket[], _analytics: TicketAnalytics): string => {
+  const generateDataDrivenPredictions = (tickets: Ticket[]): string => {
     // Analyze ticket trends over time
     const trends = analyzeTrends(tickets);
     const topGrowingCategory = trends.categories.length > 0 ? trends.categories[0].category : "network-related";
     const growthRate = trends.categories.length > 0 ? trends.categories[0].growthRate : 15;
     
     // Analyze seasonal patterns
-    const seasonalPatterns = analyzeSeasonalPatterns(tickets);
+    const seasonalPatterns = analyzeSeasonalPatterns();
     const peakSeason = seasonalPatterns.peak || "the back-to-school period";
     const seasonalIncrease = seasonalPatterns.percentage || 30;
     
     // Analyze hardware lifecycle patterns
-    const hardwarePatterns = analyzeHardwareLifecycle(tickets);
+    const hardwarePatterns = analyzeHardwareLifecycle();
     const earlyFailurePercent = hardwarePatterns.earlyFailurePercent || 20;
     const lateFailurePercent = hardwarePatterns.lateFailurePercent || 50;
     const criticalAge = hardwarePatterns.criticalAge || 22;
     
     // Analyze remote work impact
-    const remoteWorkImpact = analyzeRemoteWorkImpact(tickets);
-    const remoteIssuePercent = remoteWorkImpact.percentage || 28;
+    const remoteWorkImpact = analyzeRemoteWorkImpact();
     const correlationStrength = remoteWorkImpact.correlation || 0.89;
     
     // Generate a comprehensive prediction
@@ -666,7 +665,7 @@ export default function AnalyzePage() {
   };
   
   // Analyze seasonal patterns
-  const analyzeSeasonalPatterns = (_tickets: Ticket[]): {peak: string, percentage: number} => {
+  const analyzeSeasonalPatterns = (): {peak: string, percentage: number} => {
     // This would normally involve seasonal decomposition
     // For demo purposes, we'll return simulated results
     return {
@@ -676,7 +675,7 @@ export default function AnalyzePage() {
   };
   
   // Analyze hardware lifecycle patterns
-  const analyzeHardwareLifecycle = (_tickets: Ticket[]): {earlyFailurePercent: number, lateFailurePercent: number, criticalAge: number} => {
+  const analyzeHardwareLifecycle = (): {earlyFailurePercent: number, lateFailurePercent: number, criticalAge: number} => {
     // This would normally involve survival analysis
     // For demo purposes, we'll return simulated results
     return {
@@ -687,11 +686,10 @@ export default function AnalyzePage() {
   };
   
   // Analyze remote work impact
-  const analyzeRemoteWorkImpact = (_tickets: Ticket[]): {percentage: number, correlation: number} => {
+  const analyzeRemoteWorkImpact = (): {correlation: number} => {
     // This would normally involve correlation analysis
     // For demo purposes, we'll return simulated results
     return {
-      percentage: 28,
       correlation: 0.89
     };
   };
