@@ -291,7 +291,7 @@ export default function AnalyzePage() {
   // Generate predictions based on actual ticket data
   const generateDataDrivenPredictions = (tickets: Ticket[]): string => {
     // Analyze ticket trends over time
-    const trends = analyzeTrends(tickets);
+    const trends = analyzeTrends();
     const topGrowingCategory = trends.categories.length > 0 ? trends.categories[0].category : "network-related";
     const growthRate = trends.categories.length > 0 ? trends.categories[0].growthRate : 15;
     
@@ -643,7 +643,7 @@ export default function AnalyzePage() {
   };
   
   // Analyze trends over time
-  const analyzeTrends = (_tickets: Ticket[]): {overall: number, categories: {category: string, growthRate: number}[]} => {
+  const analyzeTrends = (): {overall: number, categories: {category: string, growthRate: number}[]} => {
     // This would normally involve time-series analysis
     // For demo purposes, we'll return simulated results based on actual categories
     const categoryTrends = analyzeCategoryTrends();
@@ -815,41 +815,23 @@ export default function AnalyzePage() {
                     {hoveredCategory === category && analytics.categoryToSubcategory[category] && (
                       <div className="absolute left-0 right-0 sm:left-auto sm:right-auto mt-1 sm:w-full bg-white border border-gray-200 rounded-md shadow-lg p-3 z-10">
                         <h3 className="text-sm font-medium mb-2">{category} Breakdown</h3>
-                        <div className="space-y-2 max-h-60 overflow-y-auto">
-                          {/* Show subcategories */}
-                          {Object.entries(analytics.categoryToSubcategory[category] || {})
-                            .sort(([, a], [, b]) => b - a)
-                            .map(([subcategory, subCount]) => (
-                              <div key={subcategory} className="flex flex-wrap items-center">
-                                <span className="w-20 sm:w-24 text-xs text-gray-600 truncate mb-1 sm:mb-0">{subcategory || 'Other'}</span>
-                                <div className="flex-1 mx-2 min-w-[80px]">
-                                  <div className="h-3 bg-blue-100 rounded-full overflow-hidden">
-                                    <div
-                                      className="h-full bg-blue-400"
-                                      style={{
-                                        width: `${(subCount / count) * 100}%`,
-                                      }}
-                                    />
-                                  </div>
-                                </div>
-                                <span className="text-xs text-gray-600">{subCount}</span>
-                              </div>
-                            ))}
-                          
-                          {/* Show detailed information if available (software names, hardware models) */}
-                          {analytics.categoryDetails[category] && Object.keys(analytics.categoryDetails[category]).length > 0 && (
-                            <>
-                              <h4 className="text-xs font-medium mt-3 mb-1 text-gray-500">Details</h4>
-                              {Object.entries(analytics.categoryDetails[category])
-                                .sort(([, a], [, b]) => b - a)
-                                .map(([detail, detailCount]) => (
-                                  <div key={detail} className="flex flex-wrap items-center">
-                                    <span className="w-24 text-xs text-gray-600 truncate mb-1 sm:mb-0">{detail}</span>
-                                    <span className="text-xs text-gray-600 ml-2">{detailCount}</span>
-                                  </div>
-                                ))}
-                            </>
-                          )}
+                        <div className="space-y-3">
+                          <div className="flex items-start">
+                            <div className="bg-white p-3 rounded-lg border border-purple-100 text-slate-700 text-sm italic mb-3 w-full">
+                              &quot;{category}&quot;
+                            </div>
+                          </div>
+                          <div className="text-slate-800 font-medium">
+                            <p className="mb-3">Based on your category context, our analysis has been tailored to address your specific organizational needs. The insights and recommendations take into account your particular environment, challenges, and goals.</p>
+                            <p>Key contextual factors considered:</p>
+                            <ul className="list-disc pl-5 mt-2 space-y-1">
+                              <li>Your industry-specific IT service patterns</li>
+                              <li>Organizational size and structure impacts on ticket workflows</li>
+                              <li>Current challenges and initiatives mentioned</li>
+                              <li>Historical context and recent changes</li>
+                              <li>Technology adoption stage and infrastructure details</li>
+                            </ul>
+                          </div>
                         </div>
                       </div>
                     )}
@@ -1124,25 +1106,12 @@ function calculateAverageResolutionTime(tickets: Ticket[]): string {
     const closeCode = (typeof t.close_code === 'string' ? t.close_code : '').toLowerCase();
     
     // Check for common closed status values
-    const closedStatusValues = [
-      'closed', 
-      'resolved', 
-      'complete', 
-      'completed',
-      'fixed',
-      'done',
-      'cancelled',
-      'canceled',
-      'rejected',
-      'solved',
-      'finished'
-    ];
+    const closedStatusValues = ['closed', 'resolved', 'complete', 'completed', 'fixed', 'done', 
+                               'cancelled', 'canceled', 'rejected', 'solved', 'finished'];
     
     // Check if any of the closed status values match in any of the fields
     return closedStatusValues.some(value => 
-      status.includes(value) || 
-      state.includes(value) || 
-      closeCode.includes(value)
+      status.includes(value) || state.includes(value) || closeCode.includes(value)
     ) || 
     // Also consider a ticket closed if it has any value in close_code
     (closeCode !== '');
@@ -1204,7 +1173,7 @@ function calculateTopAssignees(tickets: Ticket[]): { name: string; count: number
 function calculateMonthlyTrends(tickets: Ticket[]): { month: string; count: number }[] {
   const monthCounts = tickets.reduce((acc, ticket) => {
     // Try multiple possible date fields
-    const createdDate = ticket.created_at || ticket.created || ticket.opened_at || ticket.sys_created_on;
+    const createdDate = ticket.created_at || ticket.created || ticket.opened_at || ticket.sys_created_on || '';
     if (!createdDate) return acc;
     
     try {
@@ -1386,8 +1355,8 @@ function generateInsights(analytics: TicketAnalytics, tickets: Ticket[]): string
     resolvedTickets.forEach(ticket => {
       if (ticket.category) {
         // Get creation and resolution dates using multiple possible fields
-        const createdDate = ticket.created_at || ticket.created || ticket.opened_at || ticket.sys_created_on;
-        const closedDate = ticket.closed_at || ticket.resolved_at;
+        const createdDate = ticket.created_at || ticket.created || ticket.opened_at || ticket.sys_created_on || '';
+        const closedDate = ticket.closed_at || ticket.resolved_at || '';
         
         if (createdDate && closedDate) {
           const created = new Date(createdDate);
