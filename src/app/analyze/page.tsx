@@ -634,16 +634,35 @@ function calculateAverageResolutionTime(tickets: Ticket[]): string {
     // Also consider a ticket closed if it has any value in close_code
     (closeCode !== '');
     
-    // Only include tickets that are closed AND have both created_at and closed_at dates
-    return isClosed && t.created_at && t.closed_at;
+    // Check if the ticket has valid start and end dates
+    const hasValidDates = (
+      // Check for standard date fields
+      (t.created_at || t.created || t.opened_at || t.sys_created_on) && 
+      (t.closed_at || t.resolved_at)
+    );
+    
+    return isClosed && hasValidDates;
   });
 
   if (resolvedTickets.length === 0) return 'N/A';
 
   const totalTime = resolvedTickets.reduce((sum, ticket) => {
-    const created = new Date(ticket.created_at || '');
-    const closed = new Date(ticket.closed_at || '');
-    return sum + (closed.getTime() - created.getTime());
+    // Get the creation date (try multiple possible fields)
+    const createdDate = ticket.created_at || ticket.created || ticket.opened_at || ticket.sys_created_on || '';
+    // Get the resolution date (try multiple possible fields)
+    const closedDate = ticket.closed_at || ticket.resolved_at || '';
+    
+    const created = new Date(createdDate);
+    const closed = new Date(closedDate);
+    
+    // Log for debugging
+    console.log(`Ticket ${ticket.number}: Created ${createdDate}, Closed ${closedDate}`);
+    
+    // Calculate time difference in milliseconds
+    const timeDiff = closed.getTime() - created.getTime();
+    
+    // Only add valid positive time differences
+    return sum + (timeDiff > 0 ? timeDiff : 0);
   }, 0);
 
   const avgTimeInHours = totalTime / (resolvedTickets.length * 1000 * 60 * 60);

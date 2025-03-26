@@ -13,9 +13,15 @@ export interface Ticket {
   category?: string;
   subcategory?: string;
   assigned_to?: string;
+  // Standard date fields
   created_at?: string;
   created?: string;
   closed_at?: string;
+  // ServiceNow specific date fields
+  opened_at?: string;
+  resolved_at?: string;
+  closed_by?: string;
+  sys_created_on?: string;
   satisfaction?: {
     score?: number;
     comments?: string;
