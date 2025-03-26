@@ -260,21 +260,19 @@ export default function JournalPage() {
               .replace(/\s+/g, ' ')
               .trim();
             
-            if (cleanDescription.length > 30 && !generateLearningEntryFromTicket(cleanDescription, ticket, false)) {
-              // Create a learning entry from the description
-              const content = generateLearningEntryFromTicket(cleanDescription, ticket);
-              
-              if (content) {
-                journalEntries.push({
-                  id: `desc_${ticketId}`,
-                  date: formattedDate,
-                  originalDate: ticketDate,
-                  content,
-                  tags: extractMeaningfulTags(ticket),
-                  ticketNumber: ticketId,
-                  source: 'description'
-                });
-              }
+            // Create a learning entry from the description
+            const content = generateLearningEntryFromTicket(cleanDescription, ticket);
+            
+            if (content) {
+              journalEntries.push({
+                id: `desc_${ticketId}`,
+                date: formattedDate,
+                originalDate: ticketDate,
+                content,
+                tags: extractMeaningfulTags(ticket),
+                ticketNumber: ticketId,
+                source: 'description'
+              });
             }
           }
           
@@ -287,33 +285,31 @@ export default function JournalPage() {
               .replace(/\s+/g, ' ')
               .trim();
             
-            if (cleanResolution.length > 30 && !generateLearningEntryFromTicket(cleanResolution, ticket, true)) {
-              // Create a learning entry from the resolution
-              const content = generateLearningEntryFromTicket(cleanResolution, ticket, true);
+            // Create a learning entry from the resolution
+            const content = generateLearningEntryFromTicket(cleanResolution, ticket, true);
+            
+            if (content) {
+              // Use resolution date if available
+              let resolutionValue: string | Date = ticketDate;
+              if (typeof ticket.resolved_at === 'string') resolutionValue = ticket.resolved_at;
+              else if (typeof ticket.closed_at === 'string') resolutionValue = ticket.closed_at;
               
-              if (content) {
-                // Use resolution date if available
-                let resolutionValue: string | Date = ticketDate;
-                if (typeof ticket.resolved_at === 'string') resolutionValue = ticket.resolved_at;
-                else if (typeof ticket.closed_at === 'string') resolutionValue = ticket.closed_at;
-                
-                const resolutionDate = new Date(resolutionValue);
-                const formattedResolutionDate = resolutionDate.toLocaleDateString('en-US', { 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric' 
-                });
-                
-                journalEntries.push({
-                  id: `res_${ticketId}`,
-                  date: formattedResolutionDate,
-                  originalDate: resolutionDate,
-                  content,
-                  tags: extractMeaningfulTags(ticket),
-                  ticketNumber: ticketId,
-                  source: 'resolution'
-                });
-              }
+              const resolutionDate = new Date(resolutionValue);
+              const formattedResolutionDate = resolutionDate.toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              });
+              
+              journalEntries.push({
+                id: `res_${ticketId}`,
+                date: formattedResolutionDate,
+                originalDate: resolutionDate,
+                content,
+                tags: extractMeaningfulTags(ticket),
+                ticketNumber: ticketId,
+                source: 'resolution'
+              });
             }
           }
         });
