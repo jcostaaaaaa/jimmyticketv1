@@ -51,14 +51,12 @@ const useToast = () => {
     title, 
     description, 
     status, 
-    duration = 3000, 
-    isClosable = true 
+    duration = 3000 
   }: { 
     title: string; 
     description: string; 
     status: 'success' | 'error' | 'info' | 'warning'; 
     duration?: number; 
-    isClosable?: boolean;
   }) => {
     const id = Date.now().toString();
     setToasts(prev => [...prev, { id, title, description, status }]);
@@ -103,7 +101,7 @@ interface JournalEntry {
 }
 
 // Function to generate a learning entry from a ticket description or resolution
-function generateLearningEntryLegacy(text: string, ticket: Ticket): string | null {
+function generateLearningEntryLegacy(text: string): string | null {
   // Remove generic phrases
   const genericPhrases = [
     'please fill out', 'template', 'n/a', 'not applicable',
@@ -158,48 +156,41 @@ export default function JournalPage() {
 
   // Function to generate learning entry with AI
   async function generateLearningEntryWithAI(ticket: Ticket): Promise<JournalEntry | null> {
-    if (!apiKey) return null;
-    
+    if (!apiKey) {
+      toast({
+        title: 'API Key Required',
+        description: 'Please set your OpenAI API key first.',
+        status: 'error'
+      });
+      return null;
+    }
+
     try {
-      // Prepare the ticket data for the API call
-      const ticketData = {
-        number: ticket.number,
-        short_description: ticket.short_description || '',
-        description: ticket.description || '',
-        resolution: ticket.resolution || '',
-        opened_at: ticket.opened_at,
-        closed_at: ticket.closed_at
-      };
-      
-      // Create the prompt for the OpenAI API
-      const prompt = `
-You are an IT professional analyzing a support ticket to create a specific, technical learning journal entry.
+      // Extract text from ticket
+      let text = '';
+      if (ticket.description && typeof ticket.description === 'string') {
+        text = ticket.description
+          .replace(/\\n/g, ' ')
+          .replace(/\\r/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+      }
 
-TICKET INFORMATION:
-Number: ${ticketData.number}
-Short Description: ${ticketData.short_description}
-Description: ${ticketData.description}
-Resolution: ${ticketData.resolution}
-Opened: ${ticketData.opened_at}
-Closed: ${ticketData.closed_at}
+      // If no usable text, try resolution
+      if (text.length < 40 && ticket.resolution && typeof ticket.resolution === 'string') {
+        text = ticket.resolution
+          .replace(/\\n/g, ' ')
+          .replace(/\\r/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+      }
 
-TASK:
-1. Extract the SPECIFIC technical issue from this ticket. Avoid generic descriptions like "experiencing technical difficulties" or "having problems with". Instead, identify the exact component that failed (e.g., "corrupted registry keys in Windows", "failed network switch port", "misconfigured DNS settings").
+      // If still no usable text, return null
+      if (text.length < 40) {
+        return null;
+      }
 
-2. Extract the SPECIFIC technical resolution that was applied. Avoid generic phrases like "issue was fixed" or "problem was resolved". Instead, detail the exact steps taken (e.g., "replaced the faulty RAM module", "reconfigured the DNS settings to use Google's public DNS").
-
-3. Generate a concise learning journal entry in first person that explains what you learned from this ticket. Format: "I learned how to [specific technical resolution] when [specific technical issue occurs]."
-
-4. Identify 3-5 relevant technical tags that accurately reflect the content (hardware components, software applications, technologies, or issue types mentioned in the ticket).
-
-RESPONSE FORMAT:
-{
-  "entry": "Your learning journal entry here",
-  "tags": ["tag1", "tag2", "tag3"]
-}
-`;
-
-      // Make the API call to OpenAI
+      // Prepare the API request
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -211,344 +202,233 @@ RESPONSE FORMAT:
           messages: [
             {
               role: 'system',
-              content: 'You are an AI assistant that helps IT professionals create specific, technical learning journal entries from support tickets.'
+              content: `You are a technical IT specialist who helps create specific and detailed learning journal entries from IT support tickets.
+              
+              Your task is to:
+              1. Identify the SPECIFIC technical issue described in the ticket (avoid generic terms like "computer issues" or "technical difficulties")
+              2. Extract the EXACT components or systems that were problematic (e.g., specific hardware parts, software applications, network components)
+              3. Create a detailed, technical learning entry that precisely describes what was learned from this ticket
+              4. Format the entry as "Today I learned [specific technical insight]."
+              5. Include technical details that would be valuable for an IT professional to know
+              
+              IMPORTANT: Be extremely specific about the technical components involved. Never use generic terms.`
             },
             {
               role: 'user',
-              content: prompt
+              content: `Create a specific, technical learning journal entry based on this IT support ticket: "${text}"`
             }
           ],
           temperature: 0.7,
-          max_tokens: 500
+          max_tokens: 200
         })
       });
-      
+
       if (!response.ok) {
-        const errorData = await response.json();
-        console.error('OpenAI API error:', errorData);
-        throw new Error(`OpenAI API error: ${response.status}`);
+        throw new Error(`API request failed with status ${response.status}`);
       }
-      
+
       const data = await response.json();
-      const aiResponse = data.choices[0].message.content;
-      
-      // Parse the JSON response
-      let parsedResponse;
-      try {
-        // Extract JSON from the response (in case the AI includes extra text)
-        const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          parsedResponse = JSON.parse(jsonMatch[0]);
-        } else {
-          throw new Error('Could not extract JSON from AI response');
-        }
-      } catch (parseError) {
-        console.error('Error parsing AI response:', parseError);
-        console.log('Raw AI response:', aiResponse);
-        
-        // Fallback: Try to extract the entry and tags manually
-        const entryMatch = aiResponse.match(/entry["']?\s*:\s*["']([^"']+)["']/);
-        const tagsMatch = aiResponse.match(/tags["']?\s*:\s*\[(.*?)\]/);
-        
-        if (entryMatch) {
-          const entry = entryMatch[1];
-          let tags: string[] = [];
-          
-          if (tagsMatch) {
-            tags = tagsMatch[1]
-              .split(',')
-              .map((tag: string) => tag.trim().replace(/["']/g, ''));
-          } else {
-            // If no tags found, generate them from the entry content
-            tags = extractKeywordsAsTags(entry);
-          }
-          
-          parsedResponse = { entry, tags };
-        } else {
-          // If we can't extract the entry, use the legacy approach
-          return null;
-        }
+      const content = data.choices[0]?.message?.content?.trim();
+
+      if (!content) {
+        throw new Error('No content returned from API');
       }
+
+      // Get the ticket date
+      let dateValue: string | Date = new Date();
+      if (typeof ticket.created_at === 'string') dateValue = ticket.created_at;
+      else if (typeof ticket.created === 'string') dateValue = ticket.created;
+      else if (typeof ticket.opened_at === 'string') dateValue = ticket.opened_at;
+      else if (typeof ticket.sys_created_on === 'string') dateValue = ticket.sys_created_on;
       
-      // Create the journal entry
-      const today = new Date();
-      const formattedDate = today.toLocaleDateString('en-US', { 
+      const ticketDate = new Date(dateValue);
+      const formattedDate = ticketDate.toLocaleDateString('en-US', { 
         year: 'numeric', 
         month: 'long', 
         day: 'numeric' 
       });
-      
+
+      // Extract tags from the content
+      const tags = extractKeywordsAsTags(content);
+
+      // Create the journal entry
+      const ticketId = typeof ticket.number === 'string' ? ticket.number : 
+                      typeof ticket.sys_id === 'string' ? ticket.sys_id : 
+                      Date.now().toString();
+
       return {
-        id: `ai_${ticket.number}_${Date.now()}`,
+        id: `ai_${ticketId}_${Date.now()}`,
         date: formattedDate,
-        originalDate: today,
-        content: parsedResponse.entry,
-        tags: parsedResponse.tags,
-        source: 'ai',
-        ticketNumber: ticket.number
+        originalDate: ticketDate,
+        content,
+        tags,
+        ticketNumber: ticketId,
+        source: 'ai'
       };
     } catch (error) {
       console.error('Error generating AI entry:', error);
+      toast({
+        title: 'AI Processing Error',
+        description: `Failed to generate entry: ${(error as Error).message}`,
+        status: 'error'
+      });
       return null;
     }
   }
-  
+
+  // Function to extract keywords as tags
+  function extractKeywordsAsTags(text: string): string[] {
+    const tags: string[] = [];
+    
+    // Common hardware components
+    const hardwareKeywords = [
+      'laptop', 'desktop', 'printer', 'scanner', 'monitor', 'keyboard', 'mouse',
+      'server', 'hard drive', 'ssd', 'ram', 'memory', 'cpu', 'processor', 'motherboard',
+      'network card', 'router', 'switch', 'access point', 'cable', 'port', 'usb',
+      'hdmi', 'display', 'battery', 'power supply', 'cooling', 'fan'
+    ];
+    
+    // Common software applications and systems
+    const softwareKeywords = [
+      'windows', 'macos', 'linux', 'office', 'word', 'excel', 'powerpoint', 'outlook',
+      'email', 'browser', 'chrome', 'firefox', 'edge', 'safari', 'teams', 'zoom',
+      'sharepoint', 'onedrive', 'database', 'sql', 'oracle', 'active directory',
+      'vpn', 'remote desktop', 'antivirus', 'security', 'update', 'patch',
+      'driver', 'software', 'application', 'system', 'operating system'
+    ];
+    
+    // Common issue types
+    const issueKeywords = [
+      'error', 'crash', 'freeze', 'slow', 'performance', 'boot', 'startup',
+      'shutdown', 'login', 'password', 'access', 'permission', 'network',
+      'internet', 'connection', 'wifi', 'wireless', 'bluetooth', 'printing',
+      'scan', 'email', 'data', 'file', 'folder', 'backup', 'restore',
+      'update', 'upgrade', 'install', 'uninstall', 'configuration'
+    ];
+    
+    const textLower = text.toLowerCase();
+    
+    // Extract hardware tags
+    hardwareKeywords.forEach(keyword => {
+      if (textLower.includes(keyword)) {
+        tags.push(keyword);
+      }
+    });
+    
+    // Extract software tags
+    softwareKeywords.forEach(keyword => {
+      if (textLower.includes(keyword)) {
+        tags.push(keyword);
+      }
+    });
+    
+    // Extract issue tags
+    issueKeywords.forEach(keyword => {
+      if (textLower.includes(keyword)) {
+        tags.push(keyword);
+      }
+    });
+    
+    // Remove duplicates and return
+    return [...new Set(tags)];
+  }
+
+  // Function to extract meaningful tags from a ticket
+  function extractMeaningfulTags(ticket: Ticket): string[] {
+    const tags: string[] = [];
+    
+    // Extract text from ticket
+    let text = '';
+    if (ticket.description && typeof ticket.description === 'string') {
+      text += ' ' + ticket.description;
+    }
+    if (ticket.resolution && typeof ticket.resolution === 'string') {
+      text += ' ' + ticket.resolution;
+    }
+    
+    text = text.toLowerCase();
+    
+    // Extract tags using the same logic as extractKeywordsAsTags
+    return extractKeywordsAsTags(text);
+  }
+
   // Function to process tickets with AI
-  const processTicketsWithAI = async () => {
-    if (!apiKey || isProcessingAI) return;
+  async function processTicketsWithAI() {
+    if (!apiKey) {
+      setShowApiKeyInput(true);
+      return;
+    }
+    
+    if (tickets.length === 0) {
+      toast({
+        title: 'No Tickets Found',
+        description: 'Please import tickets first.',
+        status: 'warning'
+      });
+      return;
+    }
     
     setIsProcessingAI(true);
     
     try {
-      const aiEntries: JournalEntry[] = [];
+      const processedTickets = new Set<string>();
+      const newEntries: JournalEntry[] = [];
       
-      // Process tickets in batches to avoid overwhelming the API
-      const ticketBatches = [];
-      for (let i = 0; i < tickets.length; i += 5) {
-        ticketBatches.push(tickets.slice(i, i + 5));
+      // Process each ticket
+      for (const ticket of tickets) {
+        // Skip if we've already processed this ticket
+        const ticketId = typeof ticket.number === 'string' ? ticket.number : 
+                        typeof ticket.sys_id === 'string' ? ticket.sys_id : '';
+        if (processedTickets.has(ticketId) || !ticketId) continue;
+        processedTickets.add(ticketId);
+        
+        // Generate an AI entry
+        const entry = await generateLearningEntryWithAI(ticket);
+        if (entry) {
+          newEntries.push(entry);
+        }
       }
       
-      for (const batch of ticketBatches) {
-        const batchPromises = batch.map(async (ticket) => {
-          const aiEntry = await generateLearningEntryWithAI(ticket);
-          if (aiEntry) {
-            return aiEntry;
-          }
-          return null;
-        });
+      if (newEntries.length > 0) {
+        // Only add entries that don't already exist
+        const existingIds = entries.map(entry => entry.id);
+        const uniqueNewEntries = newEntries.filter(entry => !existingIds.includes(entry.id));
         
-        const batchResults = await Promise.all(batchPromises);
-        batchResults.forEach(entry => {
-          if (entry) {
-            aiEntries.push(entry);
-          }
-        });
-        
-        // Small delay between batches to avoid rate limiting
-        await new Promise(resolve => setTimeout(resolve, 1000));
-      }
-      
-      if (aiEntries.length > 0) {
-        // Combine with existing entries, avoiding duplicates
-        const existingTicketNumbers = entries
-          .filter(entry => entry.source === 'ai' && entry.ticketNumber)
-          .map(entry => entry.ticketNumber);
-        
-        const newAiEntries = aiEntries.filter(entry => 
-          !existingTicketNumbers.includes(entry.ticketNumber)
-        );
-        
-        if (newAiEntries.length > 0) {
-          const updatedEntries = [...newAiEntries, ...entries];
+        if (uniqueNewEntries.length > 0) {
+          const updatedEntries = [...entries, ...uniqueNewEntries];
           setEntries(updatedEntries);
           localStorage.setItem('journal_entries', JSON.stringify(updatedEntries));
           
           toast({
             title: 'AI Processing Complete',
-            description: `Added ${newAiEntries.length} new journal entries from tickets.`,
-            status: 'success',
-            duration: 5000,
-            isClosable: true,
+            description: `Generated ${uniqueNewEntries.length} new journal entries.`,
+            status: 'success'
           });
         } else {
           toast({
-            title: 'AI Processing Complete',
-            description: 'No new journal entries were found.',
-            status: 'info',
-            duration: 5000,
-            isClosable: true,
+            title: 'No New Entries',
+            description: 'All entries already exist in your journal.',
+            status: 'info'
           });
         }
       } else {
         toast({
-          title: 'AI Processing Complete',
-          description: 'No journal entries could be generated from the tickets.',
-          status: 'info',
-          duration: 5000,
-          isClosable: true,
+          title: 'No Entries Generated',
+          description: 'Could not generate any entries from the tickets.',
+          status: 'warning'
         });
       }
     } catch (error) {
-      console.error('Error processing tickets with AI:', error);
+      console.error('Error in AI processing:', error);
       toast({
-        title: 'Error',
-        description: 'An error occurred while processing tickets with AI.',
-        status: 'error',
-        duration: 5000,
-        isClosable: true,
+        title: 'AI Processing Error',
+        description: `An error occurred: ${(error as Error).message}`,
+        status: 'error'
       });
     } finally {
       setIsProcessingAI(false);
-      setShowApiKeyInput(false);
     }
-  };
-
-  // Function to extract meaningful tags from a ticket
-  function extractMeaningfulTags(ticket: Ticket): string[] {
-    const tags: string[] = [];
-
-    // Get text to analyze for tags
-    const textToSearch = [
-      ticket.short_description || '', 
-      ticket.description || '', 
-      ticket.resolution || ''
-    ].filter(Boolean).join(' ').toLowerCase();
-
-    // First identify the affected system from the ticket text
-    // Software systems
-    if (textToSearch.includes('outlook')) tags.push('outlook');
-    if (textToSearch.includes('teams')) tags.push('teams');
-    if (textToSearch.includes('zoom')) tags.push('zoom');
-    if (textToSearch.includes('word')) tags.push('word');
-    if (textToSearch.includes('excel')) tags.push('excel');
-    if (textToSearch.includes('powerpoint')) tags.push('powerpoint');
-    if (textToSearch.includes('office') && !tags.some(t => ['word', 'excel', 'powerpoint', 'outlook'].includes(t))) {
-      tags.push('office');
-    }
-    if (textToSearch.includes('chrome')) tags.push('chrome');
-    if (textToSearch.includes('firefox')) tags.push('firefox');
-    if (textToSearch.includes('edge')) tags.push('edge');
-    if (textToSearch.includes('adobe') || textToSearch.includes('acrobat')) tags.push('adobe');
-    if (textToSearch.includes('vpn')) tags.push('vpn');
-    if (textToSearch.includes('sharepoint')) tags.push('sharepoint');
-    if (textToSearch.includes('onedrive')) tags.push('onedrive');
-
-    // Operating systems
-    if (textToSearch.includes('windows')) tags.push('windows');
-    if (textToSearch.includes('mac') || textToSearch.includes('macos')) tags.push('macos');
-    if (textToSearch.includes('linux') || textToSearch.includes('ubuntu')) tags.push('linux');
-
-    // Hardware manufacturers
-    if (textToSearch.includes('dell')) tags.push('dell');
-    if (textToSearch.includes('hp')) tags.push('hp');
-    if (textToSearch.includes('lenovo')) tags.push('lenovo');
-    if (textToSearch.includes('apple') || textToSearch.includes('macbook')) tags.push('apple');
-    if (textToSearch.includes('logitech')) tags.push('logitech');
-    if (textToSearch.includes('cisco')) tags.push('cisco');
-
-    // Hardware components
-    if (textToSearch.includes('laptop')) tags.push('laptop');
-    if (textToSearch.includes('desktop')) tags.push('desktop');
-    if (textToSearch.includes('monitor')) tags.push('monitor');
-    if (textToSearch.includes('printer')) tags.push('printer');
-    if (textToSearch.includes('keyboard')) tags.push('keyboard');
-    if (textToSearch.includes('mouse')) tags.push('mouse');
-    if (textToSearch.includes('headset') || textToSearch.includes('headphone')) tags.push('audio-device');
-    if (textToSearch.includes('camera') || textToSearch.includes('webcam')) tags.push('camera');
-    if (textToSearch.includes('microphone')) tags.push('microphone');
-    if (textToSearch.includes('speaker')) tags.push('speaker');
-    if (textToSearch.includes('hard drive') || textToSearch.includes('hdd') || textToSearch.includes('ssd')) tags.push('storage');
-    if (textToSearch.includes('ram') || textToSearch.includes('memory')) tags.push('memory');
-    if (textToSearch.includes('motherboard')) tags.push('motherboard');
-    if (textToSearch.includes('power supply') || textToSearch.includes('psu')) tags.push('power-supply');
-    if (textToSearch.includes('cpu') || textToSearch.includes('processor')) tags.push('cpu');
-    if (textToSearch.includes('graphics') || textToSearch.includes('gpu')) tags.push('gpu');
-    if (textToSearch.includes('battery')) tags.push('battery');
-    if (textToSearch.includes('fan') || textToSearch.includes('cooling')) tags.push('cooling');
-
-    // Network components
-    if (textToSearch.includes('wifi') || textToSearch.includes('wireless')) tags.push('wifi');
-    if (textToSearch.includes('ethernet') || textToSearch.includes('lan')) tags.push('ethernet');
-    if (textToSearch.includes('router')) tags.push('router');
-    if (textToSearch.includes('switch')) tags.push('network-switch');
-    if (textToSearch.includes('firewall')) tags.push('firewall');
-    if (textToSearch.includes('vpn')) tags.push('vpn');
-
-    // Issue types
-    if (textToSearch.includes('crash') || textToSearch.includes('crashed')) tags.push('crash');
-    if (textToSearch.includes('freeze') || textToSearch.includes('frozen')) tags.push('freeze');
-    if (textToSearch.includes('blue screen') || textToSearch.includes('bsod')) tags.push('bsod');
-    if (textToSearch.includes('slow') || textToSearch.includes('performance')) tags.push('performance');
-    if (textToSearch.includes('virus') || textToSearch.includes('malware')) tags.push('malware');
-    if (textToSearch.includes('data loss') || textToSearch.includes('lost file')) tags.push('data-loss');
-    if (textToSearch.includes('backup') || textToSearch.includes('restore')) tags.push('backup');
-    if (textToSearch.includes('update') || textToSearch.includes('upgrade')) tags.push('update');
-    if (textToSearch.includes('install') || textToSearch.includes('setup')) tags.push('installation');
-    if (textToSearch.includes('login') || textToSearch.includes('password')) tags.push('authentication');
-    if (textToSearch.includes('permission') || textToSearch.includes('access denied')) tags.push('permissions');
-    if (textToSearch.includes('print') || textToSearch.includes('printer')) tags.push('printing');
-    if (textToSearch.includes('email') || textToSearch.includes('outlook')) tags.push('email');
-
-    // Limit to 5 tags and ensure uniqueness
-    return [...new Set(tags)].slice(0, 5);
   }
-
-  // Function to extract keywords as tags when AI doesn't provide them explicitly
-  function extractKeywordsAsTags(content: string): string[] {
-    const lowercaseContent = content.toLowerCase();
-    const potentialTags: string[] = [];
-    
-    // Hardware components
-    const hardwareComponents: string[] = [
-      'hard drive', 'ssd', 'hdd', 'ram', 'memory', 'cpu', 'processor', 
-      'motherboard', 'graphics card', 'gpu', 'monitor', 'display',
-      'keyboard', 'mouse', 'printer', 'scanner', 'network card', 'wifi'
-    ];
-    
-    // Software applications
-    const softwareApplications: string[] = [
-      'windows', 'office', 'excel', 'word', 'outlook', 'powerpoint',
-      'adobe', 'chrome', 'firefox', 'browser', 'antivirus', 'vpn',
-      'database', 'sql', 'sharepoint', 'teams', 'zoom', 'skype'
-    ];
-    
-    // Issue types
-    const issueTypes: string[] = [
-      'crash', 'freeze', 'error', 'blue screen', 'bsod', 'slow', 'performance',
-      'connectivity', 'network', 'login', 'password', 'update', 'driver',
-      'virus', 'malware', 'data loss', 'backup', 'recovery'
-    ];
-    
-    // Check for hardware components
-    hardwareComponents.forEach((component: string) => {
-      if (lowercaseContent.includes(component)) {
-        potentialTags.push(component.replace(/\s+/g, '_'));
-      }
-    });
-    
-    // Check for software applications
-    softwareApplications.forEach((app: string) => {
-      if (lowercaseContent.includes(app)) {
-        potentialTags.push(app.replace(/\s+/g, '_'));
-      }
-    });
-    
-    // Check for issue types
-    issueTypes.forEach((issue: string) => {
-      if (lowercaseContent.includes(issue)) {
-        potentialTags.push(issue.replace(/\s+/g, '_'));
-      }
-    });
-    
-    // Limit to 5 tags and ensure uniqueness
-    return [...new Set(potentialTags)].slice(0, 5);
-  }
-
-  // Function to check if text is generic/template text
-  function isGenericText(text: string): boolean {
-    const genericPhrases = [
-      'please fill out', 'template', 'n/a', 'not applicable',
-      'see above', 'no description provided', 'no details', 'none',
-      'please describe', 'please provide', 'pending', 'to be determined',
-      'to be filled', 'will be updated', 'see attachment', 'see attached'
-    ];
-
-    const lowercaseText = text.toLowerCase();
-    return genericPhrases.some(phrase => lowercaseText.includes(phrase)) ||
-           text.length < 40 || // Too short
-           (text.split(' ').length < 8); // Too few words
-  }
-
-  // Function to check if a tag exists in a list
-  const tagExists = (tag: string, tagList: string[]): boolean => {
-    return tagList.includes(tag.toLowerCase());
-  };
-
-  // Function to filter out generic tags
-  const filterGenericTags = (tags: string[]): string[] => {
-    const genericTags = ['issue', 'problem', 'error', 'technical'];
-    return tags.filter(tag => !genericTags.includes(tag.toLowerCase()));
-  };
 
   // Load entries from localStorage on component mount
   useEffect(() => {
@@ -612,7 +492,7 @@ RESPONSE FORMAT:
               .trim();
 
             // Create a learning entry from the description
-            const content = generateLearningEntryLegacy(cleanDescription, ticket);
+            const content = generateLearningEntryLegacy(cleanDescription);
 
             if (content) {
               journalEntries.push({
@@ -637,7 +517,7 @@ RESPONSE FORMAT:
               .trim();
 
             // Create a learning entry from the resolution
-            const content = generateLearningEntryLegacy(cleanResolution, ticket);
+            const content = generateLearningEntryLegacy(cleanResolution);
 
             if (content) {
               // Use resolution date if available
@@ -777,7 +657,6 @@ RESPONSE FORMAT:
                       description: 'Your OpenAI API key has been saved.',
                       status: 'success',
                       duration: 3000,
-                      isClosable: true,
                     });
                   }
                 }}
