@@ -189,14 +189,159 @@ export default function JournalPage() {
     // Extract the specific technical issue from the text
     const specificIssue = extractSpecificIssue(text, ticket);
     
+    // Get workflow impact statement
+    const workflowImpact = getWorkflowImpactStatement(specificIssue, text, ticket);
+    
     // Format the entry based on whether it's from description or resolution
     if (isResolution) {
       // For resolutions, focus on what was learned from solving the issue
-      return `Today I learned how to resolve ${specificIssue}: ${mainContent} This knowledge will help when similar problems arise in the future.`;
+      return `Today I learned how to resolve ${specificIssue}: ${mainContent} ${workflowImpact}`;
     } else {
       // For descriptions, focus on the technical aspects of the issue
-      return `Today I learned about a technical issue involving ${specificIssue}: ${mainContent} Understanding this problem helps build troubleshooting skills.`;
+      return `Today I learned about a technical issue involving ${specificIssue}: ${mainContent} ${workflowImpact}`;
     }
+  }
+
+  // Generate a statement about how the issue impacts workflow
+  function getWorkflowImpactStatement(issueType: string, text: string, ticket: Ticket): string {
+    // Map of issue types to workflow impact statements
+    const impactMap: {[key: string]: string[]} = {
+      // Network issues
+      "network drive access problems": [
+        "This prevented access to shared documents and halted collaborative work.",
+        "This blocked access to critical project files needed for deadlines.",
+        "This interrupted file sharing capabilities across teams."
+      ],
+      "VPN connectivity issues": [
+        "This prevented remote access to internal systems and databases.",
+        "This blocked remote workers from accessing necessary resources.",
+        "This created delays in accessing secure company data from offsite."
+      ],
+      "unstable WiFi connections": [
+        "This caused frequent disconnections during important online meetings.",
+        "This resulted in lost work due to dropped connections to cloud services.",
+        "This created frustrating interruptions throughout the workday."
+      ],
+      "DNS resolution failures": [
+        "This prevented website and service access, blocking external communications.",
+        "This caused inability to resolve internal hostnames, breaking application workflows.",
+        "This created delays in accessing critical online resources."
+      ],
+      
+      // Communication tools
+      "video conferencing disconnections": [
+        "This disrupted important client meetings and team collaborations.",
+        "This caused information loss during critical presentations.",
+        "This created communication barriers during remote discussions."
+      ],
+      "video conferencing audio/video problems": [
+        "This hindered effective communication in virtual meetings.",
+        "This created misunderstandings due to poor audio quality during discussions.",
+        "This reduced participation in team meetings due to technical limitations."
+      ],
+      "email synchronization problems": [
+        "This delayed receipt of important messages and time-sensitive information.",
+        "This caused missed communications and response delays to clients.",
+        "This created confusion with duplicate or missing emails."
+      ],
+      "calendar synchronization issues": [
+        "This resulted in missed meetings and scheduling conflicts.",
+        "This created confusion about meeting times across team members.",
+        "This caused double-bookings and inefficient time management."
+      ],
+      
+      // Hardware issues
+      "printer connectivity problems": [
+        "This blocked production of physical documents needed for client meetings.",
+        "This delayed distribution of printed materials for review.",
+        "This prevented completion of paperwork required for business processes."
+      ],
+      "monitor display issues": [
+        "This caused eye strain and reduced productivity with visual work.",
+        "This prevented effective multitasking with limited screen visibility.",
+        "This created difficulties in reviewing detailed visual information."
+      ],
+      "input device malfunctions": [
+        "This significantly slowed data entry and document creation tasks.",
+        "This created frustration and reduced typing efficiency.",
+        "This made navigation and selection tasks more time-consuming."
+      ],
+      "battery and power problems": [
+        "This created risk of data loss during unexpected shutdowns.",
+        "This limited mobility and flexibility for remote work.",
+        "This interrupted work during critical tasks due to sudden power loss."
+      ],
+      
+      // Software issues
+      "application crashes and freezes": [
+        "This resulted in lost work and repeated effort on the same tasks.",
+        "This interrupted workflow momentum and caused frustration.",
+        "This created delays in completing time-sensitive deliverables."
+      ],
+      "system performance degradation": [
+        "This extended task completion times and reduced overall productivity.",
+        "This created user frustration and increased error rates due to lag.",
+        "This made multitasking nearly impossible due to resource constraints."
+      ],
+      "software update failures": [
+        "This prevented access to new features needed for current projects.",
+        "This created security vulnerabilities by keeping outdated software active.",
+        "This caused compatibility issues with other updated systems."
+      ],
+      "authentication problems": [
+        "This blocked access to critical systems needed for daily tasks.",
+        "This created security risks with repeated failed login attempts.",
+        "This delayed work starts while waiting for credential resets."
+      ],
+      
+      // Data issues
+      "file corruption or loss": [
+        "This required recreation of important documents from scratch.",
+        "This caused loss of critical data that impacted decision-making.",
+        "This created delays in project timelines due to lost progress."
+      ],
+      "backup and restore failures": [
+        "This put critical business data at risk of permanent loss.",
+        "This prevented recovery of accidentally deleted important files.",
+        "This created compliance risks for data retention requirements."
+      ],
+      "permission and access control issues": [
+        "This blocked collaboration on shared documents and resources.",
+        "This prevented necessary team members from accessing required files.",
+        "This created bottlenecks where access requests delayed work."
+      ]
+    };
+    
+    // Default impacts for any issue type not specifically mapped
+    const defaultImpacts = [
+      "This disrupted normal workflow and created productivity losses.",
+      "This prevented completion of regular tasks and created backlogs.",
+      "This caused delays in meeting project deadlines and deliverables."
+    ];
+    
+    // Get the appropriate impact statements for this issue type
+    const possibleImpacts = impactMap[issueType] || defaultImpacts;
+    
+    // Select an impact based on a hash of the ticket number to ensure consistency
+    const ticketHash = hashString(
+      (typeof ticket.number === 'string' ? ticket.number : '') || 
+      (typeof ticket.sys_id === 'string' ? ticket.sys_id : '') || 
+      (typeof text === 'string' ? text : '')
+    );
+    const selectedIndex = ticketHash % possibleImpacts.length;
+    
+    return possibleImpacts[selectedIndex];
+  }
+  
+  // Simple string hash function for consistent selection
+  function hashString(str: string): number {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32bit integer
+    }
+    return Math.abs(hash);
   }
 
   // Extract the specific technical issue from the text
@@ -238,7 +383,7 @@ export default function JournalPage() {
     ];
     
     // Check for specific issue patterns in the text
-    const lowerText = text.toLowerCase();
+    const lowerText = typeof text === 'string' ? text.toLowerCase() : '';
     for (const pattern of issuePatterns) {
       if (pattern.regex.test(lowerText)) {
         return pattern.issue;
@@ -246,7 +391,7 @@ export default function JournalPage() {
     }
     
     // If no specific pattern is found, try to extract key terms
-    const shortDesc = ticket.short_description || '';
+    const shortDesc = typeof ticket.short_description === 'string' ? ticket.short_description : '';
     
     // If short description contains a clear issue statement, use that
     if (shortDesc.length > 10 && !isGenericText(shortDesc)) {
@@ -261,8 +406,8 @@ export default function JournalPage() {
     }
     
     // Extract category and subcategory if available
-    const category = ticket.category ? ticket.category.toLowerCase() : '';
-    const subcategory = ticket.subcategory ? ticket.subcategory.toLowerCase() : '';
+    const category = typeof ticket.category === 'string' ? ticket.category.toLowerCase() : '';
+    const subcategory = typeof ticket.subcategory === 'string' ? ticket.subcategory.toLowerCase() : '';
     
     if (subcategory && category) {
       return `${subcategory} issues in ${category} systems`;
