@@ -179,7 +179,7 @@ export default function AnalyzePage() {
       }
       
       // Find fastest growing category
-      const categoryTrends = analyzeCategoryTrends(tickets);
+      const categoryTrends = analyzeCategoryTrends();
       if (categoryTrends.length > 0) {
         insights.push(`${categoryTrends[0].category} issues are showing the fastest growth rate at ${categoryTrends[0].growthRate}% month-over-month, requiring immediate attention.`);
       }
@@ -218,7 +218,7 @@ export default function AnalyzePage() {
     }
     
     // Analyze correlation between response time and satisfaction
-    const satisfactionCorrelation = analyzeResponseTimeSatisfaction(tickets);
+    const satisfactionCorrelation = analyzeResponseTimeSatisfaction();
     if (satisfactionCorrelation.responseCorrelation > 0) {
       insights.push(`Response time has a ${satisfactionCorrelation.responseCorrelation}% correlation with satisfaction scores, while actual resolution time shows only ${satisfactionCorrelation.resolutionCorrelation}% correlation, highlighting the importance of quick initial responses.`);
     }
@@ -280,7 +280,7 @@ export default function AnalyzePage() {
     }
     
     // Recommend based on satisfaction correlation
-    const satisfactionCorrelation = analyzeResponseTimeSatisfaction(tickets);
+    const satisfactionCorrelation = analyzeResponseTimeSatisfaction();
     if (satisfactionCorrelation.responseCorrelation > 0) {
       recommendations.push(`Implement an automated initial response system that acknowledges tickets within 15 minutes, potentially improving overall satisfaction scores by up to ${Math.round(satisfactionCorrelation.potentialImprovement)}% based on current correlation data.`);
     }
@@ -317,7 +317,7 @@ export default function AnalyzePage() {
   // Helper functions for data-driven analysis
   
   // Analyze category trends over time
-  const analyzeCategoryTrends = (_tickets: Ticket[]): {category: string, growthRate: number}[] => {
+  const analyzeCategoryTrends = (): {category: string, growthRate: number}[] => {
     // This would normally involve complex time-series analysis
     // For demo purposes, we'll return simulated results
     return [
@@ -602,7 +602,7 @@ export default function AnalyzePage() {
   };
   
   // Analyze correlation between response time and satisfaction
-  const analyzeResponseTimeSatisfaction = (tickets: Ticket[]): {responseCorrelation: number, resolutionCorrelation: number, potentialImprovement: number} => {
+  const analyzeResponseTimeSatisfaction = (): {responseCorrelation: number, resolutionCorrelation: number, potentialImprovement: number} => {
     // This would normally involve statistical correlation analysis
     // For demo purposes, we'll return simulated results
     return {
@@ -646,7 +646,7 @@ export default function AnalyzePage() {
   const analyzeTrends = (_tickets: Ticket[]): {overall: number, categories: {category: string, growthRate: number}[]} => {
     // This would normally involve time-series analysis
     // For demo purposes, we'll return simulated results based on actual categories
-    const categoryTrends = analyzeCategoryTrends(_tickets);
+    const categoryTrends = analyzeCategoryTrends();
     
     return {
       overall: 12, // Overall growth rate
@@ -684,17 +684,6 @@ export default function AnalyzePage() {
     };
   };
   
-  // Simple string hash function for consistent selection
-  function hashString(str: string): number {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-      const char = str.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash; // Convert to 32bit integer
-    }
-    return Math.abs(hash);
-  }
-
   if (tickets.length === 0) {
     return (
       <div className="min-h-screen bg-slate-50">
