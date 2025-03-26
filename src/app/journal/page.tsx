@@ -40,6 +40,141 @@ export default function JournalPage() {
            (text.split(' ').length < 8); // Too few words
   }
 
+  // Extract specific technical issue from text
+  function extractSpecificIssue(text: string, ticket: Ticket): string {
+    // Common IT issues to look for in text
+    const issuePatterns = [
+      { pattern: /network\s+(?:issue|problem|connectivity|access|outage|down)/i, issue: "network connectivity" },
+      { pattern: /(?:vpn|remote\s+access)\s+(?:issue|problem|connectivity|access|failure)/i, issue: "VPN access" },
+      { pattern: /(?:email|outlook|exchange)\s+(?:issue|problem|sync|error|not\s+(?:working|sending|receiving))/i, issue: "email synchronization" },
+      { pattern: /(?:printer|printing|scan|scanner)\s+(?:issue|problem|error|jam|not\s+(?:working|connecting|printing))/i, issue: "printer configuration" },
+      { pattern: /(?:password|login|authentication|account)\s+(?:issue|problem|reset|expired|locked)/i, issue: "account authentication" },
+      { pattern: /(?:software|application|program|app)\s+(?:issue|problem|error|crash|not\s+(?:working|opening|responding))/i, issue: "software application" },
+      { pattern: /(?:hardware|device|computer|laptop|desktop|monitor|keyboard|mouse)\s+(?:issue|problem|failure|not\s+(?:working|powering|booting))/i, issue: "hardware malfunction" },
+      { pattern: /(?:update|upgrade|patch|installation)\s+(?:issue|problem|error|failure|not\s+(?:working|installing|completing))/i, issue: "software updates" },
+      { pattern: /(?:data|file|document|folder)\s+(?:issue|problem|loss|corrupt|missing|not\s+(?:opening|saving|syncing))/i, issue: "data management" },
+      { pattern: /(?:permission|access|security|authorization)\s+(?:issue|problem|denied|error|not\s+(?:working|granted))/i, issue: "access permissions" },
+      { pattern: /(?:internet|web|browser|website)\s+(?:issue|problem|error|slow|not\s+(?:working|loading|connecting))/i, issue: "web browsing" },
+      { pattern: /(?:video|audio|sound|microphone|speaker|camera|conference)\s+(?:issue|problem|error|quality|not\s+(?:working|connecting))/i, issue: "video conferencing" },
+      { pattern: /(?:mobile|phone|tablet|ipad|iphone|android)\s+(?:issue|problem|error|not\s+(?:working|connecting|syncing))/i, issue: "mobile device" },
+      { pattern: /(?:backup|restore|recovery)\s+(?:issue|problem|error|failure|not\s+(?:working|completing))/i, issue: "data backup" },
+      { pattern: /(?:performance|slow|speed|response\s+time)\s+(?:issue|problem|degradation)/i, issue: "system performance" },
+      { pattern: /(?:virus|malware|ransomware|spyware|security)\s+(?:issue|problem|infection|attack|breach)/i, issue: "security threat" }
+    ];
+    
+    // Check for specific issues in the text
+    for (const { pattern, issue } of issuePatterns) {
+      if (pattern.test(text)) {
+        return issue;
+      }
+    }
+    
+    // If no specific issue found, use the category from the ticket
+    const category = ticket.category || ticket.subcategory || '';
+    if (category.toLowerCase().includes('network')) return 'network connectivity';
+    if (category.toLowerCase().includes('email')) return 'email system';
+    if (category.toLowerCase().includes('hardware')) return 'hardware troubleshooting';
+    if (category.toLowerCase().includes('software')) return 'software application';
+    if (category.toLowerCase().includes('access')) return 'system access';
+    if (category.toLowerCase().includes('security')) return 'security protocols';
+    
+    // Default fallback
+    return 'technical support';
+  }
+  
+  // Generate a statement about how the issue impacts workflow
+  function getWorkflowImpactStatement(issueType: string, text: string, ticket: Ticket): string {
+    // Map of issue types to workflow impact statements
+    const workflowImpacts: Record<string, string[]> = {
+      "network connectivity": [
+        "This issue prevented team members from accessing shared resources, significantly hindering collaborative work.",
+        "Network problems caused delays in project delivery as team members couldn't access critical files.",
+        "The connectivity issue isolated remote workers from the team, impacting communication efficiency."
+      ],
+      "VPN access": [
+        "Remote employees were unable to access internal systems, blocking their ability to complete assigned tasks.",
+        "VPN failures forced postponement of critical remote work activities, delaying project timelines.",
+        "Secure access issues prevented timely updates to sensitive documentation required by the compliance team."
+      ],
+      "email synchronization": [
+        "Communication breakdowns occurred as important messages weren't being delivered, causing misunderstandings.",
+        "Client communications were delayed, potentially damaging business relationships.",
+        "Team coordination suffered as meeting invites and updates weren't properly synchronized."
+      ],
+      "printer configuration": [
+        "Document processing workflows were interrupted, causing delays in contract processing.",
+        "The inability to print required documentation created bottlenecks in approval processes.",
+        "Physical documentation needs couldn't be met, forcing postponement of client-facing meetings."
+      ],
+      "account authentication": [
+        "Staff were locked out of critical systems during peak business hours, halting operations.",
+        "Authentication failures prevented access to time-sensitive data needed for decision-making.",
+        "Password reset processes consumed productive time that could have been spent on core business activities."
+      ],
+      "software application": [
+        "Core business application failures prevented processing of customer transactions.",
+        "Software crashes resulted in data loss, requiring time-consuming recreation of work.",
+        "Application performance issues slowed down routine tasks, reducing overall productivity."
+      ],
+      "hardware malfunction": [
+        "Equipment failure forced employees to use suboptimal workarounds, reducing efficiency.",
+        "Hardware issues prevented access to specialized tools required for specific job functions.",
+        "Device malfunctions interrupted critical presentations to stakeholders."
+      ],
+      "software updates": [
+        "Failed updates left security vulnerabilities unpatched, increasing organizational risk.",
+        "Incompatible software versions created file sharing problems between team members.",
+        "Update failures prevented access to new features needed for upcoming project work."
+      ],
+      "data management": [
+        "Lost files required extensive recreation of work, consuming valuable project time.",
+        "Corrupted data led to inaccurate reporting and potentially flawed business decisions.",
+        "File access issues prevented timely review of deliverables, delaying approval processes."
+      ],
+      "access permissions": [
+        "Incorrect permissions prevented team members from accessing resources needed for their roles.",
+        "Permission issues created bottlenecks where single individuals became gatekeepers to information.",
+        "Access control problems exposed sensitive data to unauthorized personnel, creating compliance risks."
+      ],
+      "web browsing": [
+        "Research activities were hampered, limiting information gathering for critical decisions.",
+        "Client-facing web tools were inaccessible, preventing customer service representatives from assisting customers.",
+        "Web application failures interrupted digital marketing campaigns, reducing market reach."
+      ],
+      "video conferencing": [
+        "Meeting disruptions led to miscommunication and unclear action items.",
+        "Poor audio/video quality in client presentations damaged professional credibility.",
+        "Conference failures forced rescheduling of time-sensitive meetings, delaying decision-making."
+      ],
+      "mobile device": [
+        "Field staff couldn't access critical information while at customer sites, reducing service quality.",
+        "Mobile app failures prevented real-time data collection, creating data gaps.",
+        "Synchronization issues between mobile and desktop systems created inconsistent information."
+      ],
+      "data backup": [
+        "Backup failures created significant business continuity risks.",
+        "Recovery testing failures undermined confidence in disaster recovery capabilities.",
+        "Incomplete backups resulted in permanent loss of historical data needed for compliance."
+      ],
+      "system performance": [
+        "System slowdowns extended processing times for routine tasks, reducing overall throughput.",
+        "Performance degradation during peak hours created customer service delays.",
+        "Slow response times frustrated users, leading to workarounds that bypassed security protocols."
+      ],
+      "security threat": [
+        "Security incidents required emergency response, diverting resources from planned activities.",
+        "Potential data breaches necessitated comprehensive audits, consuming significant IT resources.",
+        "Security remediation activities required temporary shutdown of business systems."
+      ]
+    };
+    
+    // Get impact statements for the issue type
+    const impacts = workflowImpacts[issueType] || workflowImpacts["software application"];
+    
+    // Select a random impact statement
+    return impacts[Math.floor(Math.random() * impacts.length)];
+  }
+
   // Function to generate learning entry from ticket description or resolution
   const generateLearningEntryFromTicket = useCallback((text: string, ticket: Ticket, isResolution = false): string | null => {
     // Skip if text is too short or generic
@@ -68,7 +203,7 @@ export default function JournalPage() {
       // For descriptions, focus on the technical aspects of the issue
       return `Today I learned about a technical issue involving ${specificIssue}: ${mainContent} ${workflowImpact}`;
     }
-  }, []);
+  }, [extractSpecificIssue, getWorkflowImpactStatement]);
 
   // Load entries from localStorage on component mount
   useEffect(() => {
@@ -201,246 +336,6 @@ export default function JournalPage() {
       setEntries([]);
     }
   }, [tickets, generateLearningEntryFromTicket]);
-
-  // Generate a statement about how the issue impacts workflow
-  function getWorkflowImpactStatement(issueType: string, text: string, ticket: Ticket): string {
-    // Map of issue types to workflow impact statements
-    const impactMap: {[key: string]: string[]} = {
-      // Network issues
-      "network drive access problems": [
-        "This prevented access to shared documents and halted collaborative work.",
-        "This blocked access to critical project files needed for deadlines.",
-        "This interrupted file sharing capabilities across teams."
-      ],
-      "VPN connectivity issues": [
-        "This prevented remote access to internal systems and databases.",
-        "This blocked remote workers from accessing necessary resources.",
-        "This created delays in accessing secure company data from offsite."
-      ],
-      "unstable WiFi connections": [
-        "This caused frequent disconnections during important online meetings.",
-        "This resulted in lost work due to dropped connections to cloud services.",
-        "This created frustrating interruptions throughout the workday."
-      ],
-      "DNS resolution failures": [
-        "This prevented website and service access, blocking external communications.",
-        "This caused inability to resolve internal hostnames, breaking application workflows.",
-        "This created delays in accessing critical online resources."
-      ],
-      
-      // Communication tools
-      "video conferencing disconnections": [
-        "This disrupted important client meetings and team collaborations.",
-        "This caused information loss during critical presentations.",
-        "This created communication barriers during remote discussions."
-      ],
-      "video conferencing audio/video problems": [
-        "This hindered effective communication in virtual meetings.",
-        "This created misunderstandings due to poor audio quality during discussions.",
-        "This reduced participation in team meetings due to technical limitations."
-      ],
-      "email synchronization problems": [
-        "This delayed receipt of important messages and time-sensitive information.",
-        "This caused missed communications and response delays to clients.",
-        "This created confusion with duplicate or missing emails."
-      ],
-      "calendar synchronization issues": [
-        "This resulted in missed meetings and scheduling conflicts.",
-        "This created confusion about meeting times across team members.",
-        "This caused double-bookings and inefficient time management."
-      ],
-      
-      // Hardware issues
-      "printer connectivity problems": [
-        "This blocked production of physical documents needed for client meetings.",
-        "This delayed distribution of printed materials for review.",
-        "This prevented completion of paperwork required for business processes."
-      ],
-      "monitor display issues": [
-        "This caused eye strain and reduced productivity with visual work.",
-        "This prevented effective multitasking with limited screen visibility.",
-        "This created difficulties in reviewing detailed visual information."
-      ],
-      "input device malfunctions": [
-        "This significantly slowed data entry and document creation tasks.",
-        "This created frustration and reduced typing efficiency.",
-        "This made navigation and selection tasks more time-consuming."
-      ],
-      "battery and power problems": [
-        "This created risk of data loss during unexpected shutdowns.",
-        "This limited mobility and flexibility for remote work.",
-        "This interrupted work during critical tasks due to sudden power loss."
-      ],
-      
-      // Software issues
-      "application crashes and freezes": [
-        "This resulted in lost work and repeated effort on the same tasks.",
-        "This interrupted workflow momentum and caused frustration.",
-        "This created delays in completing time-sensitive deliverables."
-      ],
-      "system performance degradation": [
-        "This extended task completion times and reduced overall productivity.",
-        "This created user frustration and increased error rates due to lag.",
-        "This made multitasking nearly impossible due to resource constraints."
-      ],
-      "software update failures": [
-        "This prevented access to new features needed for current projects.",
-        "This created security vulnerabilities by keeping outdated software active.",
-        "This caused compatibility issues with other updated systems."
-      ],
-      "authentication problems": [
-        "This blocked access to critical systems needed for daily tasks.",
-        "This created security risks with repeated failed login attempts.",
-        "This delayed work starts while waiting for credential resets."
-      ],
-      
-      // Data issues
-      "file corruption or loss": [
-        "This required recreation of important documents from scratch.",
-        "This caused loss of critical data that impacted decision-making.",
-        "This created delays in project timelines due to lost progress."
-      ],
-      "backup and restore failures": [
-        "This put critical business data at risk of permanent loss.",
-        "This prevented recovery of accidentally deleted important files.",
-        "This created compliance risks for data retention requirements."
-      ],
-      "permission and access control issues": [
-        "This blocked collaboration on shared documents and resources.",
-        "This prevented necessary team members from accessing required files.",
-        "This created bottlenecks where access requests delayed work."
-      ]
-    };
-    
-    // Default impacts for any issue type not specifically mapped
-    const defaultImpacts = [
-      "This disrupted normal workflow and created productivity losses.",
-      "This prevented completion of regular tasks and created backlogs.",
-      "This caused delays in meeting project deadlines and deliverables."
-    ];
-    
-    // Get the appropriate impact statements for this issue type
-    const possibleImpacts = impactMap[issueType] || defaultImpacts;
-    
-    // Select an impact based on a hash of the ticket number to ensure consistency
-    const ticketHash = hashString(
-      (typeof ticket.number === 'string' ? ticket.number : '') || 
-      (typeof ticket.sys_id === 'string' ? ticket.sys_id : '') || 
-      (typeof text === 'string' ? text : '')
-    );
-    const selectedIndex = ticketHash % possibleImpacts.length;
-    
-    return possibleImpacts[selectedIndex];
-  }
-  
-  // Simple string hash function for consistent selection
-  function hashString(str: string): number {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-      const char = str.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash; // Convert to 32bit integer
-    }
-    return Math.abs(hash);
-  }
-
-  // Extract the specific technical issue from the text
-  function extractSpecificIssue(text: string, ticket: Ticket): string {
-    // Common technical issue patterns to look for
-    const issuePatterns = [
-      // Network issues
-      { regex: /(?:can'?t|unable to|not) (?:access|connect to|reach) (?:network|shared) (?:drive|folder|directory|resource)/i, issue: "network drive access problems" },
-      { regex: /(?:vpn|virtual private network) (?:connection|access) (?:issue|problem|error|fail)/i, issue: "VPN connectivity issues" },
-      { regex: /(?:wifi|wireless|internet) (?:connection|signal) (?:drop|weak|intermittent|unstable)/i, issue: "unstable WiFi connections" },
-      { regex: /(?:dns|domain name|name resolution) (?:error|issue|problem)/i, issue: "DNS resolution failures" },
-      
-      // Communication tools
-      { regex: /(?:teams|zoom|webex) (?:call|meeting) (?:drop|disconnect|crash|freeze)/i, issue: "video conferencing disconnections" },
-      { regex: /(?:teams|zoom|webex) (?:audio|video|camera|mic) (?:not working|issue|problem)/i, issue: "video conferencing audio/video problems" },
-      { regex: /(?:outlook|email) (?:sync|synchronization) (?:issue|problem|error|fail)/i, issue: "email synchronization problems" },
-      { regex: /(?:calendar|meeting|appointment) (?:sync|missing|not showing|disappear)/i, issue: "calendar synchronization issues" },
-      
-      // Hardware issues
-      { regex: /(?:printer|printing|scan) (?:not working|issue|problem|error|fail)/i, issue: "printer connectivity problems" },
-      { regex: /(?:monitor|display|screen) (?:blank|black|not working|flickering)/i, issue: "monitor display issues" },
-      { regex: /(?:keyboard|mouse|input device) (?:not working|unresponsive|lag)/i, issue: "input device malfunctions" },
-      { regex: /(?:battery|power) (?:drain|not charging|issue|problem)/i, issue: "battery and power problems" },
-      
-      // Software issues
-      { regex: /(?:application|program|software) (?:crash|freeze|hang|not responding)/i, issue: "application crashes and freezes" },
-      { regex: /(?:slow|performance|lag) (?:computer|laptop|pc|system)/i, issue: "system performance degradation" },
-      { regex: /(?:update|upgrade|patch) (?:fail|error|issue|problem)/i, issue: "software update failures" },
-      { regex: /(?:login|authentication|password) (?:fail|issue|problem|error|reset)/i, issue: "authentication problems" },
-      
-      // Data issues
-      { regex: /(?:file|document) (?:corrupt|missing|lost|can't open)/i, issue: "file corruption or loss" },
-      { regex: /(?:backup|restore) (?:fail|issue|problem|error)/i, issue: "backup and restore failures" },
-      { regex: /(?:permission|access denied|unauthorized)/i, issue: "permission and access control issues" },
-      
-      // Security issues
-      { regex: /(?:virus|malware|ransomware|phishing)/i, issue: "malware and security threats" },
-      { regex: /(?:suspicious|unusual|unauthorized) (?:activity|login|access)/i, issue: "unauthorized access attempts" }
-    ];
-    
-    // Check for specific issue patterns in the text
-    const lowerText = typeof text === 'string' ? text.toLowerCase() : '';
-    for (const pattern of issuePatterns) {
-      if (pattern.regex.test(lowerText)) {
-        return pattern.issue;
-      }
-    }
-    
-    // If no specific pattern is found, try to extract key terms
-    const shortDesc = typeof ticket.short_description === 'string' ? ticket.short_description : '';
-    
-    // If short description contains a clear issue statement, use that
-    if (shortDesc.length > 10 && !isGenericText(shortDesc)) {
-      // Clean up the short description
-      const cleanShortDesc = shortDesc
-        .replace(/^(re:|fwd:)/i, '')
-        .trim();
-      
-      if (cleanShortDesc.length > 10) {
-        return `issues with ${cleanShortDesc.toLowerCase()}`;
-      }
-    }
-    
-    // Extract category and subcategory if available
-    const category = typeof ticket.category === 'string' ? ticket.category.toLowerCase() : '';
-    const subcategory = typeof ticket.subcategory === 'string' ? ticket.subcategory.toLowerCase() : '';
-    
-    if (subcategory && category) {
-      return `${subcategory} issues in ${category} systems`;
-    } else if (category) {
-      return `${category} system issues`;
-    }
-    
-    // Last resort: extract technical terms from the text
-    const technicalTerms = [
-      'network', 'server', 'database', 'security', 'authentication', 
-      'firewall', 'VPN', 'DNS', 'API', 'SQL', 'Windows', 'Linux', 'macOS',
-      'cloud', 'AWS', 'Azure', 'Docker', 'virtualization', 'backup',
-      'monitoring', 'incident', 'deployment', 'Office 365', 'Teams', 'Outlook',
-      'SharePoint', 'OneDrive', 'Exchange', 'Active Directory', 'printer',
-      'laptop', 'desktop', 'mobile', 'tablet', 'browser', 'Chrome', 'Firefox',
-      'Edge', 'Safari', 'Internet Explorer', 'password', 'account', 'email',
-      'file share', 'permissions', 'access', 'connectivity', 'bandwidth'
-    ];
-    
-    const foundTerms = technicalTerms.filter(term => lowerText.includes(term.toLowerCase()));
-    
-    if (foundTerms.length > 0) {
-      // Use the first two terms found
-      if (foundTerms.length >= 2) {
-        return `${foundTerms[0]} and ${foundTerms[1]} integration issues`;
-      } else {
-        return `${foundTerms[0]} configuration issues`;
-      }
-    }
-    
-    // If nothing specific found, return a generic but somewhat specific issue
-    return "technical system integration issues";
-  }
 
   // Extract meaningful tags from a ticket
   function extractMeaningfulTags(ticket: Ticket): string[] {

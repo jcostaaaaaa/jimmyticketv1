@@ -653,10 +653,10 @@ export default function AnalyzePage() {
   };
   
   // Analyze trends over time
-  const analyzeTrends = (tickets: Ticket[]): {overall: number, categories: {category: string, growthRate: number}[]} => {
+  const analyzeTrends = (_tickets: Ticket[]): {overall: number, categories: {category: string, growthRate: number}[]} => {
     // This would normally involve time-series analysis
     // For demo purposes, we'll return simulated results based on actual categories
-    const categoryTrends = analyzeCategoryTrends(tickets);
+    const categoryTrends = analyzeCategoryTrends(_tickets);
     
     return {
       overall: 12, // Overall growth rate
