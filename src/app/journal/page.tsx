@@ -155,7 +155,7 @@ export default function JournalPage() {
       // Fallback to empty entries
       setEntries([]);
     }
-  }, [tickets]);
+  }, [tickets, generateLearningEntryFromTicket]);
 
   // Check if text is generic/template text
   function isGenericText(text: string): boolean {

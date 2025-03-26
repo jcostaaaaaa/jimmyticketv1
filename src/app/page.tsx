@@ -225,7 +225,7 @@ export default function Home() {
         
         {/* Version indicator */}
         <div className="fixed bottom-2 right-2 text-slate-400 text-sm font-mono">
-          v9
+          v10
         </div>
       </main>
       

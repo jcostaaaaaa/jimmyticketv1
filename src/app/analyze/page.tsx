@@ -289,7 +289,7 @@ export default function AnalyzePage() {
   };
   
   // Generate predictions based on actual ticket data
-  const generateDataDrivenPredictions = (tickets: Ticket[], analytics: TicketAnalytics): string => {
+  const generateDataDrivenPredictions = (tickets: Ticket[], _analytics: TicketAnalytics): string => {
     // Analyze ticket trends over time
     const trends = analyzeTrends(tickets);
     const topGrowingCategory = trends.categories.length > 0 ? trends.categories[0].category : "network-related";
@@ -343,7 +343,7 @@ export default function AnalyzePage() {
   // Analyze resolution times by category
   const analyzeResolutionTimesByCategory = (tickets: Ticket[]): {category: string, avgTime: number, comparisonPercent: number}[] => {
     const categoryTimes: {[category: string]: number[]} = {};
-    let allTimes: number[] = [];
+    const allTimes: number[] = [];
     
     // Collect resolution times by category
     tickets.forEach(ticket => {
@@ -531,7 +531,7 @@ export default function AnalyzePage() {
     }
     
     // Find the smallest group of users that generate a significant portion of tickets
-    let userCount = Math.max(1, Math.round(totalUsers * 0.15)); // Start with top 15% of users
+    const userCount = Math.max(1, Math.round(totalUsers * 0.15)); // Start with top 15% of users
     let ticketCount = 0;
     
     for (let i = 0; i < userCount && i < sortedUsers.length; i++) {
@@ -666,7 +666,7 @@ export default function AnalyzePage() {
   };
   
   // Analyze seasonal patterns
-  const analyzeSeasonalPatterns = (tickets: Ticket[]): {peak: string, percentage: number} => {
+  const analyzeSeasonalPatterns = (_tickets: Ticket[]): {peak: string, percentage: number} => {
     // This would normally involve seasonal decomposition
     // For demo purposes, we'll return simulated results
     return {
@@ -676,7 +676,7 @@ export default function AnalyzePage() {
   };
   
   // Analyze hardware lifecycle patterns
-  const analyzeHardwareLifecycle = (tickets: Ticket[]): {earlyFailurePercent: number, lateFailurePercent: number, criticalAge: number} => {
+  const analyzeHardwareLifecycle = (_tickets: Ticket[]): {earlyFailurePercent: number, lateFailurePercent: number, criticalAge: number} => {
     // This would normally involve survival analysis
     // For demo purposes, we'll return simulated results
     return {
@@ -687,7 +687,7 @@ export default function AnalyzePage() {
   };
   
   // Analyze remote work impact
-  const analyzeRemoteWorkImpact = (tickets: Ticket[]): {percentage: number, correlation: number} => {
+  const analyzeRemoteWorkImpact = (_tickets: Ticket[]): {percentage: number, correlation: number} => {
     // This would normally involve correlation analysis
     // For demo purposes, we'll return simulated results
     return {
@@ -1313,25 +1313,12 @@ function calculateResolutionEfficiency(tickets: Ticket[]): number {
     const closeCode = (typeof t.close_code === 'string' ? t.close_code : '').toLowerCase();
     
     // Check for common closed status values
-    const closedStatusValues = [
-      'closed', 
-      'resolved', 
-      'complete', 
-      'completed',
-      'fixed',
-      'done',
-      'cancelled',
-      'canceled',
-      'rejected',
-      'solved',
-      'finished'
-    ];
+    const closedStatusValues = ['closed', 'resolved', 'complete', 'completed', 'fixed', 'done', 
+                               'cancelled', 'canceled', 'rejected', 'solved', 'finished'];
     
     // Check if any of the closed status values match in any of the fields
     return closedStatusValues.some(value => 
-      status.includes(value) || 
-      state.includes(value) || 
-      closeCode.includes(value)
+      status.includes(value) || state.includes(value) || closeCode.includes(value)
     ) || 
     // Also consider a ticket closed if it has any value in close_code
     (closeCode !== '');
@@ -1414,7 +1401,9 @@ function generateInsights(analytics: TicketAnalytics, tickets: Ticket[]): string
       
       return closedStatusValues.some(value => 
         status.includes(value) || state.includes(value) || closeCode.includes(value)
-      ) || (closeCode !== '');
+      ) || 
+      // Also consider a ticket closed if it has any value in close_code
+      (closeCode !== '');
     });
     
     resolvedTickets.forEach(ticket => {
