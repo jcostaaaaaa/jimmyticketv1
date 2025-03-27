@@ -174,72 +174,19 @@ export default function JournalPage() {
     return tags.slice(0, 5);
   }, []);
 
-  // Function to extract meaningful tags from a ticket
+  // Extract meaningful tags from a ticket
   const extractMeaningfulTags = useCallback((ticket: Ticket): string[] => {
-    // Extract text from ticket
+    // Combine description and resolution text for tag extraction
     let text = '';
     if (ticket.description && typeof ticket.description === 'string') {
-      text += ' ' + ticket.description;
+      text += ticket.description + ' ';
     }
     if (ticket.resolution && typeof ticket.resolution === 'string') {
-      text += ' ' + ticket.resolution;
+      text += ticket.resolution;
     }
     
-    text = text.toLowerCase();
-    
-    // Extract tags using the same logic as extractKeywordsAsTags
     return extractKeywordsAsTags(text);
   }, [extractKeywordsAsTags]);
-
-  // Legacy function to generate learning entries from ticket text
-  const generateLearningEntryLegacy = useCallback((text: string): string | null => {
-    // Check if the text is too short to be meaningful
-    if (text.length < 30) {
-      return null;
-    }
-    
-    // Normalize text for pattern matching
-    const normalizedText = text.toLowerCase();
-    
-    // Common patterns for hardware issues
-    const hardwarePatterns = [
-      /(\w+) (not|isn'?t) (working|functioning|responding|powering on)/i,
-      /(\w+) (failed|broken|damaged|faulty)/i,
-      /(\w+) (error|issue|problem)/i,
-      /replace (\w+)/i,
-      /(\w+) needs (replacement|repair)/i
-    ];
-    
-    // Common patterns for software issues
-    const softwarePatterns = [
-      /(application|program|software) (crash|error|not responding)/i,
-      /(can'?t|cannot|unable to) (access|login|connect to) (\w+)/i,
-      /(\w+) (not|isn'?t) (loading|opening|starting)/i,
-      /error message/i,
-      /blue screen/i
-    ];
-    
-    // Check for hardware issues
-    for (const pattern of hardwarePatterns) {
-      const match = normalizedText.match(pattern);
-      if (match) {
-        const component = match[1];
-        return `Today I learned about diagnosing and resolving issues with ${component} hardware. I identified specific symptoms, troubleshooting steps, and repair procedures that will help me resolve similar issues more efficiently in the future.`;
-      }
-    }
-    
-    // Check for software issues
-    for (const pattern of softwarePatterns) {
-      const match = normalizedText.match(pattern);
-      if (match) {
-        const software = match[3] || 'software';
-        return `Today I learned about troubleshooting ${software} issues. I discovered specific error patterns, diagnostic approaches, and resolution techniques that will improve my ability to quickly resolve similar problems.`;
-      }
-    }
-    
-    // Generic fallback for when no specific pattern is matched
-    return `Today I learned about resolving technical issues through systematic troubleshooting. I applied a structured approach to identify the root cause and implement an effective solution.`;
-  }, []);
 
   // Function to generate a learning entry with AI
   const generateLearningEntryWithAI = useCallback(async (ticket: Ticket): Promise<string | null> => {
