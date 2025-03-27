@@ -137,8 +137,8 @@ export default function AnalyzePage() {
   }, [tickets]);
   
   const runAIAnalysis = async () => {
-    // Use environment variable for API key
-    const apiKeyToUse = process.env.NEXT_PUBLIC_OPENAI_API_KEY || '';
+    // Use the JOPENAPIKEY environment variable
+    const apiKeyToUse = process.env.JOPENAPIKEY || '';
     
     if (!apiKeyToUse || apiKeyToUse.trim() === '' || !analytics) {
       console.error('API key not found in environment variables');
@@ -148,62 +148,129 @@ export default function AnalyzePage() {
     setIsLoadingAI(true);
     
     try {
-      // First process the company context to inform the ticket analysis
-      let contextualizedInsights: string[] = [];
-      let contextualizedRecommendations: string[] = [];
-      let contextualizedPredictions: string = "";
+      // Process the company context and ticket data
+      let contextPrompt = '';
       
       if (companyContext && companyContext.trim() !== '') {
-        console.log("Processing company context before ticket analysis");
+        contextPrompt = `
+        DEPARTMENT CONTEXT:
+        ${companyContext}
         
-        // In a real implementation, this would make an API call to process the context
-        // For now, we'll simulate this by adding context-aware insights
-        
-        // These would normally come from an AI model that processes the context
-        contextualizedInsights = [
-          `Based on your department context, we've identified specific patterns in your ${Object.keys(analytics.categoryDistribution)[0]} tickets that align with your team's responsibilities.`,
-          `Your department's recent changes appear to correlate with an increase in ${Object.keys(analytics.categoryDistribution)[1]}-related tickets.`,
-          `The team size you mentioned suggests potential resource allocation challenges for handling ${Object.keys(analytics.categoryDistribution)[2]}-related issues.`
-        ];
-        
-        contextualizedRecommendations = [
-          "Consider adjusting team responsibilities based on your department context to better address recurring issues.",
-          "Based on your department's challenges, implement targeted training for specific technical areas.",
-          "Your current initiatives could benefit from realignment with the most common ticket categories."
-        ];
-        
-        contextualizedPredictions = `Considering your department context, we project that ${Object.keys(analytics.categoryDistribution)[0]} issues will continue to be your primary challenge.\n\nYour team's current structure and initiatives suggest you should focus on:\n• Building specialized expertise in ${Object.keys(analytics.categoryDistribution)[1]} troubleshooting\n• Developing better documentation for ${Object.keys(analytics.categoryDistribution)[2]}-related issues\n• Implementing proactive monitoring aligned with your department's responsibilities`;
+        Please consider this department context when analyzing the ticket data.
+        `;
       }
       
-      // Then generate standard insights based on ticket data
-      const standardInsights = generateDataDrivenInsights();
-      const standardRecommendations = generateDataDrivenRecommendations();
-      const standardPredictions = generateDataDrivenPredictions();
+      // Prepare ticket data for analysis
+      const ticketSummary = {
+        totalTickets: analytics.totalTickets,
+        openTickets: analytics.openTickets,
+        resolvedTickets: analytics.resolvedTickets,
+        averageResolutionTime: analytics.averageResolutionTime,
+        priorityDistribution: analytics.priorityDistribution,
+        categoryDistribution: analytics.categoryDistribution,
+        topAssignees: analytics.topAssignees.slice(0, 5),
+        monthlyTrends: analytics.monthlyTrends,
+        commonIssues: analytics.commonIssues,
+        resolutionEfficiency: analytics.resolutionEfficiency
+      };
       
-      // Combine contextualized and standard insights
-      const combinedInsights = companyContext && companyContext.trim() !== '' 
-        ? [...contextualizedInsights, ...standardInsights]
-        : standardInsights;
-        
-      const combinedRecommendations = companyContext && companyContext.trim() !== ''
-        ? [...contextualizedRecommendations, ...standardRecommendations]
-        : standardRecommendations;
-        
-      const combinedPredictions = companyContext && companyContext.trim() !== ''
-        ? contextualizedPredictions
-        : standardPredictions;
+      // Construct the prompt for OpenAI
+      const prompt = `
+      You are an IT analytics expert analyzing support ticket data.
       
-      // Enhanced AI analysis results with data-driven insights
+      ${contextPrompt}
+      
+      TICKET DATA SUMMARY:
+      ${JSON.stringify(ticketSummary, null, 2)}
+      
+      Based on this data, please provide:
+      1. 4-5 specific data-driven insights about patterns, trends, or issues
+      2. 4-5 actionable recommendations to improve IT support operations
+      3. A brief prediction of future trends and challenges
+      
+      Format your response as a JSON object with the following structure:
+      {
+        "insights": ["insight1", "insight2", ...],
+        "recommendations": ["recommendation1", "recommendation2", ...],
+        "predictionText": "Your prediction text here..."
+      }
+      `;
+      
+      // Make API call to OpenAI
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKeyToUse}`
+        },
+        body: JSON.stringify({
+          model: 'gpt-3.5-turbo',
+          messages: [
+            {
+              role: 'system',
+              content: 'You are an IT analytics expert providing insights on support ticket data.'
+            },
+            {
+              role: 'user',
+              content: prompt
+            }
+          ],
+          temperature: 0.7,
+          max_tokens: 1000
+        })
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('OpenAI API error:', errorData);
+        throw new Error(`API error: ${errorData.error?.message || response.statusText}`);
+      }
+      
+      const data = await response.json();
+      const content = data.choices[0]?.message?.content?.trim();
+      
+      if (!content) {
+        throw new Error('No content returned from API');
+      }
+      
+      // Parse the JSON response
+      try {
+        const aiResults = JSON.parse(content);
+        
+        // Ensure the response has the expected structure
+        const aiAnalysisResults: AIAnalysis = {
+          insights: Array.isArray(aiResults.insights) ? aiResults.insights : [],
+          recommendations: Array.isArray(aiResults.recommendations) ? aiResults.recommendations : [],
+          predictionText: typeof aiResults.predictionText === 'string' ? aiResults.predictionText : '',
+          companyContext: companyContext
+        };
+        
+        setAIAnalysis(aiAnalysisResults);
+      } catch (parseError) {
+        console.error('Error parsing AI response:', parseError);
+        
+        // Fallback to simulated data if parsing fails
+        const aiAnalysisResults: AIAnalysis = {
+          insights: generateDataDrivenInsights(),
+          recommendations: generateDataDrivenRecommendations(),
+          predictionText: generateDataDrivenPredictions(),
+          companyContext: companyContext
+        };
+        
+        setAIAnalysis(aiAnalysisResults);
+      }
+    } catch (error) {
+      console.error("Error running AI analysis:", error);
+      
+      // Fallback to simulated data on error
       const aiAnalysisResults: AIAnalysis = {
-        insights: combinedInsights,
-        recommendations: combinedRecommendations,
-        predictionText: combinedPredictions,
+        insights: generateDataDrivenInsights(),
+        recommendations: generateDataDrivenRecommendations(),
+        predictionText: generateDataDrivenPredictions(),
         companyContext: companyContext
       };
       
       setAIAnalysis(aiAnalysisResults);
-    } catch (error) {
-      console.error("Error running AI analysis:", error);
     } finally {
       setIsLoadingAI(false);
     }
@@ -237,18 +304,25 @@ export default function AnalyzePage() {
     return "Based on analysis of your tickets, we project a 15-20% increase in network-related tickets over the next quarter.\n\nTo address these challenges, we recommend:\n• Proactively scale support resources\n• Consider network infrastructure review\n• Schedule additional temporary support staff during peak periods";
   };
 
-  // ... rest of the code remains the same ...
+  // State for tab selection
+  const [activeTab, setActiveTab] = useState<'analysis' | 'context'>('analysis');
 
   if (tickets.length === 0) {
     return (
       <div className="min-h-screen bg-slate-50">
         <Header />
-        <main className="container mx-auto py-8 px-4">
-          <div className="bg-yellow-50 p-6 rounded-xl border border-yellow-100 text-yellow-800">
-            <h2 className="text-xl font-semibold mb-2">No Data Available</h2>
-            <p>Please import some ticket data from the Import page first.</p>
+        <div className="container mx-auto px-4 py-8">
+          <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h2 className="text-2xl font-bold mb-4">Analytics Dashboard</h2>
+            <p>No tickets available for analysis. Please import tickets first.</p>
+            <button
+              onClick={() => router.push('/')}
+              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            >
+              Go to Import
+            </button>
           </div>
-        </main>
+        </div>
       </div>
     );
   }
@@ -256,121 +330,312 @@ export default function AnalyzePage() {
   return (
     <div className="min-h-screen bg-slate-50">
       <Header />
-      
-      <main className="container mx-auto py-8 px-4">
-        <h1 className="text-2xl font-bold mb-6">Ticket Analytics</h1>
-        
-        {/* Key Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <MetricCard
-            title="Total Tickets"
-            value={analytics?.totalTickets || 0}
-            icon={<FaExclamationCircle />}
-            color="blue"
-          />
-          <MetricCard
-            title="Open Tickets"
-            value={analytics?.openTickets || 0}
-            icon={<FaClock />}
-            color="yellow"
-          />
-          <MetricCard
-            title="Resolved Tickets"
-            value={analytics?.resolvedTickets || 0}
-            icon={<FaCheckCircle />}
-            color="green"
-          />
-          <MetricCard
-            title="Avg. Resolution Time"
-            value={analytics?.averageResolutionTime || 'N/A'}
-            icon={<FaUserCog />}
-            color="purple"
-          />
-        </div>
-        
-        {/* Auto-generated Insights */}
-        <div className="bg-white p-6 rounded-xl shadow-sm mb-8">
-          <h2 className="text-lg font-semibold mb-4">Key Insights</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {insights.map((insight, index) => (
-              <div key={index} className="border-l-4 border-blue-500 pl-4 py-2">
-                <p className="text-slate-800">{insight}</p>
-              </div>
-            ))}
+      <div className="container mx-auto px-4 py-8">
+        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+          <h2 className="text-2xl font-bold mb-4">Analytics Dashboard</h2>
+          
+          {/* Tab Navigation */}
+          <div className="flex border-b mb-6">
+            <button
+              className={`px-4 py-2 font-medium ${activeTab === 'analysis' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+              onClick={() => setActiveTab('analysis')}
+            >
+              Analysis
+            </button>
+            <button
+              className={`px-4 py-2 font-medium ${activeTab === 'context' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+              onClick={() => setActiveTab('context')}
+            >
+              Department Context
+            </button>
           </div>
-        </div>
+          
+          {/* Context Tab Content */}
+          {activeTab === 'context' && (
+            <div>
+              <div className="mb-6">
+                <h3 className="text-xl font-semibold mb-4">Department Context</h3>
+                <p className="text-gray-600 mb-4">
+                  Provide context about your department to get more relevant insights. This information will be processed first to inform the AI analysis of your tickets.
+                </p>
+                <textarea
+                  value={companyContext}
+                  onChange={(e) => setCompanyContext(e.target.value)}
+                  placeholder="Describe your department (e.g., team size, key responsibilities, common challenges, recent changes, current initiatives)"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[200px]"
+                />
+              </div>
+              
+              <div className="flex justify-end">
+                <button
+                  onClick={() => setActiveTab('analysis')}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                >
+                  Continue to Analysis
+                </button>
+              </div>
+            </div>
+          )}
+          
+          {/* Analysis Tab Content */}
+          {activeTab === 'analysis' && (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                <MetricCard
+                  title="Total Tickets"
+                  value={analytics?.totalTickets || 0}
+                  icon={<FaExclamationCircle />}
+                  color="blue"
+                />
+                <MetricCard
+                  title="Open Tickets"
+                  value={analytics?.openTickets || 0}
+                  icon={<FaClock />}
+                  color="yellow"
+                />
+                <MetricCard
+                  title="Resolved Tickets"
+                  value={analytics?.resolvedTickets || 0}
+                  icon={<FaCheckCircle />}
+                  color="green"
+                />
+                <MetricCard
+                  title="Avg. Resolution Time"
+                  value={analytics?.averageResolutionTime || 'N/A'}
+                  icon={<FaUserCog />}
+                  color="purple"
+                />
+              </div>
+              
+              {/* Auto-generated Insights */}
+              <div className="bg-white p-6 rounded-xl shadow-sm mb-8">
+                <h2 className="text-lg font-semibold mb-4">Key Insights</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {insights.map((insight, index) => (
+                    <div key={index} className="border-l-4 border-blue-500 pl-4 py-2">
+                      <p className="text-slate-800">{insight}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
 
-        {/* Charts and Distributions */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          {/* Priority Distribution */}
-          <div className="bg-white p-6 rounded-xl shadow-sm">
-            <h2 className="text-lg font-semibold mb-4">Priority Distribution</h2>
-            <div className="space-y-2">
-              {analytics?.priorityDistribution && Object.entries(analytics.priorityDistribution)
-                .sort(([, a], [, b]) => b - a)
-                .map(([priority, count]) => (
-                  <div key={priority} className="flex flex-wrap items-center mb-2">
-                    <span className="w-20 sm:w-32 text-sm text-gray-600 mb-1 sm:mb-0">{priority || 'Unspecified'}</span>
-                    <div className="flex-1 mx-2 min-w-[100px]">
-                      <div className="h-4 bg-blue-100 rounded-full overflow-hidden">
+              {/* Charts and Distributions */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                {/* Priority Distribution */}
+                <div className="bg-white p-6 rounded-xl shadow-sm">
+                  <h2 className="text-lg font-semibold mb-4">Priority Distribution</h2>
+                  <div className="space-y-2">
+                    {analytics?.priorityDistribution && Object.entries(analytics.priorityDistribution)
+                      .sort(([, a], [, b]) => b - a)
+                      .map(([priority, count]) => (
+                        <div key={priority} className="flex flex-wrap items-center mb-2">
+                          <span className="w-20 sm:w-32 text-sm text-gray-600 mb-1 sm:mb-0">{priority || 'Unspecified'}</span>
+                          <div className="flex-1 mx-2 min-w-[100px]">
+                            <div className="h-4 bg-blue-100 rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-blue-500"
+                                style={{
+                                  width: `${(count / analytics.totalTickets) * 100}%`,
+                                }}
+                              />
+                            </div>
+                          </div>
+                          <span className="text-sm text-gray-600 whitespace-nowrap">{count} ({Math.round((count / analytics.totalTickets) * 100)}%)</span>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+
+                {/* Category Distribution */}
+                <div className="bg-white p-6 rounded-xl shadow-sm relative">
+                  <h2 className="text-lg font-semibold mb-4">Category Distribution</h2>
+                  <div className="space-y-2">
+                    {analytics?.categoryDistribution && Object.entries(analytics.categoryDistribution)
+                      .sort(([, a], [, b]) => b - a)
+                      .map(([category, count]) => (
+                        <div key={category} className="relative">
+                          <div 
+                            className="flex flex-wrap items-center mb-1"
+                            onMouseEnter={() => setHoveredCategory(category)}
+                            onMouseLeave={() => setHoveredCategory(null)}
+                          >
+                            <span className="w-20 sm:w-32 text-sm text-gray-600 mb-1 sm:mb-0">{category || 'Unspecified'}</span>
+                            <div className="flex-1 mx-2 min-w-[100px]">
+                              <div className="h-4 bg-green-100 rounded-full overflow-hidden">
+                                <div
+                                  className="h-full bg-green-500"
+                                  style={{
+                                    width: `${(count / analytics.totalTickets) * 100}%`,
+                                  }}
+                                />
+                              </div>
+                            </div>
+                            <span className="text-sm text-gray-600 flex items-center whitespace-nowrap">
+                              {count} ({Math.round((count / analytics.totalTickets) * 100)}%)
+                              <span className="ml-1 text-blue-500 cursor-pointer" title="View subcategories">
+                                <FaInfoCircle />
+                              </span>
+                            </span>
+                          </div>
+
+                          {/* Subcategory tooltip - position it differently on mobile */}
+                          {hoveredCategory === category && analytics.categoryToSubcategory[category] && (
+                            <div className="absolute left-0 right-0 sm:left-auto sm:right-auto mt-1 sm:w-full bg-white border border-gray-200 rounded-md shadow-lg p-3 z-10">
+                              <h3 className="text-sm font-medium mb-2">{category} Breakdown</h3>
+                              <div className="space-y-3">
+                                <div className="flex items-start">
+                                  <div className="bg-white p-3 rounded-lg border border-purple-100 text-slate-700 text-sm italic mb-3 w-full">
+                                    &quot;{category}&quot;
+                                  </div>
+                                </div>
+                                <div className="text-slate-800 font-medium">
+                                  <p className="mb-3">Based on your category context, our analysis has been tailored to address your specific organizational needs. The insights and recommendations take into account your particular environment, challenges, and goals.</p>
+                                  <p>Key contextual factors considered:</p>
+                                  <ul className="list-disc pl-5 mt-2 space-y-1">
+                                    <li>Your industry-specific IT service patterns</li>
+                                    <li>Organizational size and structure impacts on ticket workflows</li>
+                                    <li>Current challenges and initiatives mentioned</li>
+                                    <li>Historical context and recent changes</li>
+                                    <li>Technology adoption stage and infrastructure details</li>
+                                  </ul>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                  </div>
+                </div>
+
+                {/* Top Assignees */}
+                <div className="bg-white p-6 rounded-xl shadow-sm">
+                  <h2 className="text-lg font-semibold mb-4">Top Assignees</h2>
+                  <div className="space-y-2">
+                    {analytics?.topAssignees.map(({ name, count }) => (
+                      <div key={name} className="flex flex-wrap items-center mb-2">
+                        <span className="w-20 sm:w-40 text-sm text-gray-600 truncate mb-1 sm:mb-0">{name || 'Unassigned'}</span>
+                        <div className="flex-1 mx-2 min-w-[100px]">
+                          <div className="h-4 bg-purple-100 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-purple-500"
+                              style={{
+                                width: `${(count / analytics.totalTickets) * 100}%`,
+                              }}
+                            />
+                          </div>
+                        </div>
+                        <span className="text-sm text-gray-600 whitespace-nowrap">{count} tickets</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Monthly Trends */}
+                <div className="bg-white p-6 rounded-xl shadow-sm">
+                  <h2 className="text-lg font-semibold mb-4">Monthly Trends</h2>
+                  <div className="space-y-2">
+                    {analytics?.monthlyTrends.map(({ month, count }) => (
+                      <div key={month} className="flex flex-wrap items-center mb-2">
+                        <span className="w-20 sm:w-24 text-sm text-gray-600 mb-1 sm:mb-0">{month}</span>
+                        <div className="flex-1 mx-2 min-w-[100px]">
+                          <div className="h-4 bg-yellow-100 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-yellow-500"
+                              style={{
+                                width: `${(count / Math.max(...analytics.monthlyTrends.map(t => t.count))) * 100}%`,
+                              }}
+                            />
+                          </div>
+                        </div>
+                        <span className="text-sm text-gray-600 whitespace-nowrap">{count} tickets</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Common Issues */}
+                <div className="bg-white p-6 rounded-xl shadow-sm">
+                  <h2 className="text-lg font-semibold mb-4">Common Issues</h2>
+                  <ul className="list-disc pl-5 space-y-2">
+                    {analytics?.commonIssues.map((issue, index) => (
+                      <li key={index} className="text-gray-700">{issue}</li>
+                    ))}
+                  </ul>
+                </div>
+                
+                {/* Resolution Efficiency */}
+                <div className="bg-white p-6 rounded-xl shadow-sm">
+                  <h2 className="text-lg font-semibold mb-4">Resolution Efficiency</h2>
+                  <div className="flex flex-col items-center">
+                    <div className="relative w-40 h-40">
+                      <div className="w-full h-full rounded-full bg-gray-100 flex items-center justify-center">
                         <div
-                          className="h-full bg-blue-500"
+                          className="absolute inset-0 rounded-full"
                           style={{
-                            width: `${(count / analytics.totalTickets) * 100}%`,
+                            background: `conic-gradient(#22c55e ${analytics?.resolutionEfficiency || 0}%, #f3f4f6 0%)`,
+                            clipPath: 'circle(50% at 50% 50%)',
                           }}
                         />
-                      </div>
-                    </div>
-                    <span className="text-sm text-gray-600 whitespace-nowrap">{count} ({Math.round((count / analytics.totalTickets) * 100)}%)</span>
-                  </div>
-                ))}
-            </div>
-          </div>
-
-          {/* Category Distribution */}
-          <div className="bg-white p-6 rounded-xl shadow-sm relative">
-            <h2 className="text-lg font-semibold mb-4">Category Distribution</h2>
-            <div className="space-y-2">
-              {analytics?.categoryDistribution && Object.entries(analytics.categoryDistribution)
-                .sort(([, a], [, b]) => b - a)
-                .map(([category, count]) => (
-                  <div key={category} className="relative">
-                    <div 
-                      className="flex flex-wrap items-center mb-1"
-                      onMouseEnter={() => setHoveredCategory(category)}
-                      onMouseLeave={() => setHoveredCategory(null)}
-                    >
-                      <span className="w-20 sm:w-32 text-sm text-gray-600 mb-1 sm:mb-0">{category || 'Unspecified'}</span>
-                      <div className="flex-1 mx-2 min-w-[100px]">
-                        <div className="h-4 bg-green-100 rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-green-500"
-                            style={{
-                              width: `${(count / analytics.totalTickets) * 100}%`,
-                            }}
-                          />
+                        <div className="w-32 h-32 bg-white rounded-full flex items-center justify-center z-10">
+                          <span 
+                            className="text-3xl font-bold text-gray-800 cursor-pointer hover:text-blue-600 transition-colors"
+                            onClick={() => router.push('/journal')}
+                            title="View Learning Journal"
+                          >
+                            {analytics?.resolutionEfficiency || 0}%
+                          </span>
                         </div>
                       </div>
-                      <span className="text-sm text-gray-600 flex items-center whitespace-nowrap">
-                        {count} ({Math.round((count / analytics.totalTickets) * 100)}%)
-                        <span className="ml-1 text-blue-500 cursor-pointer" title="View subcategories">
-                          <FaInfoCircle />
-                        </span>
-                      </span>
                     </div>
-
-                    {/* Subcategory tooltip - position it differently on mobile */}
-                    {hoveredCategory === category && analytics.categoryToSubcategory[category] && (
-                      <div className="absolute left-0 right-0 sm:left-auto sm:right-auto mt-1 sm:w-full bg-white border border-gray-200 rounded-md shadow-lg p-3 z-10">
-                        <h3 className="text-sm font-medium mb-2">{category} Breakdown</h3>
+                    <p className="mt-4 text-center text-gray-600">
+                      Based on resolution time, response time, and satisfaction ratings
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              {/* AI-Powered Analysis Section */}
+              <div className="bg-white p-6 rounded-xl shadow-sm mb-8">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-xl font-semibold mb-4">AI-Powered Analysis</h3>
+                  
+                  <button
+                    onClick={runAIAnalysis}
+                    disabled={isLoadingAI || !analytics}
+                    className={`px-4 py-2 rounded-md ${
+                      isLoadingAI || !analytics 
+                        ? 'bg-gray-300 cursor-not-allowed' 
+                        : 'bg-blue-600 hover:bg-blue-700 text-white'
+                    }`}
+                  >
+                    {isLoadingAI ? 'Processing...' : 'Run AI Analysis'}
+                  </button>
+                </div>
+                
+                {isLoadingAI && (
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                    <p>Processing your ticket data with AI...</p>
+                    <p className="text-sm text-gray-500 mt-2">This may take a few moments</p>
+                  </div>
+                )}
+                
+                {aiAnalysis && !isLoadingAI && (
+                  <div className="space-y-6">
+                    {/* Display company context if provided */}
+                    {aiAnalysis.companyContext && (
+                      <div className="border border-purple-100 rounded-lg p-5 bg-purple-50">
+                        <h3 className="text-md font-semibold mb-3 text-purple-900 border-b border-purple-200 pb-2">
+                          Company Context Analysis
+                        </h3>
                         <div className="space-y-3">
                           <div className="flex items-start">
                             <div className="bg-white p-3 rounded-lg border border-purple-100 text-slate-700 text-sm italic mb-3 w-full">
-                              &quot;{category}&quot;
+                              &quot;{aiAnalysis.companyContext}&quot;
                             </div>
                           </div>
                           <div className="text-slate-800 font-medium">
-                            <p className="mb-3">Based on your category context, our analysis has been tailored to address your specific organizational needs. The insights and recommendations take into account your particular environment, challenges, and goals.</p>
+                            <p className="mb-3">Based on your company context, our analysis has been tailored to address your specific organizational needs. The insights and recommendations take into account your particular environment, challenges, and goals.</p>
                             <p>Key contextual factors considered:</p>
                             <ul className="list-disc pl-5 mt-2 space-y-1">
                               <li>Your industry-specific IT service patterns</li>
@@ -383,202 +648,42 @@ export default function AnalyzePage() {
                         </div>
                       </div>
                     )}
-                  </div>
-                ))}
-            </div>
-          </div>
 
-          {/* Top Assignees */}
-          <div className="bg-white p-6 rounded-xl shadow-sm">
-            <h2 className="text-lg font-semibold mb-4">Top Assignees</h2>
-            <div className="space-y-2">
-              {analytics?.topAssignees.map(({ name, count }) => (
-                <div key={name} className="flex flex-wrap items-center mb-2">
-                  <span className="w-20 sm:w-40 text-sm text-gray-600 truncate mb-1 sm:mb-0">{name || 'Unassigned'}</span>
-                  <div className="flex-1 mx-2 min-w-[100px]">
-                    <div className="h-4 bg-purple-100 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-purple-500"
-                        style={{
-                          width: `${(count / analytics.totalTickets) * 100}%`,
-                        }}
-                      />
-                    </div>
-                  </div>
-                  <span className="text-sm text-gray-600 whitespace-nowrap">{count} tickets</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Monthly Trends */}
-          <div className="bg-white p-6 rounded-xl shadow-sm">
-            <h2 className="text-lg font-semibold mb-4">Monthly Trends</h2>
-            <div className="space-y-2">
-              {analytics?.monthlyTrends.map(({ month, count }) => (
-                <div key={month} className="flex flex-wrap items-center mb-2">
-                  <span className="w-20 sm:w-24 text-sm text-gray-600 mb-1 sm:mb-0">{month}</span>
-                  <div className="flex-1 mx-2 min-w-[100px]">
-                    <div className="h-4 bg-yellow-100 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-yellow-500"
-                        style={{
-                          width: `${(count / Math.max(...analytics.monthlyTrends.map(t => t.count))) * 100}%`,
-                        }}
-                      />
-                    </div>
-                  </div>
-                  <span className="text-sm text-gray-600 whitespace-nowrap">{count} tickets</span>
-                </div>
-              ))}
-            </div>
-          </div>
-          
-          {/* Common Issues */}
-          <div className="bg-white p-6 rounded-xl shadow-sm">
-            <h2 className="text-lg font-semibold mb-4">Common Issues</h2>
-            <ul className="list-disc pl-5 space-y-2">
-              {analytics?.commonIssues.map((issue, index) => (
-                <li key={index} className="text-gray-700">{issue}</li>
-              ))}
-            </ul>
-          </div>
-          
-          {/* Resolution Efficiency */}
-          <div className="bg-white p-6 rounded-xl shadow-sm">
-            <h2 className="text-lg font-semibold mb-4">Resolution Efficiency</h2>
-            <div className="flex flex-col items-center">
-              <div className="relative w-40 h-40">
-                <div className="w-full h-full rounded-full bg-gray-100 flex items-center justify-center">
-                  <div
-                    className="absolute inset-0 rounded-full"
-                    style={{
-                      background: `conic-gradient(#22c55e ${analytics?.resolutionEfficiency || 0}%, #f3f4f6 0%)`,
-                      clipPath: 'circle(50% at 50% 50%)',
-                    }}
-                  />
-                  <div className="w-32 h-32 bg-white rounded-full flex items-center justify-center z-10">
-                    <span 
-                      className="text-3xl font-bold text-gray-800 cursor-pointer hover:text-blue-600 transition-colors"
-                      onClick={() => router.push('/journal')}
-                      title="View Learning Journal"
-                    >
-                      {analytics?.resolutionEfficiency || 0}%
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <p className="mt-4 text-center text-gray-600">
-                Based on resolution time, response time, and satisfaction ratings
-              </p>
-            </div>
-          </div>
-        </div>
-        
-        {/* AI-Powered Analysis Section */}
-        <div className="bg-white p-6 rounded-xl shadow-sm mb-8">
-          <div className="flex justify-between items-center">
-            <h3 className="text-xl font-semibold mb-4">AI-Powered Analysis</h3>
-            
-            <button
-              onClick={runAIAnalysis}
-              disabled={isLoadingAI || !analytics}
-              className={`px-4 py-2 rounded-md ${
-                isLoadingAI || !analytics 
-                  ? 'bg-gray-300 cursor-not-allowed' 
-                  : 'bg-blue-600 hover:bg-blue-700 text-white'
-              }`}
-            >
-              {isLoadingAI ? 'Processing...' : 'Run AI Analysis'}
-            </button>
-          </div>
-          
-          {/* Company Context Section */}
-          <div className="mb-6 bg-slate-50 p-4 rounded-lg">
-            <h4 className="text-md font-medium text-gray-700 mb-2 flex items-center">
-              <FaInfoCircle className="mr-2 text-blue-500" />
-              Department Context
-            </h4>
-            <textarea
-              value={companyContext}
-              onChange={(e) => setCompanyContext(e.target.value)}
-              placeholder="Provide context about your department to get more relevant insights (e.g., team size, key responsibilities, common challenges, recent changes, current initiatives)"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[100px]"
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              This information will be processed first to inform the AI analysis of your tickets
-            </p>
-          </div>
-          
-          {isLoadingAI && (
-            <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-              <p>Processing your ticket data with AI...</p>
-              <p className="text-sm text-gray-500 mt-2">This may take a few moments</p>
-            </div>
-          )}
-          
-          {aiAnalysis && !isLoadingAI && (
-            <div className="space-y-6">
-              {/* Display company context if provided */}
-              {aiAnalysis.companyContext && (
-                <div className="border border-purple-100 rounded-lg p-5 bg-purple-50">
-                  <h3 className="text-md font-semibold mb-3 text-purple-900 border-b border-purple-200 pb-2">
-                    Company Context Analysis
-                  </h3>
-                  <div className="space-y-3">
-                    <div className="flex items-start">
-                      <div className="bg-white p-3 rounded-lg border border-purple-100 text-slate-700 text-sm italic mb-3 w-full">
-                        &quot;{aiAnalysis.companyContext}&quot;
-                      </div>
-                    </div>
-                    <div className="text-slate-800 font-medium">
-                      <p className="mb-3">Based on your company context, our analysis has been tailored to address your specific organizational needs. The insights and recommendations take into account your particular environment, challenges, and goals.</p>
-                      <p>Key contextual factors considered:</p>
-                      <ul className="list-disc pl-5 mt-2 space-y-1">
-                        <li>Your industry-specific IT service patterns</li>
-                        <li>Organizational size and structure impacts on ticket workflows</li>
-                        <li>Current challenges and initiatives mentioned</li>
-                        <li>Historical context and recent changes</li>
-                        <li>Technology adoption stage and infrastructure details</li>
+                    <div className="border border-blue-100 rounded-lg p-5 bg-blue-50">
+                      <h3 className="text-md font-semibold mb-3 text-blue-900 border-b border-blue-200 pb-2">AI Insights</h3>
+                      <ul className="space-y-3">
+                        {aiAnalysis.insights.map((insight, index) => (
+                          <li key={index} className="flex items-start">
+                            <span className="text-blue-600 mr-2 mt-1 text-lg font-bold">•</span>
+                            <span className="text-slate-800 font-medium">{insight}</span>
+                          </li>
+                        ))}
                       </ul>
                     </div>
+                    
+                    <div className="border border-green-100 rounded-lg p-5 bg-green-50">
+                      <h3 className="text-md font-semibold mb-3 text-green-900 border-b border-green-200 pb-2">Recommendations</h3>
+                      <ul className="space-y-3">
+                        {aiAnalysis.recommendations.map((rec, index) => (
+                          <li key={index} className="flex items-start">
+                            <span className="text-green-600 mr-2 mt-1 text-lg font-bold">•</span>
+                            <span className="text-slate-800 font-medium">{rec}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    
+                    <div className="border border-indigo-100 bg-indigo-50 p-5 rounded-lg shadow-sm">
+                      <h3 className="text-md font-semibold mb-3 text-indigo-900 border-b border-indigo-200 pb-2">Predictive Analysis</h3>
+                      <p className="text-slate-800 font-medium leading-relaxed">{aiAnalysis.predictionText}</p>
+                    </div>
                   </div>
-                </div>
-              )}
-
-              <div className="border border-blue-100 rounded-lg p-5 bg-blue-50">
-                <h3 className="text-md font-semibold mb-3 text-blue-900 border-b border-blue-200 pb-2">AI Insights</h3>
-                <ul className="space-y-3">
-                  {aiAnalysis.insights.map((insight, index) => (
-                    <li key={index} className="flex items-start">
-                      <span className="text-blue-600 mr-2 mt-1 text-lg font-bold">•</span>
-                      <span className="text-slate-800 font-medium">{insight}</span>
-                    </li>
-                  ))}
-                </ul>
+                )}
               </div>
-              
-              <div className="border border-green-100 rounded-lg p-5 bg-green-50">
-                <h3 className="text-md font-semibold mb-3 text-green-900 border-b border-green-200 pb-2">Recommendations</h3>
-                <ul className="space-y-3">
-                  {aiAnalysis.recommendations.map((rec, index) => (
-                    <li key={index} className="flex items-start">
-                      <span className="text-green-600 mr-2 mt-1 text-lg font-bold">•</span>
-                      <span className="text-slate-800 font-medium">{rec}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              
-              <div className="border border-indigo-100 bg-indigo-50 p-5 rounded-lg shadow-sm">
-                <h3 className="text-md font-semibold mb-3 text-indigo-900 border-b border-indigo-200 pb-2">Predictive Analysis</h3>
-                <p className="text-slate-800 font-medium leading-relaxed">{aiAnalysis.predictionText}</p>
-              </div>
-            </div>
+            </>
           )}
         </div>
-      </main>
+      </div>
     </div>
   );
 }

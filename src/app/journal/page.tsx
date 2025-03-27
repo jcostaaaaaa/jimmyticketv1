@@ -7,42 +7,20 @@ import { useTickets } from '@/context/TicketContext';
 import type { Ticket } from '@/context/TicketContext';
 
 // Create a custom toast component since we're not using Chakra UI
-const Toast = ({ title, description, status, onClose }: { 
+const Toast = ({ title, description, status }: { 
   title: string; 
   description: string; 
   status: 'success' | 'error' | 'info' | 'warning'; 
-  onClose: () => void;
 }) => {
-  // Add effect to auto-close the toast after 5 seconds
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      onClose();
-    }, 5000);
-    
-    return () => clearTimeout(timer);
-  }, [onClose]);
-  
   const bgColor = status === 'success' ? 'bg-green-500' : 
                   status === 'error' ? 'bg-red-500' : 
                   status === 'warning' ? 'bg-yellow-500' : 'bg-blue-500';
   
   return (
     <div className={`p-4 rounded-md shadow-lg ${bgColor} text-white max-w-md mb-4`}>
-      <div className="flex justify-between items-start">
-        <div>
-          <h3 className="font-bold">{title}</h3>
-          <p>{description}</p>
-        </div>
-        <button 
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onClose();
-          }} 
-          className="ml-4 text-white font-bold text-xl"
-        >
-          ×
-        </button>
+      <div>
+        <h3 className="font-bold">{title}</h3>
+        <p>{description}</p>
       </div>
     </div>
   );
@@ -55,6 +33,7 @@ const useToast = () => {
     title: string;
     description: string;
     status: 'success' | 'error' | 'info' | 'warning';
+    timeoutId?: NodeJS.Timeout;
   }>>([]);
   
   // Function to add a toast
@@ -72,14 +51,39 @@ const useToast = () => {
     // Remove any existing toasts with the same title
     setToasts(prev => {
       const filtered = prev.filter(t => t.title !== title);
-      return [...filtered, { id, title, description, status }];
+      
+      // Create a timeout to auto-dismiss after 10 seconds
+      const timeoutId = setTimeout(() => {
+        closeToast(id);
+      }, 10000);
+      
+      return [...filtered, { id, title, description, status, timeoutId }];
     });
   };
   
   // Function to close a toast
   const closeToast = (id: string) => {
-    setToasts(prev => prev.filter(toast => toast.id !== id));
+    setToasts(prev => {
+      // Clear the timeout for the toast being removed
+      const toastToRemove = prev.find(t => t.id === id);
+      if (toastToRemove?.timeoutId) {
+        clearTimeout(toastToRemove.timeoutId);
+      }
+      
+      return prev.filter(toast => toast.id !== id);
+    });
   };
+  
+  // Cleanup timeouts when component unmounts
+  useEffect(() => {
+    return () => {
+      toasts.forEach(t => {
+        if (t.timeoutId) {
+          clearTimeout(t.timeoutId);
+        }
+      });
+    };
+  }, [toasts]);
   
   // Toast container component
   const ToastContainer = () => (
@@ -89,8 +93,7 @@ const useToast = () => {
           key={t.id} 
           title={t.title} 
           description={t.description} 
-          status={t.status} 
-          onClose={() => closeToast(t.id)} 
+          status={t.status}
         />
       ))}
     </div>
@@ -241,56 +244,43 @@ export default function JournalPage() {
   // Function to generate a learning entry with AI
   const generateLearningEntryWithAI = useCallback(async (ticket: Ticket): Promise<string | null> => {
     try {
-      const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY;
+      const apiKey = process.env.JOPENAPIKEY;
       
       if (!apiKey) {
-        console.error('OpenAI API key not found in environment variables');
+        toast({
+          title: 'API Key Missing',
+          description: 'OpenAI API key is required for AI-powered journal entries.',
+          status: 'error'
+        });
         return null;
       }
-
-      // Extract text from ticket
-      let ticketText = '';
-      if (ticket.description && typeof ticket.description === 'string') {
-        ticketText += 'Description: ' + ticket.description + '\n\n';
-      }
-      if (ticket.resolution && typeof ticket.resolution === 'string') {
-        ticketText += 'Resolution: ' + ticket.resolution;
-      }
-
-      // Clean up the text
-      const cleanText = ticketText
-        .replace(/\\n/g, ' ')
-        .replace(/\\r/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim();
-
-      if (cleanText.length < 30) {
-        return null; // Not enough meaningful content
-      }
-
-      // Prepare the prompt
+      
+      // Construct a prompt that will generate specific technical learning entries
       const prompt = `
-        You are an IT professional creating a learning journal entry based on the following ticket information.
-        
-        Your task is to create a highly specific technical journal entry that follows this format:
-        1. Start with "Today I learned about..." followed by the EXACT technical issue (be very specific)
-        2. Identify the precise hardware components or software systems involved
-        3. Include 1-2 sentences about how the issue was resolved based on the resolution information
-        
-        Guidelines:
-        - Be extremely specific about what component failed (e.g., "corrupted registry keys in Windows" instead of just "Windows issue")
-        - Mention exact hardware components when relevant (e.g., "failed network switch port" not just "network issue")
-        - For software, identify the specific component that failed (e.g., "Outlook PST file corruption" not just "email problem")
-        - Include specific technical details about the nature of the failure
-        - Describe the resolution approach briefly but technically
-        - Keep the entire entry concise (2-3 sentences total)
-        - ALWAYS start with "Today I learned about..."
-        
-        Ticket Information:
-        ${cleanText}
+      You are an IT professional documenting what you learned from resolving a technical support ticket.
+      
+      TICKET DESCRIPTION:
+      ${ticket.description}
+      
+      RESOLUTION:
+      ${ticket.resolution}
+      
+      Write a detailed, specific learning journal entry that starts with "Today I learned about..." 
+      
+      Your entry MUST:
+      1. Identify the SPECIFIC technical issue (not generic categories like "hardware" or "software")
+      2. Mention the exact components that failed (e.g., "corrupted registry keys", "failed network switch port")
+      3. Include technical details about symptoms and root causes
+      4. Explain the specific troubleshooting steps that were effective
+      5. Be written in first person as if you personally solved this issue
+      6. Be 3-5 sentences long
+      
+      BAD EXAMPLE: "Today I learned about hardware issues. The problem was with a computer not working. I fixed it by replacing parts."
+      
+      GOOD EXAMPLE: "Today I learned about troubleshooting Windows registry corruption causing application crashes. The specific issue involved corrupted shell extension registry keys preventing File Explorer from properly loading file context menus. I discovered that running the System File Checker and manually removing the problematic registry keys under HKEY_CLASSES_ROOT resolved the issue without requiring a system restore."
       `;
-
-      // Make the API call
+      
+      // Make API call to OpenAI
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -300,32 +290,49 @@ export default function JournalPage() {
         body: JSON.stringify({
           model: 'gpt-3.5-turbo',
           messages: [
-            { role: 'system', content: 'You are a helpful assistant that creates specific technical learning journal entries from IT support tickets.' },
-            { role: 'user', content: prompt }
+            {
+              role: 'system',
+              content: 'You are an IT professional documenting specific technical learnings from support tickets.'
+            },
+            {
+              role: 'user',
+              content: prompt
+            }
           ],
-          max_tokens: 300,
-          temperature: 0.7
+          temperature: 0.7,
+          max_tokens: 250
         })
       });
-
+      
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(`API error: ${errorData.error?.message || response.statusText}`);
+        console.error('OpenAI API error:', errorData);
+        toast({
+          title: 'AI Processing Failed',
+          description: `Error: ${errorData.error?.message || 'Unknown error'}`,
+          status: 'error'
+        });
+        return null;
       }
-
+      
       const data = await response.json();
-      const content = data.choices[0]?.message?.content?.trim();
-
-      if (!content) {
-        throw new Error('No content returned from API');
+      const aiEntry = data.choices[0]?.message?.content?.trim();
+      
+      if (!aiEntry) {
+        toast({
+          title: 'AI Processing Failed',
+          description: 'No content generated by AI',
+          status: 'error'
+        });
+        return null;
       }
-
-      return content;
+      
+      return aiEntry;
     } catch (error) {
       console.error('Error generating AI entry:', error);
       toast({
-        title: 'AI Processing Error',
-        description: `Failed to generate entry: ${error instanceof Error ? error.message : String(error)}`,
+        title: 'AI Processing Failed',
+        description: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
         status: 'error'
       });
       return null;
@@ -337,11 +344,6 @@ export default function JournalPage() {
     if (tickets.length === 0) return;
     
     setIsProcessingAI(true);
-    toast({
-      title: 'AI Processing',
-      description: 'Generating AI-powered journal entries...',
-      status: 'info'
-    });
     
     try {
       const processedTickets = new Set<string>();
@@ -444,115 +446,16 @@ export default function JournalPage() {
     }
   }, []);
 
-  // Process tickets to generate entries when tickets change
+  // Auto-process tickets with AI when tickets are loaded and no AI entries exist
   useEffect(() => {
     if (!tickets || tickets.length === 0) return;
-
-    try {
-      const newEntries: JournalEntry[] = [];
-      
-      // Process each ticket
-      tickets.forEach(ticket => {
-        // Skip if ticket doesn't have necessary data
-        if (!ticket) return;
-        
-        // Get ticket ID
-        const ticketId = typeof ticket.number === 'string' ? ticket.number : 
-                        typeof ticket.sys_id === 'string' ? ticket.sys_id : '';
-        
-        if (!ticketId) return;
-        
-        // Process description
-        if (ticket.description && typeof ticket.description === 'string') {
-          const content = generateLearningEntryLegacy(ticket.description);
-          
-          if (content) {
-            // Get the ticket date
-            let dateValue: string | Date = new Date();
-            if (typeof ticket.created_at === 'string') dateValue = ticket.created_at;
-            else if (typeof ticket.created === 'string') dateValue = ticket.created;
-            else if (typeof ticket.opened_at === 'string') dateValue = ticket.opened_at;
-            else if (typeof ticket.sys_created_on === 'string') dateValue = ticket.sys_created_on;
-            
-            const ticketDate = new Date(dateValue);
-            const formattedDate = ticketDate.toLocaleDateString('en-US', { 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric' 
-            });
-            
-            // Extract tags
-            const tags = extractMeaningfulTags(ticket);
-            
-            newEntries.push({
-              id: `desc_${ticketId}`,
-              date: formattedDate,
-              originalDate: ticketDate,
-              content,
-              tags,
-              ticketNumber: ticketId,
-              source: 'description'
-            });
-          }
-        }
-        
-        // Process resolution
-        if (ticket.resolution && typeof ticket.resolution === 'string') {
-          const content = generateLearningEntryLegacy(ticket.resolution);
-          
-          if (content) {
-            // Get the resolution date (or ticket date if no resolution date)
-            let dateValue: string | Date = new Date();
-            if (typeof ticket.resolved_at === 'string') dateValue = ticket.resolved_at;
-            else if (typeof ticket.closed_at === 'string') dateValue = ticket.closed_at;
-            else if (typeof ticket.sys_updated_on === 'string') dateValue = ticket.sys_updated_on;
-            else if (typeof ticket.created_at === 'string') dateValue = ticket.created_at;
-            else if (typeof ticket.created === 'string') dateValue = ticket.created;
-            
-            const resolutionDate = new Date(dateValue);
-            const formattedResolutionDate = resolutionDate.toLocaleDateString('en-US', { 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric' 
-            });
-            
-            // Extract tags
-            const tags = extractMeaningfulTags(ticket);
-            
-            newEntries.push({
-              id: `res_${ticketId}`,
-              date: formattedResolutionDate,
-              originalDate: resolutionDate,
-              content,
-              tags,
-              ticketNumber: ticketId,
-              source: 'resolution'
-            });
-          }
-        }
-      });
-      
-      if (newEntries.length > 0) {
-        // Only add entries that don't already exist
-        const existingIds = entries.map(entry => entry.id);
-        const uniqueNewEntries = newEntries.filter(entry => !existingIds.includes(entry.id));
-        
-        if (uniqueNewEntries.length > 0) {
-          const updatedEntries = [...entries, ...uniqueNewEntries];
-          setEntries(updatedEntries);
-          localStorage.setItem('journal_entries', JSON.stringify(updatedEntries));
-        }
-      }
-      
-      // Auto-process with AI on initial load if we have tickets and no AI entries yet
-      const hasAiEntries = entries.some(entry => entry.source === 'ai');
-      if (tickets.length > 0 && !hasAiEntries && !isProcessingAI) {
-        processTicketsWithAI();
-      }
-    } catch (error) {
-      console.error('Error in journal entries processing:', error);
+    
+    // Auto-process with AI on initial load if we have tickets and no AI entries yet
+    const hasAiEntries = entries.some(entry => entry.source === 'ai');
+    if (tickets.length > 0 && !hasAiEntries && !isProcessingAI) {
+      processTicketsWithAI();
     }
-  }, [tickets, entries, extractMeaningfulTags, generateLearningEntryLegacy, isProcessingAI, processTicketsWithAI]);
+  }, [tickets, entries, isProcessingAI, processTicketsWithAI]);
 
   // Process tickets with AI when the button is clicked
   const handleProcessTicketsWithAI = useCallback(() => {
