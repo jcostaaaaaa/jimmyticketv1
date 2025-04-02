@@ -79,13 +79,13 @@ const mockTickets: Ticket[] = [
 
 export default function TicketsPage() {
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-[#1A1A1A] text-[#E0E0E0]">
       <Header />
       
       <main className="container mx-auto py-8 px-4">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-2xl font-bold">All Tickets</h1>
-          <button className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded">
+          <h1 className="text-2xl font-bold text-[#E0E0E0]">All Tickets</h1>
+          <button className="bg-[#E69500] hover:bg-[#FFA500] text-white font-medium py-2 px-4 rounded transition-colors">
             + New Ticket
           </button>
         </div>
@@ -93,11 +93,11 @@ export default function TicketsPage() {
         <TicketList tickets={mockTickets} />
       </main>
       
-      <footer className="bg-gray-800 text-white py-4 mt-auto">
+      <footer className="bg-[#2B2B2B] text-[#E0E0E0] py-4 mt-auto border-t border-gray-800">
         <div className="container mx-auto px-4 text-center">
-          <p>Ticket Analysis Dashboard &copy; 2024</p>
+          <p>Jimmy Ticket Analyzer v27 &copy; 2025</p>
         </div>
       </footer>
     </div>
   );
-} 
+}

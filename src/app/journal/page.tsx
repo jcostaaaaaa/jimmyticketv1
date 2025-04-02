@@ -410,10 +410,10 @@ export default function JournalPage() {
   }, [processTicketsWithAI]);
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
+    <div className="min-h-screen bg-[#1A1A1A] text-[#E0E0E0]">
       {/* Toast container */}
       <ToastContainer />
-      <div className="bg-white shadow-sm">
+      <div className="bg-[#2B2B2B] shadow-sm">
         <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
           <div className="flex items-center">
             <button
@@ -422,19 +422,19 @@ export default function JournalPage() {
             >
               <FaArrowLeft className="text-gray-600" />
             </button>
-            <h1 className="text-2xl font-semibold text-gray-900">Learning Journal</h1>
+            <h1 className="text-2xl font-semibold text-[#E0E0E0]">Learning Journal</h1>
           </div>
           <div className="flex items-center space-x-2">
             <button
               onClick={() => setIsAddingEntry(true)}
-              className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              className="flex items-center px-4 py-2 bg-[#E69500] hover:bg-[#FFA500] text-white rounded-md transition-colors"
             >
               <FaPlus className="mr-2" />
               <span>Add Entry</span>
             </button>
             <button
               onClick={handleProcessTicketsWithAI}
-              className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
+              className="flex items-center px-4 py-2 bg-[#E69500] hover:bg-[#FFA500] text-white rounded-md transition-colors"
             >
               <FaPlus className="mr-2" />
               <span>Generate AI Entries</span>
@@ -445,10 +445,10 @@ export default function JournalPage() {
 
       {/* New entry form */}
       {isAddingEntry && (
-        <div className="mb-6 p-4 bg-white rounded-lg shadow">
-          <h2 className="text-xl font-semibold mb-4">Add New Entry</h2>
+        <div className="mb-6 p-4 bg-[#2B2B2B] rounded-lg shadow">
+          <h2 className="text-xl font-semibold mb-4 text-[#E0E0E0]">Add New Entry</h2>
           <div className="mb-4">
-            <label htmlFor="newEntry" className="block text-sm font-medium text-slate-700 mb-1">
+            <label htmlFor="newEntry" className="block text-sm font-medium text-[#E0E0E0] mb-1">
               What did you learn today?
             </label>
             <textarea
@@ -456,12 +456,12 @@ export default function JournalPage() {
               value={newEntry}
               onChange={(e) => setNewEntry(e.target.value)}
               rows={4}
-              className="w-full border border-slate-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-[#333333] rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-[#FFA500]"
               placeholder="Today I learned..."
             ></textarea>
           </div>
           <div className="mb-4">
-            <label htmlFor="newTags" className="block text-sm font-medium text-slate-700 mb-1">
+            <label htmlFor="newTags" className="block text-sm font-medium text-[#E0E0E0] mb-1">
               Tags (comma separated)
             </label>
             <input
@@ -469,14 +469,14 @@ export default function JournalPage() {
               id="newTags"
               value={newTags}
               onChange={(e) => setNewTags(e.target.value)}
-              className="w-full border border-slate-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-[#333333] rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-[#FFA500]"
               placeholder="e.g., networking, security, windows"
             />
           </div>
           <div className="flex justify-end gap-2">
             <button
               onClick={() => setIsAddingEntry(false)}
-              className="px-4 py-2 border border-slate-300 rounded hover:bg-slate-50"
+              className="px-4 py-2 border border-[#333333] rounded hover:bg-[#444444]"
             >
               Cancel
             </button>
@@ -508,7 +508,7 @@ export default function JournalPage() {
                 setNewTags('');
                 setIsAddingEntry(false);
               }}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md"
+              className="bg-[#E69500] hover:bg-[#FFA500] text-white px-4 py-2 rounded-md"
             >
               Save Entry
             </button>
@@ -520,14 +520,14 @@ export default function JournalPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow">
         {/* AI Processing Status */}
         {isProcessingAI && (
-          <div className="mb-6 p-4 bg-indigo-50 rounded-lg border border-indigo-200">
+          <div className="mb-6 p-4 bg-[#2B2B2B] rounded-lg border border-[#333333]">
             <div className="flex items-center">
               <div className="mr-4">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600"></div>
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#FFA500]"></div>
               </div>
               <div>
-                <h3 className="font-medium text-indigo-800">Processing Tickets with AI</h3>
-                <p className="text-sm text-indigo-600">
+                <h3 className="font-medium text-[#E0E0E0]">Processing Tickets with AI</h3>
+                <p className="text-sm text-[#E0E0E0]">
                   This may take a few moments depending on the number of tickets.
                 </p>
               </div>
@@ -538,13 +538,13 @@ export default function JournalPage() {
         {/* Search and Filter Controls */}
         <div className="mb-6 flex items-center gap-4">
           <div className="relative flex-grow">
-            <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
+            <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#E69500]" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search journal entries..."
-              className="pl-10 w-full border border-slate-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="pl-10 w-full border border-[#333333] rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-[#FFA500]"
             />
           </div>
         </div>
@@ -572,20 +572,20 @@ export default function JournalPage() {
                 key={entry.id} 
                 className={`p-4 rounded-lg shadow ${
                   entry.source === 'ai' 
-                    ? 'bg-gradient-to-r from-indigo-50 to-white border-l-4 border-indigo-500' 
-                    : 'bg-white'
+                    ? 'bg-[#2B2B2B] border-l-4 border-[#FFA500]' 
+                    : 'bg-[#2B2B2B]'
                 }`}
               >
                 <div className="flex justify-between items-start mb-2">
                   <div className="flex items-center">
-                    <span className="text-slate-600 font-medium">{entry.date}</span>
+                    <span className="text-[#E0E0E0] font-medium">{entry.date}</span>
                     {entry.source === 'ai' && (
-                      <span className="ml-2 px-2 py-1 bg-indigo-100 text-indigo-800 text-xs font-medium rounded-full">
+                      <span className="ml-2 px-2 py-1 bg-[#333333] text-[#E0E0E0] rounded-full text-sm hover:bg-[#444444] cursor-pointer transition-colors">
                         AI Generated
                       </span>
                     )}
                     {entry.ticketNumber && (
-                      <span className="ml-2 text-xs text-slate-500">
+                      <span className="ml-2 text-xs text-[#E0E0E0]">
                         Ticket #{entry.ticketNumber}
                       </span>
                     )}
@@ -605,16 +605,12 @@ export default function JournalPage() {
                     </svg>
                   </button>
                 </div>
-                <p className="text-slate-800 mb-3 whitespace-pre-wrap">{entry.content}</p>
+                <p className="text-[#E0E0E0] mb-3 whitespace-pre-wrap">{entry.content}</p>
                 <div className="flex flex-wrap gap-2">
                   {entry.tags.map((tag, index) => (
                     <span 
                       key={index} 
-                      className={`px-2 py-1 text-xs font-medium rounded-full ${
-                        entry.source === 'ai'
-                          ? 'bg-indigo-100 text-indigo-800 hover:bg-indigo-200'
-                          : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
-                      } cursor-pointer`}
+                      className={`px-3 py-1 bg-[#333333] text-[#E0E0E0] rounded-full text-sm hover:bg-[#444444] cursor-pointer transition-colors`}
                       onClick={() => setSearchTerm(tag)}
                     >
                       {tag}
@@ -626,11 +622,11 @@ export default function JournalPage() {
           
           {entries.length === 0 && (
             <div className="text-center py-12">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-[#E69500]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
               </svg>
-              <h3 className="mt-4 text-lg font-medium text-slate-900">No journal entries yet</h3>
-              <p className="mt-1 text-slate-500">
+              <h3 className="mt-4 text-lg font-medium text-[#E0E0E0]">No journal entries yet</h3>
+              <p className="mt-1 text-[#E0E0E0]">
                 {tickets.length > 0 
                   ? "Click 'Generate AI Entries' to create entries from your tickets" 
                   : "Import tickets or add entries manually to get started"}
@@ -638,7 +634,7 @@ export default function JournalPage() {
               <div className="mt-6">
                 <button
                   onClick={() => setIsAddingEntry(true)}
-                  className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  className="inline-flex items-center px-4 py-2 bg-[#E69500] hover:bg-[#FFA500] text-white rounded-md transition-colors"
                 >
                   <FaPlus className="-ml-1 mr-2 h-5 w-5" />
                   Add Your First Entry
@@ -656,7 +652,7 @@ export default function JournalPage() {
             );
           }).length === 0 && (
             <div className="text-center py-8">
-              <p className="text-slate-500">No entries match your search criteria</p>
+              <p className="text-[#E0E0E0]">No entries match your search criteria</p>
             </div>
           )}
         </div>

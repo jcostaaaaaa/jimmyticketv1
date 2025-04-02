@@ -19,7 +19,7 @@ export default function Home() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link 
               href="/import" 
-              className="bg-[#FFA500] hover:bg-[#CC8400] text-[#E0E0E0] font-medium py-3 px-8 rounded-lg shadow-sm hover:shadow transition-all flex items-center justify-center gap-2 text-lg"
+              className="bg-[#E69500] hover:bg-[#CC8400] text-[#E0E0E0] font-medium py-3 px-8 rounded-lg shadow-sm hover:shadow transition-all flex items-center justify-center gap-2 text-lg"
             >
               <FaFileUpload /> Import Data
             </Link>
@@ -201,7 +201,7 @@ export default function Home() {
             <div className="text-center">
               <Link 
                 href="/conversations" 
-                className="bg-[#FFA500] hover:bg-[#CC8400] text-[#E0E0E0] font-medium py-2 px-6 rounded-lg inline-flex items-center justify-center gap-2 shadow-sm hover:shadow transition-all"
+                className="bg-[#E69500] hover:bg-[#CC8400] text-[#E0E0E0] font-medium py-2 px-6 rounded-lg inline-flex items-center justify-center gap-2 shadow-sm hover:shadow transition-all"
               >
                 <FaComments /> Explore Conversation Analysis
               </Link>
@@ -209,15 +209,15 @@ export default function Home() {
           </div>
         </div>
         
-        <div className="text-center bg-gradient-to-r from-[#FFA500] to-[#FF8C00] text-[#1A1A1A] p-10 rounded-xl shadow-md">
-          <h2 className="text-3xl font-bold mb-4">Ready to analyze your IT support data?</h2>
-          <p className="text-xl mb-8 max-w-3xl mx-auto">
+        <div className="text-center bg-gradient-to-r from-[#2B2B2B] to-[#3C3C3C] p-10 rounded-xl shadow-md border border-[#3C3C3C]">
+          <h2 className="text-3xl font-bold mb-4 text-[#E0E0E0]">Ready to analyze your IT support data?</h2>
+          <p className="text-xl mb-8 max-w-3xl mx-auto text-[#E0E0E0]">
             Import your ServiceNow ticket data and customer conversations to discover insights that will transform 
             how your IT department operates and responds to issues.
           </p>
           <Link 
             href="/import" 
-            className="bg-[#1A1A1A] text-[#FFA500] hover:bg-[#2B2B2B] font-semibold py-3 px-8 rounded-lg inline-flex items-center justify-center gap-2 text-lg shadow-sm hover:shadow transition-all"
+            className="bg-[#E69500] text-[#E0E0E0] hover:bg-[#CC8400] font-semibold py-3 px-8 rounded-lg inline-flex items-center justify-center gap-2 text-lg shadow-sm hover:shadow transition-all"
           >
             <FaFileUpload /> Get Started
           </Link>
@@ -225,7 +225,7 @@ export default function Home() {
         
         {/* Version indicator */}
         <div className="fixed bottom-2 right-2 text-[#A0A0A0] text-sm font-mono">
-          v25
+          v26
         </div>
       </main>
       

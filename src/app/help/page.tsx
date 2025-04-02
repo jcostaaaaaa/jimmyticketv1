@@ -1,133 +1,163 @@
+import React from 'react';
 import { Header } from '@/components/Header';
-import { FaFileUpload, FaChartBar, FaSearch, FaQuestionCircle, FaInfoCircle, FaBook } from 'react-icons/fa';
-import Link from 'next/link';
+import { FaQuestion, FaFileAlt, FaTools, FaChartBar, FaDatabase, FaExchangeAlt, FaBook } from 'react-icons/fa';
 
 export default function HelpPage() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#1A1A1A] text-[#E0E0E0]">
       <Header />
       
-      <main className="container mx-auto py-8 px-4">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-3xl font-bold mb-8">Help & Documentation</h1>
-          
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-8">
-            <div className="flex items-center gap-2 mb-4">
-              <FaInfoCircle className="text-blue-500" />
-              <h2 className="text-xl font-semibold">About This Application</h2>
+      <main className="container mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold mb-6 text-[#E0E0E0]">Help & Documentation</h1>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <div className="bg-[#2B2B2B] rounded-lg shadow-md p-6 border border-gray-700">
+            <div className="flex items-center mb-4">
+              <div className="bg-[#E69500] rounded-full p-3 mr-3">
+                <FaQuestion className="text-white" />
+              </div>
+              <h2 className="text-xl font-semibold text-[#E0E0E0]">Getting Started</h2>
             </div>
-            
-            <p className="text-gray-700 mb-4">
-              The ServiceNow Ticket Analysis Dashboard is designed to help IT departments analyze their support ticket data, 
-              identify patterns, and optimize their workflow. This application can parse JSON data exported from ServiceNow 
-              and provide insights through advanced analytics and AI-powered querying.
+            <p className="mb-4 text-[#E0E0E0]">
+              Welcome to the Jimmy Ticket Analyzer! This application helps you analyze IT support tickets to gain insights 
+              and improve your support processes. Here's how to get started:
             </p>
-            
-            <p className="text-gray-700">
-              Key features include ticket categorization, pattern recognition, resolution time analysis, 
-              and natural language querying capabilities to help you understand your support workload.
-            </p>
+            <ol className="list-decimal list-inside space-y-2 text-[#E0E0E0]">
+              <li>Import your ticket data using the Import page</li>
+              <li>View analytics and insights on the Analyze page</li>
+              <li>Track learning points in the Journal page</li>
+              <li>Browse individual tickets on the Tickets page</li>
+            </ol>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-              <div className="flex items-center gap-2 mb-4">
-                <FaFileUpload className="text-green-500" />
-                <h2 className="text-lg font-semibold">Importing Data</h2>
+          <div className="bg-[#2B2B2B] rounded-lg shadow-md p-6 border border-gray-700">
+            <div className="flex items-center mb-4">
+              <div className="bg-[#E69500] rounded-full p-3 mr-3">
+                <FaFileAlt className="text-white" />
               </div>
-              
-              <ol className="list-decimal list-inside space-y-2 text-gray-700">
-                <li>Export your tickets from ServiceNow in JSON format</li>
-                <li>Go to the <Link href="/import" className="text-blue-600 hover:underline">Import</Link> page</li>
-                <li>Drag and drop your JSON file or click to select it</li>
-                <li>Click &quot;Process File&quot; to analyze your data</li>
-                <li>Once processing is complete, you can view analytics or query the data</li>
-              </ol>
+              <h2 className="text-xl font-semibold text-[#E0E0E0]">Supported File Formats</h2>
             </div>
-            
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-              <div className="flex items-center gap-2 mb-4">
-                <FaChartBar className="text-purple-500" />
-                <h2 className="text-lg font-semibold">Analyzing Tickets</h2>
-              </div>
-              
-              <ul className="list-disc list-inside space-y-2 text-gray-700">
-                <li>Navigate to the <Link href="/analyze" className="text-blue-600 hover:underline">Analytics</Link> page</li>
-                <li>Use the time period filter to focus on specific timeframes</li>
-                <li>Filter by category to analyze specific types of tickets</li>
-                <li>Expand the advanced filters for more detailed analysis</li>
-                <li>Scroll through different charts and insights about your ticket data</li>
-                <li>Export reports as needed for presentations or further analysis</li>
-              </ul>
-            </div>
-            
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-              <div className="flex items-center gap-2 mb-4">
-                <FaSearch className="text-orange-500" />
-                <h2 className="text-lg font-semibold">Querying Data</h2>
-              </div>
-              
-              <ul className="list-disc list-inside space-y-2 text-gray-700">
-                <li>Go to the <Link href="/query" className="text-blue-600 hover:underline">Query</Link> page</li>
-                <li>Enter a natural language question about your ticket data</li>
-                <li>Example questions:
-                  <ul className="list-disc list-inside ml-6 space-y-1 mt-1">
-                    <li>What are the most common software issues?</li>
-                    <li>Which tickets took the longest to resolve?</li>
-                    <li>Compare resolution times between categories</li>
-                  </ul>
-                </li>
-                <li>The AI will analyze your data and provide insights</li>
-                <li>View related tickets that support the AI&apos;s conclusion</li>
-              </ul>
-            </div>
-            
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-              <div className="flex items-center gap-2 mb-4">
-                <FaQuestionCircle className="text-red-500" />
-                <h2 className="text-lg font-semibold">FAQ</h2>
-              </div>
-              
-              <div className="space-y-4">
-                <div>
-                  <h3 className="font-medium text-gray-800">What format should my ServiceNow export be in?</h3>
-                  <p className="text-gray-700">Your export should be in JSON format. The application supports both individual ticket objects and arrays of ticket objects.</p>
-                </div>
-                
-                <div>
-                  <h3 className="font-medium text-gray-800">How are tickets categorized?</h3>
-                  <p className="text-gray-700">The application uses natural language processing to analyze ticket descriptions and categorize them based on issue type, affected software, and resolution methods.</p>
-                </div>
-                
-                <div>
-                  <h3 className="font-medium text-gray-800">Is my data secure?</h3>
-                  <p className="text-gray-700">All data processing happens locally in your browser. Your ticket data is not sent to any external servers for analysis.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-blue-50 p-6 rounded-xl border border-blue-100">
-            <div className="flex items-center gap-2 mb-4">
-              <FaBook className="text-blue-500" />
-              <h2 className="text-lg font-semibold">Additional Resources</h2>
-            </div>
-            
-            <ul className="list-disc list-inside space-y-2 text-blue-800">
-              <li><a href="#" className="hover:underline">ServiceNow Export Guide</a></li>
-              <li><a href="#" className="hover:underline">Understanding Ticket Analytics</a></li>
-              <li><a href="#" className="hover:underline">Best Practices for IT Support</a></li>
-              <li><a href="#" className="hover:underline">Contact Support</a></li>
+            <p className="mb-4 text-[#E0E0E0]">
+              The application supports the following file formats for ticket data import:
+            </p>
+            <ul className="list-disc list-inside space-y-2 text-[#E0E0E0]">
+              <li>CSV files (.csv)</li>
+              <li>JSON files (.json)</li>
+              <li>Excel files (.xlsx, .xls)</li>
+              <li>ServiceNow export files</li>
+              <li>Jira export files</li>
+              <li>Zendesk export files</li>
             </ul>
+            <p className="mt-4 text-[#E0E0E0]">
+              Files should contain ticket data with fields such as ID, description, status, creation date, and resolution date.
+            </p>
+          </div>
+        </div>
+        
+        <div className="bg-[#2B2B2B] rounded-lg shadow-md p-6 mb-8 border border-gray-700">
+          <div className="flex items-center mb-4">
+            <div className="bg-[#E69500] rounded-full p-3 mr-3">
+              <FaTools className="text-white" />
+            </div>
+            <h2 className="text-xl font-semibold text-[#E0E0E0]">Features & Functionality</h2>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <h3 className="text-lg font-medium mb-2 text-[#FFA500]">Ticket Analysis</h3>
+              <p className="text-[#E0E0E0]">
+                The Analyze page provides comprehensive analytics on your ticket data, including:
+              </p>
+              <ul className="list-disc list-inside mt-2 space-y-1 text-[#E0E0E0]">
+                <li>Ticket volume trends over time</li>
+                <li>Average resolution time</li>
+                <li>Category distribution</li>
+                <li>Priority distribution</li>
+                <li>Top assignees</li>
+                <li>Resolution efficiency</li>
+              </ul>
+            </div>
+            
+            <div>
+              <h3 className="text-lg font-medium mb-2 text-[#FFA500]">Learning Journal</h3>
+              <p className="text-[#E0E0E0]">
+                The Journal page helps you track learning points from resolved tickets:
+              </p>
+              <ul className="list-disc list-inside mt-2 space-y-1 text-[#E0E0E0]">
+                <li>Automatically extract technical issues from tickets</li>
+                <li>Identify specific hardware and software components that failed</li>
+                <li>Track resolution methods for common problems</li>
+                <li>Tag entries for easy categorization and searching</li>
+                <li>Generate AI-powered journal entries with detailed technical analysis</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-[#2B2B2B] rounded-lg shadow-md p-6 border border-gray-700">
+            <div className="flex items-center mb-4">
+              <div className="bg-[#E69500] rounded-full p-3 mr-3">
+                <FaChartBar className="text-white" />
+              </div>
+              <h2 className="text-xl font-semibold text-[#E0E0E0]">Analytics Guide</h2>
+            </div>
+            <p className="text-[#E0E0E0]">
+              Learn how to interpret the analytics data and use it to improve your support processes.
+              The analytics dashboard provides actionable insights based on historical ticket data.
+            </p>
+            <button className="mt-4 bg-[#E69500] hover:bg-[#FFA500] text-white py-2 px-4 rounded-md transition-colors">
+              View Guide
+            </button>
+          </div>
+          
+          <div className="bg-[#2B2B2B] rounded-lg shadow-md p-6 border border-gray-700">
+            <div className="flex items-center mb-4">
+              <div className="bg-[#E69500] rounded-full p-3 mr-3">
+                <FaDatabase className="text-white" />
+              </div>
+              <h2 className="text-xl font-semibold text-[#E0E0E0]">Data Management</h2>
+            </div>
+            <p className="text-[#E0E0E0]">
+              Learn how to manage your imported data, update existing records, and ensure data quality.
+              Proper data management ensures accurate analytics and insights.
+            </p>
+            <button className="mt-4 bg-[#E69500] hover:bg-[#FFA500] text-white py-2 px-4 rounded-md transition-colors">
+              View Guide
+            </button>
+          </div>
+          
+          <div className="bg-[#2B2B2B] rounded-lg shadow-md p-6 border border-gray-700">
+            <div className="flex items-center mb-4">
+              <div className="bg-[#E69500] rounded-full p-3 mr-3">
+                <FaExchangeAlt className="text-white" />
+              </div>
+              <h2 className="text-xl font-semibold text-[#E0E0E0]">API Integration</h2>
+            </div>
+            <p className="text-[#E0E0E0]">
+              Learn how to integrate with ticket systems via API to automate data import.
+              The application supports OpenAI API integration for enhanced journal entry generation.
+            </p>
+            <button className="mt-4 bg-[#E69500] hover:bg-[#FFA500] text-white py-2 px-4 rounded-md transition-colors">
+              View Guide
+            </button>
           </div>
         </div>
       </main>
       
-      <footer className="bg-gray-800 text-white py-6 mt-auto">
-        <div className="container mx-auto px-4 text-center">
-          <p>ServiceNow Ticket Analysis Dashboard &copy; 2024</p>
+      <footer className="bg-[#1A1A1A] border-t border-gray-800 py-6 mt-12">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col md:flex-row justify-between items-center">
+            <div className="mb-4 md:mb-0">
+              <p className="text-[#E0E0E0]">Jimmy Ticket Analyzer v27 &copy; 2025</p>
+            </div>
+            <div className="flex items-center">
+              <FaBook className="text-[#E69500] mr-2" />
+              <span className="text-[#E0E0E0]">Documentation Version 2.1</span>
+            </div>
+          </div>
         </div>
       </footer>
     </div>
   );
-} 
+}

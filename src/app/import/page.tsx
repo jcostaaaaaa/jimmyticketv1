@@ -347,7 +347,7 @@ export default function ImportPage() {
   const renderPreview = () => {
     if (!previewData) {
       return (
-        <div className="mt-4 bg-yellow-50 text-yellow-700 p-3 rounded-md flex items-center">
+        <div className="mt-4 bg-[#3A2A2A] text-red-400 p-3 rounded-md flex items-center border border-red-900">
           <FaExclamationTriangle className="mr-2" />
           <span>No data loaded yet. Please select a file.</span>
         </div>
@@ -359,21 +359,21 @@ export default function ImportPage() {
         {/* Display ticket data if available */}
         {previewData.tickets.length > 0 && (
           <div>
-            <h3 className="text-lg font-semibold mb-2 flex items-center">
-              <FaTicketAlt className="mr-2 text-blue-600" />
+            <h3 className="text-lg font-semibold mb-2 flex items-center text-[#E0E0E0]">
+              <FaTicketAlt className="mr-2 text-[#FFA500]" />
               Ticket Data Preview
             </h3>
-            <div className="bg-slate-800 p-4 rounded border border-slate-700 overflow-auto max-h-80">
-              <pre className="text-sm text-slate-100 font-mono whitespace-pre-wrap">
+            <div className="bg-[#333333] p-4 rounded border border-gray-700 overflow-auto max-h-80">
+              <pre className="text-sm text-[#E0E0E0] font-mono whitespace-pre-wrap">
                 {JSON.stringify(previewData.tickets.slice(0, 3), null, 2)}
               </pre>
             </div>
             <div className="mt-2 space-y-1">
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-[#E0E0E0]">
                 <span className="font-medium">Total tickets found:</span> {previewData.tickets.length}
               </p>
               {previewData.tickets.length > 3 && (
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-[#E0E0E0]">
                   Showing first 3 of {previewData.tickets.length} records
                 </p>
               )}
@@ -384,24 +384,24 @@ export default function ImportPage() {
         {/* Display conversation data if available */}
         {previewData.conversations.length > 0 && (
           <div>
-            <h3 className="text-lg font-semibold mb-2 flex items-center">
-              <FaComments className="mr-2 text-purple-600" />
+            <h3 className="text-lg font-semibold mb-2 flex items-center text-[#E0E0E0]">
+              <FaComments className="mr-2 text-[#FFA500]" />
               Conversation Data Preview
             </h3>
-            <div className="bg-slate-800 p-4 rounded border border-slate-700 overflow-auto max-h-80">
-              <pre className="text-sm text-slate-100 font-mono whitespace-pre-wrap">
+            <div className="bg-[#333333] p-4 rounded border border-gray-700 overflow-auto max-h-80">
+              <pre className="text-sm text-[#E0E0E0] font-mono whitespace-pre-wrap">
                 {JSON.stringify(previewData.conversations.slice(0, 1), null, 2)}
               </pre>
             </div>
             <div className="mt-2 space-y-1">
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-[#E0E0E0]">
                 <span className="font-medium">Total conversations found:</span> {previewData.conversations.length}
               </p>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-[#E0E0E0]">
                 <span className="font-medium">Total messages:</span> {previewData.conversations.reduce((total, conv) => total + conv.messages.length, 0)}
               </p>
               {previewData.conversations.length > 1 && (
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-[#E0E0E0]">
                   Showing first of {previewData.conversations.length} conversations
                 </p>
               )}
@@ -413,34 +413,34 @@ export default function ImportPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#1A1A1A] text-[#E0E0E0]">
       <Header />
       
       <main className="container mx-auto py-8 px-4">
-        <h1 className="text-2xl font-bold mb-6">Import Data</h1>
+        <h1 className="text-2xl font-bold mb-6 text-[#E0E0E0]">Import Data</h1>
         
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-8">
+        <div className="bg-[#2B2B2B] p-6 rounded-xl shadow-sm border border-gray-700 mb-8">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold flex items-center">
-              <FaLayerGroup className="mr-2 text-blue-600" />
+            <h2 className="text-xl font-semibold flex items-center text-[#E0E0E0]">
+              <FaLayerGroup className="mr-2 text-[#FFA500]" />
               Upload JSON Data
             </h2>
           </div>
           
-          <p className="text-gray-600 mb-6">
+          <p className="text-[#E0E0E0] mb-6">
             Upload your ServiceNow tickets and conversation history in JSON format. The system will automatically detect and extract both types of data from the same file or from multiple files.
           </p>
           
           <div 
             className={`border-2 border-dashed rounded-lg p-8 text-center ${
-              isDragging ? 'border-blue-500 bg-blue-50' : 'border-gray-300'
+              isDragging ? 'border-[#FFA500] bg-[#333333]' : 'border-gray-600'
             } transition-colors`}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleFileDrop}
           >
-            <FaFileUpload className="mx-auto text-4xl text-gray-400 mb-4" />
-            <p className="text-gray-600 mb-4">
+            <FaFileUpload className="mx-auto text-4xl text-[#E69500] mb-4" />
+            <p className="text-[#E0E0E0] mb-4">
               Drag and drop your JSON file(s) here, or click to select file(s)
             </p>
             <input
@@ -453,7 +453,7 @@ export default function ImportPage() {
             />
             <button
               onClick={() => document.getElementById('fileInput')?.click()}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded"
+              className="bg-[#E69500] hover:bg-[#FFA500] text-white font-medium py-2 px-4 rounded transition-colors"
             >
               Select Files
             </button>
@@ -461,13 +461,13 @@ export default function ImportPage() {
           
           {files.length > 0 && (
             <div className="mt-4">
-              <h3 className="font-medium mb-2">Selected Files:</h3>
+              <h3 className="font-medium mb-2 text-[#E0E0E0]">Selected Files:</h3>
               <div className="space-y-2">
                 {files.map((file, index) => (
-                  <div key={index} className="flex items-center bg-gray-50 p-2 rounded">
-                    <FaFileUpload className="text-blue-500 mr-2" />
-                    <span className="font-medium">{file.name}</span>
-                    <span className="ml-2 text-gray-500">({(file.size / 1024).toFixed(1)} KB)</span>
+                  <div key={index} className="flex items-center bg-[#333333] p-2 rounded">
+                    <FaFileUpload className="text-[#FFA500] mr-2" />
+                    <span className="font-medium text-[#E0E0E0]">{file.name}</span>
+                    <span className="ml-2 text-[#E0E0E0]">({(file.size / 1024).toFixed(1)} KB)</span>
                   </div>
                 ))}
               </div>
@@ -480,8 +480,8 @@ export default function ImportPage() {
                   disabled={isUploading || uploadStatus === 'success' || !previewData}
                   className={`font-medium py-2 px-6 rounded ${
                     isUploading || uploadStatus === 'success' || !previewData
-                      ? 'bg-gray-400 cursor-not-allowed' 
-                    : 'bg-blue-600 hover:bg-blue-700 text-white'
+                      ? 'bg-gray-600 cursor-not-allowed text-gray-400' 
+                    : 'bg-[#E69500] hover:bg-[#FFA500] text-white transition-colors'
                   }`}
                 >
                   {isUploading ? 'Processing...' : 
@@ -493,27 +493,27 @@ export default function ImportPage() {
           )}
           
           {uploadStatus === 'error' && (
-            <div className="mt-4 bg-red-50 text-red-700 p-3 rounded-md flex items-center">
+            <div className="mt-4 bg-[#3A2A2A] text-red-400 p-3 rounded-md flex items-center border border-red-900">
               <FaExclamationTriangle className="mr-2" />
               <span>{errorMessage}</span>
             </div>
           )}
           
           {uploadStatus === 'success' && (
-            <div className="mt-4 bg-green-50 text-green-700 p-3 rounded-md flex items-center">
+            <div className="mt-4 bg-[#2A3A2A] text-green-400 p-3 rounded-md flex items-center border border-green-900">
               <FaCheck className="mr-2" />
               <div>
                 <p className="font-medium">Data processed successfully!</p>
                 <div className="flex flex-wrap gap-3 mt-2">
                   {previewData?.tickets.length ? (
-                    <div className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm flex items-center">
-                      <FaTicketAlt className="mr-1" /> {previewData.tickets.length} tickets imported
+                    <div className="bg-[#333333] text-[#E0E0E0] px-3 py-1 rounded-full text-sm flex items-center border border-[#FFA500]">
+                      <FaTicketAlt className="mr-1 text-[#FFA500]" /> {previewData.tickets.length} tickets imported
                     </div>
                   ) : null}
                   
                   {previewData?.conversations.length ? (
-                    <div className="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm flex items-center">
-                      <FaComments className="mr-1" /> {previewData.conversations.length} conversations imported
+                    <div className="bg-[#333333] text-[#E0E0E0] px-3 py-1 rounded-full text-sm flex items-center border border-[#FFA500]">
+                      <FaComments className="mr-1 text-[#FFA500]" /> {previewData.conversations.length} conversations imported
                     </div>
                   ) : null}
                 </div>
@@ -522,42 +522,42 @@ export default function ImportPage() {
           )}
         </div>
         
-        <div className="bg-blue-50 p-6 rounded-xl border border-blue-100">
-          <h2 className="text-lg font-semibold mb-2 text-blue-900">Data Format Information</h2>
-          <p className="text-blue-800 mb-3">
+        <div className="bg-[#2B2B2B] p-6 rounded-xl border border-gray-700">
+          <h2 className="text-lg font-semibold mb-2 text-[#E0E0E0]">Data Format Information</h2>
+          <p className="text-[#E0E0E0] mb-3">
             The system can extract both ticket data and conversation history from the same JSON file, or from separate files. Simply upload your file(s) and we&apos;ll identify the data types automatically.
           </p>
           
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <div className="border border-blue-200 bg-white p-4 rounded-lg">
-              <h3 className="font-medium text-blue-900 mb-2 flex items-center">
-                <FaTicketAlt className="mr-2 text-blue-600" />
+            <div className="border border-gray-700 bg-[#333333] p-4 rounded-lg">
+              <h3 className="font-medium text-[#E0E0E0] mb-2 flex items-center">
+                <FaTicketAlt className="mr-2 text-[#FFA500]" />
                 Ticket Data Format
               </h3>
-              <ul className="list-disc pl-5 space-y-1 text-blue-800 text-sm">
+              <ul className="list-disc pl-5 space-y-1 text-[#E0E0E0] text-sm">
                 <li>ServiceNow exports in JSON format</li>
                 <li>Standard ticket fields like number, status, priority</li>
                 <li>Data can be in arrays or nested objects</li>
                 <li>Common paths: result, records, data, tickets</li>
               </ul>
-              <a href="/sample-ticket.json" download className="text-blue-600 mt-3 text-sm flex items-center hover:underline">
+              <a href="/sample-ticket.json" download className="text-[#FFA500] mt-3 text-sm flex items-center hover:underline">
                 <FaFileUpload className="mr-1" />
                 Download sample ticket data
               </a>
             </div>
             
-            <div className="border border-blue-200 bg-white p-4 rounded-lg">
-              <h3 className="font-medium text-blue-900 mb-2 flex items-center">
-                <FaComments className="mr-2 text-purple-600" />
+            <div className="border border-gray-700 bg-[#333333] p-4 rounded-lg">
+              <h3 className="font-medium text-[#E0E0E0] mb-2 flex items-center">
+                <FaComments className="mr-2 text-[#FFA500]" />
                 Conversation Data Format
               </h3>
-              <ul className="list-disc pl-5 space-y-1 text-blue-800 text-sm">
+              <ul className="list-disc pl-5 space-y-1 text-[#E0E0E0] text-sm">
                 <li>JSON format with messages array</li>
                 <li>Fields like id, customer_id, channel, resolved</li>
                 <li>Messages with sender, timestamp, content</li>
                 <li>Optional sentiment analysis and categorization</li>
               </ul>
-              <a href="/sample-conversation.json" download className="text-purple-600 mt-3 text-sm flex items-center hover:underline">
+              <a href="/sample-conversation.json" download className="text-[#FFA500] mt-3 text-sm flex items-center hover:underline">
                 <FaFileUpload className="mr-1" />
                 Download sample conversation data
               </a>
@@ -566,9 +566,9 @@ export default function ImportPage() {
         </div>
       </main>
       
-      <footer className="bg-gray-800 text-white py-6 mt-auto">
+      <footer className="bg-[#2B2B2B] text-[#E0E0E0] py-6 mt-auto border-t border-gray-800">
         <div className="container mx-auto px-4 text-center">
-          <p>ServiceNow Ticket Analysis Dashboard &copy; 2024</p>
+          <p>Jimmy Ticket Analyzer v27 &copy; 2025</p>
         </div>
       </footer>
     </div>
