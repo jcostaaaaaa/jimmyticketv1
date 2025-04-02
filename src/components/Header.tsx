@@ -8,13 +8,13 @@ export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
-    <header className="bg-slate-800 text-white shadow-lg border-b border-slate-700">
+    <header className="bg-[#1A1A1A] text-[#E0E0E0] shadow-lg border-b border-[#3C3C3C]">
       <div className="container mx-auto px-4">
         <div className="flex flex-col sm:flex-row justify-between items-center">
           <div className="flex items-center py-4 w-full sm:w-auto justify-between">
             <Link href="/" className="flex items-center gap-2 text-xl font-bold tracking-tight">
-              <FaServer className="text-cyan-400" />
-              <span className="bg-gradient-to-r from-cyan-300 to-blue-400 bg-clip-text text-transparent">
+              <FaServer className="text-[#FFA500]" />
+              <span className="bg-gradient-to-r from-[#FFA500] to-[#FF8C00] bg-clip-text text-transparent">
                 ServiceNow Analytics
               </span>
             </Link>
@@ -50,9 +50,9 @@ function NavLink({ href, icon, text }: { href: string; icon: React.ReactNode; te
   return (
     <Link 
       href={href} 
-      className="flex items-center gap-2 px-4 py-3 rounded-md font-medium transition-colors hover:bg-slate-700 text-slate-200 hover:text-white"
+      className="flex items-center gap-2 px-4 py-3 rounded-md font-medium transition-colors hover:bg-[#2B2B2B] text-[#E0E0E0] hover:text-[#FFA500]"
     >
-      <span className="text-cyan-400">{icon}</span>
+      <span className="text-[#FFA500]">{icon}</span>
       <span>{text}</span>
     </Link>
   );
