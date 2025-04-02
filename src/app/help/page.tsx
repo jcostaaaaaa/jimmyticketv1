@@ -20,7 +20,7 @@ export default function HelpPage() {
             </div>
             <p className="mb-4 text-[#E0E0E0]">
               Welcome to the Jimmy Ticket Analyzer! This application helps you analyze IT support tickets to gain insights 
-              and improve your support processes. Here's how to get started:
+              and improve your support processes. Here&apos;s how to get started:
             </p>
             <ol className="list-decimal list-inside space-y-2 text-[#E0E0E0]">
               <li>Import your ticket data using the Import page</li>
