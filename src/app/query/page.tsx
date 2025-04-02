@@ -298,22 +298,22 @@ export default function QueryPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[#1A1A1A] text-[#E0E0E0]">
       <Header />
       
       <main className="container mx-auto py-8 px-4">
-        <h1 className="text-2xl font-bold mb-8">Ask AI Assistant</h1>
+        <h1 className="text-2xl font-bold mb-8 text-[#E0E0E0]">Ask AI Assistant</h1>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="md:col-span-2">
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-6">
+            <div className="bg-[#2B2B2B] p-6 rounded-xl shadow-md border border-[#3C3C3C] mb-6">
               {/* Query type selector */}
               <div className="flex space-x-2 mb-4">
                 <button
                   className={`px-3 py-2 rounded-md flex items-center ${
                     queryType === 'ticket_analysis' 
-                      ? 'bg-blue-600 text-white' 
-                      : 'bg-gray-100 hover:bg-gray-200 text-gray-800'
+                      ? 'bg-[#E69500] text-[#E0E0E0]' 
+                      : 'bg-[#3C3C3C] hover:bg-[#4C4C4C] text-[#E0E0E0]'
                   }`}
                   onClick={() => handleQueryTypeChange('ticket_analysis')}
                 >
@@ -323,8 +323,8 @@ export default function QueryPage() {
                 <button
                   className={`px-3 py-2 rounded-md flex items-center ${
                     queryType === 'conversation_analysis' 
-                      ? 'bg-blue-600 text-white' 
-                      : 'bg-gray-100 hover:bg-gray-200 text-gray-800'
+                      ? 'bg-[#E69500] text-[#E0E0E0]' 
+                      : 'bg-[#3C3C3C] hover:bg-[#4C4C4C] text-[#E0E0E0]'
                   }`}
                   onClick={() => handleQueryTypeChange('conversation_analysis')}
                 >
@@ -334,8 +334,8 @@ export default function QueryPage() {
                 <button
                   className={`px-3 py-2 rounded-md flex items-center ${
                     queryType === 'it_knowledge' 
-                      ? 'bg-blue-600 text-white' 
-                      : 'bg-gray-100 hover:bg-gray-200 text-gray-800'
+                      ? 'bg-[#E69500] text-[#E0E0E0]' 
+                      : 'bg-[#3C3C3C] hover:bg-[#4C4C4C] text-[#E0E0E0]'
                   }`}
                   onClick={() => handleQueryTypeChange('it_knowledge')}
                 >
@@ -345,8 +345,8 @@ export default function QueryPage() {
               </div>
               
               <form onSubmit={handleSubmit}>
-                <div className="flex items-center bg-slate-100 rounded-lg p-2">
-                  <FaTerminal className="text-slate-500 ml-2 mr-3" />
+                <div className="flex items-center bg-[#1A1A1A] rounded-lg p-2 border border-[#3C3C3C]">
+                  <FaTerminal className="text-[#FFA500] ml-2 mr-3" />
                   <input
                     type="text"
                     value={query}
@@ -358,15 +358,15 @@ export default function QueryPage() {
                           ? "Ask a question about your conversation data..."
                           : "Ask a general IT support question..."
                     }
-                    className="flex-1 bg-transparent border-none focus:outline-none py-2 text-slate-700"
+                    className="flex-1 bg-transparent border-none focus:outline-none py-2 text-[#E0E0E0] placeholder-gray-500"
                   />
                   <button
                     type="submit"
                     disabled={isLoading || !query.trim()}
                     className={`ml-2 px-4 py-2 rounded-md ${
                       isLoading || !query.trim() 
-                        ? 'bg-gray-300 cursor-not-allowed' 
-                        : 'bg-blue-600 hover:bg-blue-700 text-white'
+                        ? 'bg-gray-600 cursor-not-allowed' 
+                        : 'bg-[#E69500] hover:bg-[#FFA500] text-[#E0E0E0]'
                     }`}
                   >
                     {isLoading ? (
@@ -377,7 +377,7 @@ export default function QueryPage() {
                   </button>
                 </div>
                 
-                <div className="mt-2 text-xs text-gray-500">
+                <div className="mt-2 text-xs text-gray-400">
                   {queryType === 'ticket_analysis' && (
                     <span>Analyze patterns, resolution times, categories, and more from your ticket data</span>
                   )}
@@ -393,30 +393,30 @@ export default function QueryPage() {
             
             {/* Response Area */}
             {response && (
-              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-6">
+              <div className="bg-[#2B2B2B] p-6 rounded-xl shadow-md border border-[#3C3C3C] mb-6">
                 <div className="flex items-start">
                   <div className={`p-2 mr-4 rounded-full ${
                     response.type === 'ticket_analysis' 
-                      ? 'bg-blue-100 text-blue-700' 
+                      ? 'bg-[#3C3C3C] text-[#FFA500]' 
                       : response.type === 'conversation_analysis'
-                        ? 'bg-purple-100 text-purple-700'
-                        : 'bg-green-100 text-green-700'
+                        ? 'bg-[#3C3C3C] text-[#FFA500]'
+                        : 'bg-[#3C3C3C] text-[#FFA500]'
                   }`}>
                     {response.type === 'ticket_analysis' && <FaDatabase className="text-xl" />}
                     {response.type === 'conversation_analysis' && <FaComments className="text-xl" />}
                     {response.type === 'it_knowledge' && <FaQuestion className="text-xl" />}
                   </div>
                   <div className="flex-1">
-                    <div className="whitespace-pre-line text-slate-800" dangerouslySetInnerHTML={{ __html: response.answer.replace(/&apos;/g, "'") }}>
+                    <div className="whitespace-pre-line text-[#E0E0E0]" dangerouslySetInnerHTML={{ __html: response.answer.replace(/&apos;/g, "'") }}>
                     </div>
                     
                     {response.sources && (
                       <div className="mt-4">
-                        <p className="text-sm font-medium text-slate-700">Sources:</p>
+                        <p className="text-sm font-medium text-[#E0E0E0]">Sources:</p>
                         <ul className="mt-1 space-y-1">
                           {response.sources.map((source, index) => (
-                            <li key={index} className="text-sm text-slate-600 flex items-center">
-                              <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
+                            <li key={index} className="text-sm text-gray-400 flex items-center">
+                              <span className="w-2 h-2 bg-[#FFA500] rounded-full mr-2"></span>
                               {source}
                             </li>
                           ))}
@@ -426,10 +426,10 @@ export default function QueryPage() {
                     
                     {response.relatedTickets && response.relatedTickets.length > 0 && (
                       <div className="mt-4">
-                        <p className="text-sm font-medium text-slate-700">Related Tickets:</p>
+                        <p className="text-sm font-medium text-[#E0E0E0]">Related Tickets:</p>
                         <div className="flex flex-wrap gap-2 mt-1">
                           {response.relatedTickets.map((ticketId) => (
-                            <span key={ticketId} className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-md">
+                            <span key={ticketId} className="px-2 py-1 bg-[#3C3C3C] text-[#FFA500] text-xs rounded-md">
                               Ticket #{ticketId}
                             </span>
                           ))}
@@ -439,10 +439,10 @@ export default function QueryPage() {
                     
                     {response.relatedConversations && response.relatedConversations.length > 0 && (
                       <div className="mt-4">
-                        <p className="text-sm font-medium text-slate-700">Related Conversations:</p>
+                        <p className="text-sm font-medium text-[#E0E0E0]">Related Conversations:</p>
                         <div className="flex flex-wrap gap-2 mt-1">
                           {response.relatedConversations.map((convId) => (
-                            <span key={convId} className="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-md">
+                            <span key={convId} className="px-2 py-1 bg-[#3C3C3C] text-[#FFA500] text-xs rounded-md">
                               {convId}
                             </span>
                           ))}
@@ -451,10 +451,10 @@ export default function QueryPage() {
                     )}
                     
                     <div className="mt-4 flex justify-between items-center">
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-gray-400">
                         Confidence: {Math.round(response.confidence * 100)}%
                       </div>
-                      <button className="text-blue-600 hover:text-blue-800 text-sm">
+                      <button className="text-[#FFA500] hover:text-[#E69500] text-sm">
                         Feedback
                       </button>
                     </div>
@@ -466,9 +466,9 @@ export default function QueryPage() {
           
           {/* Sidebar */}
           <div className="md:col-span-1">
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-6">
-              <h2 className="text-lg font-semibold mb-4 flex items-center">
-                <FaHistory className="mr-2 text-gray-500" />
+            <div className="bg-[#2B2B2B] p-6 rounded-xl shadow-md border border-[#3C3C3C] mb-6">
+              <h2 className="text-lg font-semibold mb-4 flex items-center text-[#E0E0E0]">
+                <FaHistory className="mr-2 text-[#FFA500]" />
                 Recent Queries
               </h2>
               <ul className="space-y-3">
@@ -476,16 +476,10 @@ export default function QueryPage() {
                   <li key={index}>
                     <button
                       onClick={() => handleSuggestedQuery(rq.text, rq.type)}
-                      className="text-left w-full p-2 hover:bg-gray-50 rounded text-gray-700 flex items-start"
+                      className="text-left w-full p-2 hover:bg-[#3C3C3C] rounded text-[#E0E0E0] flex items-start transition-colors"
                     >
                       <span 
-                        className={`mr-2 mt-1 ${
-                          rq.type === 'ticket_analysis' 
-                            ? 'text-blue-500' 
-                            : rq.type === 'conversation_analysis'
-                              ? 'text-purple-500'
-                              : 'text-green-500'
-                        }`}
+                        className={`mr-2 mt-1 text-[#FFA500]`}
                       >
                         {rq.type === 'ticket_analysis' && <FaDatabase />}
                         {rq.type === 'conversation_analysis' && <FaComments />}
@@ -498,54 +492,54 @@ export default function QueryPage() {
               </ul>
             </div>
             
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-              <h2 className="text-lg font-semibold mb-4 flex items-center">
-                <FaRobot className="mr-2 text-gray-500" />
+            <div className="bg-[#2B2B2B] p-6 rounded-xl shadow-md border border-[#3C3C3C]">
+              <h2 className="text-lg font-semibold mb-4 flex items-center text-[#E0E0E0]">
+                <FaRobot className="mr-2 text-[#FFA500]" />
                 Suggested Queries
               </h2>
               <ul className="space-y-3">
                 <li>
                   <button
                     onClick={() => handleSuggestedQuery("What are the most common categories of tickets?", 'ticket_analysis')}
-                    className="text-left w-full p-2 hover:bg-gray-50 rounded text-gray-700 flex items-start"
+                    className="text-left w-full p-2 hover:bg-[#3C3C3C] rounded text-[#E0E0E0] flex items-start transition-colors"
                   >
-                    <span className="text-blue-500 mr-2 mt-1"><FaDatabase /></span>
+                    <span className="text-[#FFA500] mr-2 mt-1"><FaDatabase /></span>
                     <span>What are the most common categories of tickets?</span>
                   </button>
                 </li>
                 <li>
                   <button
                     onClick={() => handleSuggestedQuery("What is the sentiment trend in customer conversations?", 'conversation_analysis')}
-                    className="text-left w-full p-2 hover:bg-gray-50 rounded text-gray-700 flex items-start"
+                    className="text-left w-full p-2 hover:bg-[#3C3C3C] rounded text-[#E0E0E0] flex items-start transition-colors"
                   >
-                    <span className="text-purple-500 mr-2 mt-1"><FaComments /></span>
+                    <span className="text-[#FFA500] mr-2 mt-1"><FaComments /></span>
                     <span>What is the sentiment trend in customer conversations?</span>
                   </button>
                 </li>
                 <li>
                   <button
                     onClick={() => handleSuggestedQuery("How do I fix Outlook when it&apos;s not syncing emails?", 'it_knowledge')}
-                    className="text-left w-full p-2 hover:bg-gray-50 rounded text-gray-700 flex items-start"
+                    className="text-left w-full p-2 hover:bg-[#3C3C3C] rounded text-[#E0E0E0] flex items-start transition-colors"
                   >
-                    <span className="text-green-500 mr-2 mt-1"><FaQuestion /></span>
+                    <span className="text-[#FFA500] mr-2 mt-1"><FaQuestion /></span>
                     <span>How do I fix Outlook when it&apos;s not syncing emails?</span>
                   </button>
                 </li>
                 <li>
                   <button
                     onClick={() => handleSuggestedQuery("What is the average ticket resolution time by department?", 'ticket_analysis')}
-                    className="text-left w-full p-2 hover:bg-gray-50 rounded text-gray-700 flex items-start"
+                    className="text-left w-full p-2 hover:bg-[#3C3C3C] rounded text-[#E0E0E0] flex items-start transition-colors"
                   >
-                    <span className="text-blue-500 mr-2 mt-1"><FaDatabase /></span>
+                    <span className="text-[#FFA500] mr-2 mt-1"><FaDatabase /></span>
                     <span>What is the average ticket resolution time by department?</span>
                   </button>
                 </li>
                 <li>
                   <button
                     onClick={() => handleSuggestedQuery("How do I resolve network connectivity issues?", 'it_knowledge')}
-                    className="text-left w-full p-2 hover:bg-gray-50 rounded text-gray-700 flex items-start"
+                    className="text-left w-full p-2 hover:bg-[#3C3C3C] rounded text-[#E0E0E0] flex items-start transition-colors"
                   >
-                    <span className="text-green-500 mr-2 mt-1"><FaQuestion /></span>
+                    <span className="text-[#FFA500] mr-2 mt-1"><FaQuestion /></span>
                     <span>How do I resolve network connectivity issues?</span>
                   </button>
                 </li>
@@ -555,9 +549,9 @@ export default function QueryPage() {
         </div>
       </main>
       
-      <footer className="bg-gray-800 text-white py-6 mt-auto">
+      <footer className="bg-[#1A1A1A] border-t border-[#3C3C3C] py-6 mt-auto">
         <div className="container mx-auto px-4 text-center">
-          <p>ServiceNow Ticket Analysis Dashboard &copy; 2024</p>
+          <p className="text-[#E0E0E0]">Jimmy Ticket Analyzer v27 &copy; 2025</p>
         </div>
       </footer>
     </div>
