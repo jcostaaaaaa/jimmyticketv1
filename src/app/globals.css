@@ -1,0 +1,226 @@
+/* Tailwind directives - stylelint-disable */
+/* postcss-import directives are processed by the build system */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+/* stylelint-enable */
+
+:root {
+  --foreground-rgb: 224, 224, 224; /* Light Grey/Off-White #E0E0E0 */
+  --background-rgb: 26, 26, 26; /* Dark Charcoal #1A1A1A */
+  --primary-rgb: 255, 165, 0; /* Orange #FFA500 */
+  --primary-soft-rgb: 230, 149, 0; /* Softer Orange #E69500 for large UI elements */
+  --accent-rgb: 255, 165, 0; /* Orange #FFA500 */
+  
+  /* Mobile-specific color fixes to ensure consistent orange display */
+  --primary-hex: #FFA500; /* Explicit HEX for consistent orange */
+  --primary-soft-hex: #E69500; /* Explicit HEX for consistent softer orange */
+  --accent-hex: #FFA500; /* Explicit HEX for consistent accent orange */
+  --success-color: 34, 197, 94; /* Green 500 */
+  --warning-color: 245, 158, 11; /* Amber 500 */
+  --error-color: 239, 68, 68; /* Red 500 */
+  --text-primary: 224, 224, 224; /* Light Grey/Off-White #E0E0E0 */
+  --text-secondary: 160, 160, 160; /* Medium Grey #A0A0A0 */
+  --border-color: 60, 60, 60; /* Dark Grey #3C3C3C */
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: rgb(var(--background-rgb));
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Dark theme styles */
+.dark {
+  --foreground-rgb: 224, 224, 224;
+  --background-rgb: 26, 26, 26;
+}
+
+/* Mobile-specific adjustments */
+@media screen and (max-width: 768px) {
+  :root {
+    /* Ensure consistent orange color on mobile by using more orange-focused values */
+    --primary-rgb: 255, 140, 0; /* Pure orange for mobile */
+    --primary-soft-rgb: 235, 130, 0; /* Softer pure orange for mobile */
+    --accent-rgb: 255, 140, 0; /* Pure orange accent for mobile */
+    
+    /* Ensure HEX values match the RGB values */
+    --primary-hex: #FF8C00; /* Dark orange for mobile */
+    --primary-soft-hex: #EB8200; /* Softer dark orange for mobile */
+    --accent-hex: #FF8C00; /* Dark orange accent for mobile */
+  }
+}
+
+/* Typography improvements */
+h1 {
+  font-size: 2.25rem;
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: 1.5rem;
+  color: #E0E0E0;
+}
+
+h2 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1.3;
+  margin-bottom: 1.25rem;
+  color: #E0E0E0;
+}
+
+h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.4;
+  margin-bottom: 1rem;
+  color: #E0E0E0;
+}
+
+p {
+  color: #E0E0E0;
+  font-size: 1.05rem;
+  line-height: 1.75rem;
+  margin-bottom: 1.25rem;
+}
+
+/* Custom component styles */
+.code {
+  background-color: #3C3C3C;
+  color: #E0E0E0;
+  font-family: monospace;
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+}
+
+.card {
+  background-color: #2B2B2B;
+  border: 1px solid #3C3C3C;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.2s ease-in-out;
+}
+
+.card:hover {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.data-card {
+  background-color: #2B2B2B;
+  border: 1px solid #3C3C3C;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  border-left: 4px solid #3C3C3C;
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #E0E0E0;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #A0A0A0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.tech-badge {
+  background-color: #3C3C3C;
+  color: #E0E0E0;
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+}
+
+.btn-primary {
+  background-color: var(--primary-soft-hex, rgb(var(--primary-soft-rgb)));
+  color: #E0E0E0;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-primary:hover {
+  background-color: #CC8400;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.btn-secondary {
+  background-color: #3C3C3C;
+  color: var(--primary-hex, rgb(var(--primary-rgb)));
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid #3C3C3C;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-secondary:hover {
+  background-color: #2B2B2B;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.btn-outline {
+  border: 1px solid #3C3C3C;
+  background-color: transparent;
+  color: #E0E0E0;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-outline:hover {
+  background-color: #3C3C3C;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Form element styles */
+input, select, textarea {
+  background-color: #2B2B2B;
+  border: 1px solid #3C3C3C;
+  color: #E0E0E0;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.375rem;
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: 2px solid var(--primary-hex, rgb(var(--primary-rgb)));
+  border-color: var(--primary-hex, rgb(var(--primary-rgb)));
+}
+
+/* Table styles */
+table {
+  background-color: #2B2B2B;
+  border: 1px solid #3C3C3C;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+th {
+  background-color: #1A1A1A;
+  color: #E0E0E0;
+  font-weight: 600;
+  padding: 0.75rem 1rem;
+  text-align: left;
+}
+
+td {
+  padding: 0.75rem 1rem;
+  border-top: 1px solid #3C3C3C;
+}
+
+tr:hover {
+  background-color: #3C3C3C;
+}
