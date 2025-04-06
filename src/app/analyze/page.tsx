@@ -137,11 +137,9 @@ export default function AnalyzePage() {
   }, [tickets]);
   
   const runAIAnalysis = async () => {
-    // Use the JOPENAPIKEY environment variable
-    const apiKeyToUse = process.env.JOPENAPIKEY || '';
-    
-    if (!apiKeyToUse || apiKeyToUse.trim() === '' || !analytics) {
-      console.error('API key not found in environment variables');
+    // Check if analytics data is available
+    if (!analytics) {
+      console.error('Analytics data not available');
       return;
     }
     
@@ -196,15 +194,13 @@ export default function AnalyzePage() {
       }
       `;
       
-      // Make API call to OpenAI
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      // Make API call to our secure API route that handles the OpenAI API key
+      const response = await fetch('/api/analyze', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKeyToUse}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          model: 'gpt-3.5-turbo',
           messages: [
             {
               role: 'system',
