@@ -32,3 +32,4 @@ export default function RootLayout({
     </html>
   );
 }
+// TODO: Add Samsung browser color fix

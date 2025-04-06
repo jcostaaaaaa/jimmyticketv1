@@ -42,15 +42,87 @@ body {
 /* Mobile-specific adjustments */
 @media screen and (max-width: 768px) {
   :root {
-    /* Ensure consistent orange color on mobile by using more orange-focused values */
-    --primary-rgb: 255, 140, 0; /* Pure orange for mobile */
-    --primary-soft-rgb: 235, 130, 0; /* Softer pure orange for mobile */
-    --accent-rgb: 255, 140, 0; /* Pure orange accent for mobile */
+    /* Ensure consistent orange color on mobile by using explicit orange values */
+    --primary-rgb: 255, 128, 0; /* Pure orange for mobile */
+    --primary-soft-rgb: 235, 120, 0; /* Softer pure orange for mobile */
+    --accent-rgb: 255, 128, 0; /* Pure orange accent for mobile */
     
-    /* Ensure HEX values match the RGB values */
-    --primary-hex: #FF8C00; /* Dark orange for mobile */
-    --primary-soft-hex: #EB8200; /* Softer dark orange for mobile */
-    --accent-hex: #FF8C00; /* Dark orange accent for mobile */
+    /* Ensure HEX values match the RGB values - using explicit values for Samsung browser */
+    --primary-hex: #FF8000 !important; /* Pure orange for mobile */
+    --primary-soft-hex: #F76B00 !important; /* Softer pure orange for mobile */
+    --accent-hex: #FF8000 !important; /* Pure orange accent for mobile */
+  }
+  
+  /* Direct color overrides for Samsung Internet browser compatibility */
+  .btn-primary, 
+  a[href^="/import"],
+  a[href^="/conversations"],
+  a[href="/import"],
+  a[href="/conversations"] {
+    background-color: #FF8000 !important;
+  }
+  
+  .btn-primary:hover,
+  a[href^="/import"]:hover,
+  a[href^="/conversations"]:hover,
+  a[href="/import"]:hover,
+  a[href="/conversations"]:hover {
+    background-color: #F76B00 !important;
+  }
+  
+  .btn-secondary,
+  a[href^="/analyze"],
+  a[href="/analyze"] {
+    color: #FF8000 !important;
+  }
+  
+  [class*="border-l-[#FF"] {
+    border-left-color: #FF8000 !important;
+  }
+  
+  [class*="text-[#FF"] {
+    color: #FF8000 !important;
+  }
+  
+  h1[class*="bg-gradient-to-r"] {
+    background-image: linear-gradient(to right, #FF8000, #FFA700) !important;
+  }
+  
+  /* Samsung Internet browser specific fixes */
+  /* These selectors are more specific to override Samsung browser's color handling */
+  .bg-\[\#FF8000\], 
+  .hover\:bg-\[\#F76B00\]:hover,
+  a[href].bg-\[\#FF8000\],
+  button.bg-\[\#FF8000\],
+  div.bg-\[\#FF8000\] {
+    background-color: #FF8000 !important;
+  }
+
+  .hover\:bg-\[\#F76B00\]:hover,
+  a[href].hover\:bg-\[\#F76B00\]:hover,
+  button.hover\:bg-\[\#F76B00\]:hover {
+    background-color: #F76B00 !important;
+  }
+
+  .text-\[\#FF8000\],
+  a[href].text-\[\#FF8000\],
+  svg.text-\[\#FF8000\],
+  div.text-\[\#FF8000\] {
+    color: #FF8000 !important;
+  }
+
+  .border-l-\[\#FF8000\],
+  div.border-l-\[\#FF8000\] {
+    border-left-color: #FF8000 !important;
+  }
+
+  /* Fix for gradient text */
+  .bg-gradient-to-r.from-\[\#FF8000\].to-\[\#FFA700\].bg-clip-text.text-transparent,
+  h1.bg-gradient-to-r.from-\[\#FF8000\].to-\[\#FFA700\].bg-clip-text.text-transparent {
+    background-image: linear-gradient(to right, #FF8000, #FFA700) !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    color: transparent !important;
   }
 }
 
