@@ -26,7 +26,7 @@ export async function POST(request: Request) {
         model: 'gpt-3.5-turbo',
         messages: body.messages,
         temperature: body.temperature || 0.7,
-        max_tokens: body.max_tokens || 1000
+        max_tokens: body.max_tokens || 3000
       })
     });
 
