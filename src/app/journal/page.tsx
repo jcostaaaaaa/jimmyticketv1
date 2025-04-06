@@ -104,11 +104,17 @@ export default function JournalPage() {
   // Function to generate a learning entry with AI
   const generateLearningEntryWithAI = useCallback(async (ticket: Ticket): Promise<string | null> => {
     try {
-      // Check if ticket has description and resolution
-      if (!ticket.description || !ticket.resolution) {
-        console.log('Skipping ticket without description or resolution');
+      // Check if ticket has at least description or resolution
+      if (!ticket.description && !ticket.resolution) {
+        console.log('Skipping ticket without both description and resolution');
         return null;
       }
+      
+      // If either field is missing, use what we have
+      const hasDescription = !!ticket.description;
+      const hasResolution = !!ticket.resolution;
+      
+      console.log(`Processing ticket with description: ${hasDescription}, resolution: ${hasResolution}`);
 
       // Construct a prompt that will generate specific technical learning entries
       const prompt = `
@@ -277,9 +283,9 @@ export default function JournalPage() {
         processedTickets.add(ticketId);
         processedCount++;
         
-        // Check if ticket has required fields
-        if (!ticket.description || !ticket.resolution) {
-          console.log(`Skipping ticket ${ticketId} - missing description or resolution`);
+        // Check if ticket has at least one required field
+        if (!ticket.description && !ticket.resolution) {
+          console.log(`Skipping ticket ${ticketId} - missing both description and resolution`);
           skippedCount++;
           continue;
         }
