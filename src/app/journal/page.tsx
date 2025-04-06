@@ -263,7 +263,7 @@ export default function JournalPage() {
         try {
           const errorData = JSON.parse(errorText);
           errorMessage = errorData.error || 'API error';
-        } catch (_) {
+        } catch {
           errorMessage = errorText || `HTTP error ${response.status}`;
         }
         
