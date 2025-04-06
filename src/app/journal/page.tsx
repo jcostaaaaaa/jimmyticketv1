@@ -158,18 +158,20 @@ export default function JournalPage() {
       const batchPrompt = `
       You are an IT professional documenting what you learned from resolving technical support tickets.
       
-      I will provide you with a batch of ${batch.length} IT support tickets. For each ticket, generate a learning journal entry.
+      I will provide you with a batch of ${batch.length} IT support tickets. For each ticket, generate a detailed learning journal entry.
       
       Each entry MUST:
       1. Start with "Today I learned about [specific component]" where [specific component] is the exact hardware/software component that failed
-      2. Explain why the specific component failed or caused issues
-      3. Detail what was done to resolve the issue
-      4. Be written in first person as if you personally solved this issue
-      5. Be 3-5 sentences long
+      2. Provide a comprehensive explanation of how the component works and why it's critical to the company's operations
+      3. Explain in detail why the specific component failed or caused issues
+      4. Detail the troubleshooting process and what was done to resolve the issue
+      5. Include any preventative measures that could avoid similar issues in the future
+      6. Be written in first person as if you personally solved this issue
+      7. Be 5-8 sentences long with detailed technical explanations
       
       Format your response as a JSON array where each object has:
       - ticketId: The ID of the ticket
-      - content: The learning journal entry
+      - content: The detailed learning journal entry
       
       Here are the tickets:
       `;
@@ -266,8 +268,27 @@ export default function JournalPage() {
         // Parse the JSON response
         let batchEntries: { ticketId: string; content: string }[] = [];
         try {
-          // Try to parse the JSON response
-          batchEntries = JSON.parse(aiContent);
+          // Try to parse the JSON response with various cleanup attempts
+          let jsonToParse = aiContent;
+          
+          // Try to find JSON array in the response if it's wrapped in other text
+          const jsonMatch = aiContent.match(/\[\s*\{.*\}\s*\]/);
+          if (jsonMatch) {
+            jsonToParse = jsonMatch[0];
+          }
+          
+          // Try to parse with some common cleanup
+          try {
+            batchEntries = JSON.parse(jsonToParse);
+          } catch (initialError) {
+            // Try to fix common JSON issues
+            // Replace single quotes with double quotes
+            jsonToParse = jsonToParse.replace(/'/g, '"');
+            // Fix unquoted keys
+            jsonToParse = jsonToParse.replace(/(\w+)\s*:/g, '"$1":');
+            batchEntries = JSON.parse(jsonToParse);
+          }
+          
           console.log(`Successfully parsed ${batchEntries.length} entries from batch ${batchIndex + 1}`);
           
           // Increment API response counter
@@ -288,8 +309,27 @@ export default function JournalPage() {
             });
             console.log(`Extracted ${batchEntries.length} entries from text format`);
           } else {
-            console.error('Could not extract entries from response');
-            continue;
+            // Last resort - try to find entries by looking for "Today I learned about" patterns
+            const todayILearnedMatches = aiContent.match(/Today I learned about[\s\S]+?(?=Today I learned about|$)/g);
+            if (todayILearnedMatches && todayILearnedMatches.length > 0) {
+              console.log(`Found ${todayILearnedMatches.length} entries using 'Today I learned about' pattern`);
+              
+              // Try to associate each entry with a ticket ID by position
+              batchEntries = todayILearnedMatches.map((content: string, idx: number) => {
+                // Use the ticket ID if we can find it in the content, otherwise use the index
+                const ticketIdMatch = batch[idx] ? 
+                  (typeof batch[idx].number === 'string' ? batch[idx].number : 
+                   typeof batch[idx].sys_id === 'string' ? batch[idx].sys_id : `unknown-${idx}`) : 
+                  `unknown-${idx}`;
+                return { ticketId: ticketIdMatch, content: content.trim() };
+              });
+              
+              // Increment API response counter
+              setApiResponseCount(prevCount => prevCount + 1);
+            } else {
+              console.error('Could not extract entries from response');
+              continue;
+            }
           }
         }
         
