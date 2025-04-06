@@ -203,7 +203,7 @@ export default function JournalPage() {
         console.log(`Making API request for batch ${batchIndex + 1} with ${batch.length} tickets...`);
         
         // Make API call to our secure API route that handles the OpenAI API key
-        const response = await fetch('/api/journal', {
+        const response = await fetch('/api/analyze', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -220,7 +220,7 @@ export default function JournalPage() {
               }
             ],
             temperature: 0.7,
-            max_tokens: 1500 // Increased token limit for batch processing
+            max_tokens: 3000
           })
         });
         
