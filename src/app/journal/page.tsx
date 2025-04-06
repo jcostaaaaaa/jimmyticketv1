@@ -560,6 +560,7 @@ export default function JournalPage() {
 
     setEntries([...entries, newEntry]);
     setNewEntryContent('');
+    setNewEntryTitle('');
     setNewEntryTags('');
     setIsAddingEntry(false);
     addNotification({
