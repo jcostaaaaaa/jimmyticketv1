@@ -38,6 +38,7 @@ export default function JournalPage() {
   const [newEntryTitle] = useState('');
   const [newEntryTags, setNewEntryTags] = useState('');
   const [isProcessingAI, setIsProcessingAI] = useState(false);
+  const [apiResponseCount, setApiResponseCount] = useState(0);
   
   // Function to extract keywords as tags from text
   const extractKeywordsAsTags = useCallback((text: string): string[] => {
@@ -130,8 +131,6 @@ export default function JournalPage() {
       priority
     };
   }, []);
-
-  // Note: chunkText function was removed as it's not being used
 
   // Function to process tickets in batches
   const processTicketsInBatches = useCallback(async (ticketsToProcess: Ticket[], batchSize: number = 20): Promise<JournalEntry[]> => {
@@ -256,6 +255,9 @@ export default function JournalPage() {
           // Try to parse the JSON response
           batchEntries = JSON.parse(aiContent);
           console.log(`Successfully parsed ${batchEntries.length} entries from batch ${batchIndex + 1}`);
+          
+          // Increment API response counter
+          setApiResponseCount(prevCount => prevCount + 1);
         } catch (parseError) {
           console.error('Failed to parse API response as JSON:', parseError);
           console.log('Raw response:', aiContent);
@@ -350,7 +352,7 @@ export default function JournalPage() {
     }
     
     return aiEntries;
-  }, [extractTicketInfo, extractMeaningfulTags]);
+  }, [extractTicketInfo, extractMeaningfulTags, setApiResponseCount]);
 
   // Function to process tickets with AI
   const processTicketsWithAI = useCallback(async () => {
@@ -518,8 +520,11 @@ export default function JournalPage() {
       {/* Notifications are now handled by the NotificationProvider */}
       <div className="bg-[#2B2B2B] shadow-sm">
         <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-          <div className="flex items-center">
-            <h1 className="text-2xl font-bold">Learning Journal</h1>
+          <div className="flex items-center gap-4">
+            <h1 className="text-2xl font-bold text-white">Learning Journal</h1>
+            <div className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 px-3 py-1 rounded-full text-sm font-medium">
+              API Responses: {apiResponseCount}
+            </div>
           </div>
           <div className="flex space-x-2">
             <button
