@@ -182,9 +182,11 @@ export default function AnalyzePage() {
       ${JSON.stringify(ticketSummary, null, 2)}
       
       Based on this data, please provide:
-      1. 4-5 specific data-driven insights about patterns, trends, or issues
-      2. 4-5 actionable recommendations to improve IT support operations
-      3. A comprehensive and detailed prediction of future trends and challenges (at least 200 words). Include potential ticket volume changes, emerging issue categories, staffing implications, and technology adoption impacts
+      1. ONLY if there is sufficient data: 2-5 specific data-driven insights about patterns, trends, or issues that are directly supported by the provided ticket data. Do not generate generic insights that aren't clearly evident in the data.
+      2. ONLY if there is sufficient data: 2-5 actionable recommendations that directly address the specific issues found in the ticket data. Do not provide generic recommendations.
+      3. ONLY if there is sufficient historical data to make meaningful projections: A comprehensive prediction of future trends and challenges that are specifically related to the patterns in the provided ticket data. Include relevant projections about ticket volume changes, emerging issue categories, staffing implications, and technology adoption impacts, but ONLY if these can be reasonably inferred from the actual data provided.
+      
+      IMPORTANT: If there is insufficient data to make meaningful insights, recommendations, or predictions for any of the above categories, return an empty array for that category or a message stating "Insufficient data to generate reliable predictions" instead of creating generic content. Quality over quantity - only include items that are directly supported by the data.
       
       Format your response as a JSON object with the following structure:
       {
@@ -233,13 +235,18 @@ export default function AnalyzePage() {
       try {
         const aiResults = JSON.parse(content);
         
-        // Ensure the response has the expected structure
+        // Ensure the response has the expected structure and handle insufficient data cases
         const aiAnalysisResults: AIAnalysis = {
-          insights: Array.isArray(aiResults.insights) ? aiResults.insights : [],
-          recommendations: Array.isArray(aiResults.recommendations) ? aiResults.recommendations : [],
-          predictionText: typeof aiResults.predictionText === 'string' ? aiResults.predictionText : '',
+          insights: Array.isArray(aiResults.insights) ? aiResults.insights : 
+                   (aiResults.insights === "Insufficient data to generate reliable insights" ? [] : []),
+          recommendations: Array.isArray(aiResults.recommendations) ? aiResults.recommendations : 
+                          (aiResults.recommendations === "Insufficient data to generate reliable recommendations" ? [] : []),
+          predictionText: typeof aiResults.predictionText === 'string' ? 
+                         (aiResults.predictionText === "Insufficient data to generate reliable predictions" ? 
+                         "There is currently insufficient historical ticket data to generate reliable predictions. Continue collecting more ticket data with diverse categories, priorities, and resolution times to enable meaningful future projections." : 
+                         aiResults.predictionText) : '',
           companyContext: companyContext
-        };
+        };  
         
         setAIAnalysis(aiAnalysisResults);
       } catch (parseError) {
@@ -274,48 +281,155 @@ export default function AnalyzePage() {
 
   // Generate insights based on actual ticket data
   const generateDataDrivenInsights = (): string[] => {
-    // Simplified implementation
-    return [
-      "Network connectivity issues account for the highest percentage of tickets.",
-      "Resolution times for software application issues are significantly longer than average.",
-      "Several users are experiencing recurring issues with email synchronization.",
-      "Peak ticket submission occurs during morning hours, suggesting potential for proactive staffing adjustments."
-    ];
+    // Check if we have enough data to generate meaningful insights
+    if (!analytics || analytics.totalTickets < 10) {
+      return [];
+    }
+    
+    const insights: string[] = [];
+    
+    // Only add insights if the relevant data exists and shows clear patterns
+    if (analytics.categoryDistribution && Object.keys(analytics.categoryDistribution).length > 0) {
+      // Find the category with the highest percentage
+      const categories = Object.entries(analytics.categoryDistribution);
+      if (categories.length > 0) {
+        categories.sort((a, b) => b[1] - a[1]);
+        const [topCategory, percentage] = categories[0];
+        if (typeof percentage === 'number' && percentage > 20) { // Only if it's a significant percentage
+          insights.push(`${topCategory} issues account for ${Math.round(percentage)}% of all tickets, making it the most common category.`);
+        }
+      }
+    }
+    
+    // Add insight about resolution time if data exists
+    if (analytics.averageResolutionTime && typeof analytics.averageResolutionTime === 'number' && analytics.averageResolutionTime > 0) {
+      const resolutionTime = Number(analytics.averageResolutionTime);
+      insights.push(`The average resolution time for tickets is ${resolutionTime.toFixed(1)} hours.`);
+    }
+    
+    // Add insight about open vs. resolved tickets if data exists
+    if (analytics.openTickets > 0 && analytics.resolvedTickets > 0) {
+      const openPercentage = (analytics.openTickets / analytics.totalTickets) * 100;
+      insights.push(`Currently, ${Math.round(openPercentage)}% of tickets remain open, which may indicate ${openPercentage > 30 ? 'potential resource constraints' : 'normal operational flow'}.`);
+    }
+    
+    return insights;
   };
-  
+
   // Generate recommendations based on actual ticket data
   const generateDataDrivenRecommendations = (): string[] => {
-    // Simplified implementation
-    return [
-      "Develop specialized training for support staff focused on network connectivity issues.",
-      "Create detailed troubleshooting guides for software application issues to reduce resolution time.",
-      "Implement proactive monitoring for email systems to detect issues before they impact users.",
-      "Adjust support staff scheduling to increase coverage during morning hours."
-    ];
+    // Check if we have enough data to generate meaningful recommendations
+    if (!analytics || analytics.totalTickets < 10) {
+      return [];
+    }
+    
+    const recommendations: string[] = [];
+    
+    // Only add recommendations if the relevant data exists and shows clear patterns
+    if (analytics.categoryDistribution && Object.keys(analytics.categoryDistribution).length > 0) {
+      // Find the categories with the highest percentages
+      const categories = Object.entries(analytics.categoryDistribution);
+      if (categories.length > 0) {
+        categories.sort((a, b) => b[1] - a[1]);
+        const [topCategory, percentage] = categories[0];
+        if (typeof percentage === 'number' && percentage > 20) {
+          recommendations.push(`Develop specialized training for support staff focused on ${topCategory} issues, which account for a significant portion of tickets.`);
+        }
+      }
+    }
+    
+    // Add recommendation about resolution time if data exists
+    if (analytics.averageResolutionTime) {
+      const resolutionTime = typeof analytics.averageResolutionTime === 'number' ? 
+        analytics.averageResolutionTime : 
+        parseFloat(analytics.averageResolutionTime);
+        
+      if (!isNaN(resolutionTime) && resolutionTime > 8) {
+        recommendations.push(`Create detailed troubleshooting guides to reduce the current average resolution time of ${resolutionTime.toFixed(1)} hours.`);
+      }
+    }
+    
+    // Add recommendation about staffing if there are assignees data
+    if (analytics.topAssignees && analytics.topAssignees.length > 0) {
+      const topAssignee = analytics.topAssignees[0];
+      if (topAssignee && topAssignee.count > analytics.totalTickets * 0.3) {
+        recommendations.push(`Consider redistributing workload more evenly among team members, as ${topAssignee.name} is currently handling a disproportionate number of tickets.`);
+      }
+    }
+    
+    return recommendations;
   };
   
   // Generate predictions based on actual ticket data
   const generateDataDrivenPredictions = (): string => {
-    // Comprehensive fallback prediction
-    return `Based on the analysis of your ticket data, we project several significant trends over the next 6-12 months:
-
-1. Ticket Volume Trends: We anticipate a 15-20% overall increase in ticket volume, with network-related issues showing the most substantial growth at approximately 25%. Software application tickets are likely to remain stable but with increasing complexity as more cloud-based applications are adopted. Hardware-related tickets may decrease by 5-10% as more reliable equipment is deployed.
-
-2. Emerging Issue Categories: New categories of tickets related to remote work technologies and cloud security will likely emerge. We project that collaboration tool issues could represent up to 15% of all tickets by next quarter, while security-related concerns may double in frequency, particularly around access management and data protection.
-
-3. Seasonal Patterns: Based on current monthly trends, expect significant spikes in ticket volume during system upgrade periods and at the beginning of each quarter when new projects typically launch. January and September appear to be particularly high-volume months that will require additional staffing.
-
-4. Resolution Time Implications: Average resolution times may initially increase by 10-15% as new technologies are adopted, before improving once staff training catches up. High-priority tickets will continue to be resolved efficiently, but medium-priority tickets risk longer wait times without process improvements.
-
-5. Staffing Implications: The current support team structure will likely need a 15% increase in specialized technical staff, particularly those with network security and cloud application expertise. Cross-training existing staff could mitigate approximately 30% of this need.
-
-6. Technology Adoption Impact: The transition to newer technologies will temporarily increase ticket volume but should result in a 20-25% reduction in certain categories of recurring issues by year-end. Proactive monitoring tools could further reduce reactive support needs by up to 30%.
-
-These predictions suggest the need for strategic planning around staffing, training, and potentially restructuring certain support processes to maintain or improve current service levels.`;
+    // Check if we have enough data to generate meaningful predictions
+    if (!analytics || analytics.totalTickets < 20 || !analytics.monthlyTrends || Object.keys(analytics.monthlyTrends).length < 3) {
+      return "There is currently insufficient historical ticket data to generate reliable predictions. Continue collecting more ticket data with diverse categories, priorities, and resolution times to enable meaningful future projections.";
+    }
+    
+    // Only generate predictions if we have enough monthly data to establish trends
+    const months = Object.keys(analytics.monthlyTrends);
+    if (months.length < 3) {
+      return "At least three months of historical data is needed to identify meaningful trends and make reliable predictions. Continue collecting ticket data to enable future projections.";
+    }
+    
+    // Analyze monthly trends to detect patterns
+    // Extract ticket counts from monthly trends with proper type handling
+    const monthlyTicketCounts = months.map(month => {
+      const monthData = analytics.monthlyTrends[month as keyof typeof analytics.monthlyTrends];
+      return typeof monthData === 'number' ? monthData : 0;
+    });
+    const isIncreasing = monthlyTicketCounts.every((count, i) => i === 0 || count >= monthlyTicketCounts[i-1]);
+    const isDecreasing = monthlyTicketCounts.every((count, i) => i === 0 || count <= monthlyTicketCounts[i-1]);
+    
+    // Calculate average monthly change
+    let trendDescription = "";
+    if (monthlyTicketCounts.length >= 2) {
+      const firstMonth = monthlyTicketCounts[0];
+      const lastMonth = monthlyTicketCounts[monthlyTicketCounts.length - 1];
+      const monthsElapsed = monthlyTicketCounts.length - 1;
+      
+      if (firstMonth > 0) {
+        const monthlyChangeRate = (lastMonth - firstMonth) / firstMonth / monthsElapsed;
+        
+        if (isIncreasing && monthlyChangeRate > 0.05) {
+          trendDescription = `Based on your historical data, ticket volume is showing a consistent upward trend of approximately ${(monthlyChangeRate * 100).toFixed(1)}% per month.`;
+        } else if (isDecreasing && monthlyChangeRate < -0.05) {
+          trendDescription = `Based on your historical data, ticket volume is showing a consistent downward trend of approximately ${Math.abs(monthlyChangeRate * 100).toFixed(1)}% per month.`;
+        } else {
+          trendDescription = "Based on your historical data, ticket volume appears to be relatively stable with minor fluctuations.";
+        }
+      }
+    }
+    
+    // Analyze category distribution if available
+    let categoryTrends = "";
+    if (analytics.categoryDistribution && Object.keys(analytics.categoryDistribution).length > 0) {
+      const categories = Object.entries(analytics.categoryDistribution);
+      categories.sort((a, b) => b[1] - a[1]);
+      
+      if (categories.length > 0) {
+        const [topCategory, percentage] = categories[0];
+        if (typeof percentage === 'number' && percentage > 20) {
+          categoryTrends = `\n\nYour data shows that ${topCategory} issues currently account for ${Math.round(percentage)}% of all tickets. If this trend continues, you may want to consider specialized training or resources focused on this area.`;
+        }
+      }
+    }
+    
+    // Analyze resolution efficiency if available
+    let resolutionTrends = "";
+    if (analytics.resolutionEfficiency && typeof analytics.resolutionEfficiency === 'number') {
+      const efficiency = Number(analytics.resolutionEfficiency);
+      if (efficiency < 50) {
+        resolutionTrends = "\n\nYour current resolution efficiency is below average, which may lead to increasing backlogs if ticket volume grows. Consider reviewing support processes and resources to improve efficiency.";
+      } else if (efficiency > 80) {
+        resolutionTrends = "\n\nYour team is demonstrating high resolution efficiency, which positions you well to handle potential increases in ticket volume.";
+      }
+    }
+    
+    // Combine all analyses into a comprehensive prediction
+    return `${trendDescription}${categoryTrends}${resolutionTrends}\n\nContinue collecting more detailed ticket data to enable more comprehensive predictions about future trends, staffing needs, and potential process improvements.`;
   };
-
-  // Function to extract specific technical issues from tickets - used in journal entry generation
-  // This function is currently used by the journal module for generating specific technical entries
 
   // State for tab selection
   const [activeTab, setActiveTab] = useState<'analysis' | 'context'>('analysis');
