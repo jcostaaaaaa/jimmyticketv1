@@ -4,8 +4,12 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTickets } from '@/context/TicketContext';
 import type { Ticket } from '@/context/TicketContext';
-// @ts-ignore
-import { v4 as uuidv4 } from 'uuid';
+// Simple function to generate a unique ID
+function generateId() {
+  return Math.random().toString(36).substring(2, 15) + 
+         Math.random().toString(36).substring(2, 15) + 
+         Date.now().toString(36);
+}
 import { FaPlus, FaSearch, FaArrowLeft } from 'react-icons/fa';
 
 // Import the notification context hook
@@ -307,7 +311,7 @@ export default function JournalPage() {
             
             // Create the entry
             const newEntry: JournalEntry = {
-              id: uuidv4(),
+              id: generateId(),
               date: formattedDate,
               originalDate: ticketDate,
               content: content,
@@ -441,7 +445,7 @@ export default function JournalPage() {
     }
 
     const newEntry: JournalEntry = {
-      id: uuidv4(),
+      id: generateId(),
       date: new Date().toISOString(),
       content: newEntryContent,
       tags: newEntryTags.split(',').map(tag => tag.trim()).filter(Boolean),
@@ -645,15 +649,12 @@ export default function JournalPage() {
                         Ticket #{entry.ticketNumber}
                       </span>
                     )}
-                    {entry.originalDate ? (
-                      <span className="text-xs text-gray-400">
-                        {new Date(entry.originalDate as Date).toLocaleDateString()} {new Date(entry.originalDate as Date).toLocaleTimeString()}
-                      </span>
-                    ) : (
-                      <span className="text-xs text-gray-400">
-                        {new Date(entry.date).toLocaleDateString()} {new Date(entry.date).toLocaleTimeString()}
-                      </span>
-                    )}
+                    <span className="text-xs text-gray-400">
+                      {entry.originalDate 
+                        ? `${new Date(entry.originalDate as Date).toLocaleDateString()} ${new Date(entry.originalDate as Date).toLocaleTimeString()}`
+                        : `${new Date(entry.date).toLocaleDateString()} ${new Date(entry.date).toLocaleTimeString()}`
+                      }
+                    </span>
                   </div>
                   <button
                     onClick={() => {

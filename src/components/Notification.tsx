@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useEffect, useState } from 'react';
 
 export type NotificationType = 'success' | 'error' | 'info' | 'warning';
