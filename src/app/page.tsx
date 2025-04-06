@@ -2,6 +2,12 @@ import { Header } from "@/components/Header";
 import Link from "next/link";
 import { FaFileUpload, FaChartBar, FaSearch, FaLightbulb, FaServer, FaNetworkWired, FaDatabase, FaComments, FaChartPie } from "react-icons/fa";
 
+// Note: For client components that need these imports, create a separate file with 'use client' directive
+// import Image from "next/image";
+// import { useRouter } from "next/navigation";
+// import { useState, useEffect } from "react";
+// import { motion } from "framer-motion";
+
 export default function Home() {
   return (
     <div className="min-h-screen bg-[#1A1A1A]">
@@ -9,7 +15,7 @@ export default function Home() {
       
       <main className="container mx-auto py-12 px-4">
         <div className="text-center max-w-4xl mx-auto mb-16">
-          <h1 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-[#FFA500] to-[#FF8C00] bg-clip-text text-transparent">
+          <h1 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-[#FFA500] to-[#FF9800] bg-clip-text text-transparent">
             ServiceNow Ticket Analysis
           </h1>
           <p className="text-xl text-[#E0E0E0] mb-10 leading-relaxed">
@@ -19,13 +25,13 @@ export default function Home() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link 
               href="/import" 
-              className="bg-[#E69500] hover:bg-[#CC8400] text-[#E0E0E0] font-medium py-3 px-8 rounded-lg shadow-sm hover:shadow transition-all flex items-center justify-center gap-2 text-lg"
+              className="bg-[#FF9800] hover:bg-[#FB8C00] text-[#E0E0E0] font-medium py-3 px-8 rounded-lg shadow-sm hover:shadow transition-all flex items-center justify-center gap-2 text-lg"
             >
               <FaFileUpload /> Import Data
             </Link>
             <Link 
               href="/analyze" 
-              className="bg-[#3C3C3C] hover:bg-[#2B2B2B] text-[#FFA500] border border-[#3C3C3C] font-medium py-3 px-8 rounded-lg shadow-sm hover:shadow transition-all flex items-center justify-center gap-2 text-lg"
+              className="bg-[#3C3C3C] hover:bg-[#2B2B2B] text-[#FF9800] border border-[#3C3C3C] font-medium py-3 px-8 rounded-lg shadow-sm hover:shadow transition-all flex items-center justify-center gap-2 text-lg"
             >
               <FaSearch /> Query Data
             </Link>
@@ -33,10 +39,10 @@ export default function Home() {
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
-          <div className="bg-[#2B2B2B] border border-[#3C3C3C] rounded-xl shadow-sm hover:shadow-md transition-shadow p-6 border-l-4 border-l-[#FFA500]">
+          <div className="bg-[#2B2B2B] border border-[#3C3C3C] rounded-xl shadow-sm hover:shadow-md transition-shadow p-6 border-l-4 border-l-[#FF9800]">
             <div className="text-center mb-4">
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#3C3C3C] mb-4">
-                <FaFileUpload className="text-[#FFA500] text-2xl" />
+                <FaFileUpload className="text-[#FF9800] text-2xl" />
               </div>
               <h2 className="text-2xl font-bold mb-2 text-[#E0E0E0]">Import & Parse</h2>
             </div>
@@ -46,10 +52,10 @@ export default function Home() {
             </p>
           </div>
           
-          <div className="bg-[#2B2B2B] border border-[#3C3C3C] rounded-xl shadow-sm hover:shadow-md transition-shadow p-6 border-l-4 border-l-[#FFA500]">
+          <div className="bg-[#2B2B2B] border border-[#3C3C3C] rounded-xl shadow-sm hover:shadow-md transition-shadow p-6 border-l-4 border-l-[#FF9800]">
             <div className="text-center mb-4">
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#3C3C3C] mb-4">
-                <FaChartBar className="text-[#FFA500] text-2xl" />
+                <FaChartBar className="text-[#FF9800] text-2xl" />
               </div>
               <h2 className="text-2xl font-bold mb-2 text-[#E0E0E0]">Analyze & Visualize</h2>
             </div>
@@ -59,10 +65,10 @@ export default function Home() {
             </p>
           </div>
           
-          <div className="bg-[#2B2B2B] border border-[#3C3C3C] rounded-xl shadow-sm hover:shadow-md transition-shadow p-6 border-l-4 border-l-[#FFA500]">
+          <div className="bg-[#2B2B2B] border border-[#3C3C3C] rounded-xl shadow-sm hover:shadow-md transition-shadow p-6 border-l-4 border-l-[#FF9800]">
             <div className="text-center mb-4">
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#3C3C3C] mb-4">
-                <FaLightbulb className="text-[#FFA500] text-2xl" />
+                <FaLightbulb className="text-[#FF9800] text-2xl" />
               </div>
               <h2 className="text-2xl font-bold mb-2 text-[#E0E0E0]">Query & Learn</h2>
             </div>
@@ -164,7 +170,7 @@ export default function Home() {
               <div className="bg-[#1A1A1A] p-5 rounded-lg border border-[#3C3C3C]">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="bg-[#3C3C3C] p-2 rounded-full">
-                    <FaChartPie className="text-[#FFA500]" />
+                    <FaChartPie className="text-[#FF9800]" />
                   </div>
                   <h3 className="font-semibold text-[#E0E0E0]">Sentiment Analysis</h3>
                 </div>
@@ -176,7 +182,7 @@ export default function Home() {
               <div className="bg-[#1A1A1A] p-5 rounded-lg border border-[#3C3C3C]">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="bg-[#3C3C3C] p-2 rounded-full">
-                    <FaLightbulb className="text-[#FFA500]" />
+                    <FaLightbulb className="text-[#FF9800]" />
                   </div>
                   <h3 className="font-semibold text-[#E0E0E0]">Topic Detection</h3>
                 </div>
@@ -188,7 +194,7 @@ export default function Home() {
               <div className="bg-[#1A1A1A] p-5 rounded-lg border border-[#3C3C3C]">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="bg-[#3C3C3C] p-2 rounded-full">
-                    <FaChartBar className="text-[#FFA500]" />
+                    <FaChartBar className="text-[#FF9800]" />
                   </div>
                   <h3 className="font-semibold text-[#E0E0E0]">Agent Performance</h3>
                 </div>
@@ -201,7 +207,7 @@ export default function Home() {
             <div className="text-center">
               <Link 
                 href="/conversations" 
-                className="bg-[#E69500] hover:bg-[#CC8400] text-[#E0E0E0] font-medium py-2 px-6 rounded-lg inline-flex items-center justify-center gap-2 shadow-sm hover:shadow transition-all"
+                className="bg-[#FF9800] hover:bg-[#FB8C00] text-[#E0E0E0] font-medium py-2 px-6 rounded-lg inline-flex items-center justify-center gap-2 shadow-sm hover:shadow transition-all"
               >
                 <FaComments /> Explore Conversation Analysis
               </Link>
@@ -217,7 +223,7 @@ export default function Home() {
           </p>
           <Link 
             href="/import" 
-            className="bg-[#E69500] text-[#E0E0E0] hover:bg-[#CC8400] font-semibold py-3 px-8 rounded-lg inline-flex items-center justify-center gap-2 text-lg shadow-sm hover:shadow transition-all"
+            className="bg-[#FF9800] text-[#E0E0E0] hover:bg-[#FB8C00] font-semibold py-3 px-8 rounded-lg inline-flex items-center justify-center gap-2 text-lg shadow-sm hover:shadow transition-all"
           >
             <FaFileUpload /> Get Started
           </Link>
