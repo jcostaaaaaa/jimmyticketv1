@@ -35,7 +35,7 @@ export default function JournalPage() {
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
   const [isAddingEntry, setIsAddingEntry] = useState(false);
   const [newEntryContent, setNewEntryContent] = useState('');
-  const [newEntryTitle] = useState('');
+  const [newEntryTitle, setNewEntryTitle] = useState('');
   const [newEntryTags, setNewEntryTags] = useState('');
   const [isProcessingAI, setIsProcessingAI] = useState(false);
   const [apiResponseCount, setApiResponseCount] = useState(0);
@@ -280,7 +280,7 @@ export default function JournalPage() {
           // Try to parse with some common cleanup
           try {
             batchEntries = JSON.parse(jsonToParse);
-          } catch (initialError) {
+          } catch {
             // Try to fix common JSON issues
             // Replace single quotes with double quotes
             jsonToParse = jsonToParse.replace(/'/g, '"');
@@ -499,7 +499,7 @@ export default function JournalPage() {
     } finally {
       setIsProcessingAI(false);
     }
-  }, [tickets, entries, extractMeaningfulTags, addNotification, isProcessingAI, processTicketsInBatches, setIsProcessingAI, setEntries]);
+  }, [tickets, entries, addNotification, isProcessingAI, processTicketsInBatches, setIsProcessingAI, setEntries]);
 
   // Save entries to localStorage whenever they change
   useEffect(() => {
