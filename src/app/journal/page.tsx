@@ -191,17 +191,6 @@ export default function JournalPage() {
   // Function to generate a learning entry with AI
   const generateLearningEntryWithAI = useCallback(async (ticket: Ticket): Promise<string | null> => {
     try {
-      const apiKey = process.env.JOPENAPIKEY;
-      
-      if (!apiKey) {
-        toast({
-          title: 'API Key Missing',
-          description: 'OpenAI API key is required for AI-powered journal entries.',
-          status: 'error'
-        });
-        return null;
-      }
-      
       // Construct a prompt that will generate specific technical learning entries
       const prompt = `
       You are an IT professional documenting what you learned from resolving a technical support ticket.
@@ -227,15 +216,13 @@ export default function JournalPage() {
       GOOD EXAMPLE: "Today I learned about troubleshooting Windows registry corruption causing application crashes. The specific issue involved corrupted shell extension registry keys preventing File Explorer from properly loading file context menus. I discovered that running the System File Checker and manually removing the problematic registry keys under HKEY_CLASSES_ROOT resolved the issue without requiring a system restore."
       `;
       
-      // Make API call to OpenAI
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      // Make API call to our secure API route that handles the OpenAI API key
+      const response = await fetch('/api/journal', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          model: 'gpt-3.5-turbo',
           messages: [
             {
               role: 'system',
