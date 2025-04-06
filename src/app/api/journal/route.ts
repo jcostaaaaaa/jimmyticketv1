@@ -3,38 +3,11 @@ import { NextResponse } from 'next/server';
 export async function POST(request: Request) {
   console.log('Journal API route called');
   try {
-    // Get the API key from environment variables
-    console.log('Available environment variables:', Object.keys(process.env).filter(key => 
-      key.includes('API') || key.includes('KEY') || key.includes('OPEN')
-    ));
-    
-    // Use OPENKEYGSMD as the primary API key variable
+    // Get the API key from environment variables - use the same approach as analyze route
     const apiKey = process.env.OPENKEYGSMD;
-    console.log('OPENKEYGSMD exists:', apiKey ? 'Yes' : 'No');
     
-    // Try alternative environment variable names if needed
-    const alternativeKeys = {
-      OPENAI_API_KEY: process.env.OPENAI_API_KEY,
-      JOPENAPIKEY: process.env.JOPENAPIKEY,
-      NEXT_PUBLIC_OPENAI_API_KEY: process.env.NEXT_PUBLIC_OPENAI_API_KEY
-    };
-    
-    console.log('Alternative keys available:', Object.entries(alternativeKeys)
-      .filter(([, value]) => !!value)
-      .map(([key]) => key));
-    
-    // Use OPENKEYGSMD as primary, fall back to alternatives if needed
-    let finalApiKey = apiKey;
-    if (!finalApiKey) {
-      finalApiKey = alternativeKeys.OPENAI_API_KEY || 
-                   alternativeKeys.JOPENAPIKEY || 
-                   alternativeKeys.NEXT_PUBLIC_OPENAI_API_KEY;
-      
-      console.log('Using alternative API key:', finalApiKey ? 'Yes' : 'No');
-    }
-    
-    if (!finalApiKey) {
-      console.error('API key not found in any environment variables');
+    if (!apiKey) {
+      console.error('API key not found in environment variables');
       return NextResponse.json(
         { error: 'API key not found in environment variables' },
         { status: 500 }
@@ -50,50 +23,29 @@ export async function POST(request: Request) {
       max_tokens: body.max_tokens
     });
     
-    // Make the API call to OpenAI
+    // Make the API call to OpenAI - match the format used in analyze route
     console.log('Making request to OpenAI API');
-    const requestBody = {
-      model: 'gpt-3.5-turbo',
-      messages: body.messages,
-      temperature: body.temperature || 0.7,
-      max_tokens: body.max_tokens || 250
-    };
-    
-    console.log('OpenAI request configuration:', {
-      model: requestBody.model,
-      messageCount: requestBody.messages?.length || 0,
-      temperature: requestBody.temperature,
-      max_tokens: requestBody.max_tokens
-    });
-    
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${finalApiKey}`
+        'Authorization': `Bearer ${apiKey}`
       },
-      body: JSON.stringify(requestBody)
+      body: JSON.stringify({
+        model: 'gpt-3.5-turbo',
+        messages: body.messages,
+        temperature: body.temperature || 0.7,
+        max_tokens: body.max_tokens || 250
+      })
     });
 
     console.log('OpenAI API response status:', response.status);
     
-    // Check if the response is successful
+    // Check if the response is successful - match the format used in analyze route
     if (!response.ok) {
-      const responseText = await response.text();
-      console.error('OpenAI API error response:', responseText);
-      
-      let errorMessage = 'Unknown error';
-      try {
-        const errorData = JSON.parse(responseText);
-        errorMessage = errorData.error?.message || response.statusText;
-        console.error('Parsed error message:', errorMessage);
-      } catch {
-        errorMessage = responseText || response.statusText;
-        console.error('Could not parse error response, using raw text');
-      }
-      
+      const errorData = await response.json();
       return NextResponse.json(
-        { error: errorMessage },
+        { error: errorData.error?.message || response.statusText },
         { status: response.status }
       );
     }
