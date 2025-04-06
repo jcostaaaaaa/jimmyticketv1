@@ -13,11 +13,11 @@ export async function POST(request: Request) {
       );
     }
     
-    // Ensure the API key is in the correct format (should start with 'sk-')
-    if (!apiKey.startsWith('sk-')) {
+    // Ensure the API key is in the correct format (should start with 'sk-' or 'sk-proj-')
+    if (!apiKey.startsWith('sk-') && !apiKey.startsWith('sk-proj-')) {
       console.error('Invalid API key format');
       return NextResponse.json(
-        { error: 'Invalid API key format. OpenAI API keys should start with "sk-"' },
+        { error: 'Invalid API key format. OpenAI API keys should start with "sk-" or "sk-proj-"' },
         { status: 500 }
       );
     }
