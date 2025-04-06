@@ -176,288 +176,224 @@ export default function JournalPage() {
     return chunks;
   }, []);
 
-  // Function to generate a learning entry with AI
-  const generateLearningEntryWithAI = useCallback(async (ticket: Ticket): Promise<string | null> => {
-    try {
-      // Check if ticket has at least description or resolution
-      if (!ticket.description && !ticket.resolution) {
-        console.log('Skipping ticket without both description and resolution');
-        return null;
+  // Function to process tickets in batches
+  const processTicketsInBatches = useCallback(async (ticketsToProcess: Ticket[], batchSize: number = 20): Promise<JournalEntry[]> => {
+    const aiEntries: JournalEntry[] = [];
+    const batches: Ticket[][] = [];
+    
+    // Split tickets into batches of the specified size
+    for (let i = 0; i < ticketsToProcess.length; i += batchSize) {
+      batches.push(ticketsToProcess.slice(i, i + batchSize));
+    }
+    
+    console.log(`Split ${ticketsToProcess.length} tickets into ${batches.length} batches of approximately ${batchSize} tickets each`);
+    
+    // Process each batch
+    for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
+      const batch = batches[batchIndex];
+      console.log(`Processing batch ${batchIndex + 1}/${batches.length} with ${batch.length} tickets...`);
+      
+      // Add a delay between batches to prevent rate limiting
+      if (batchIndex > 0) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
       }
       
-      // Extract ticket information in a structured format
-      const ticketInfo = extractTicketInfo(ticket);
+      // Create a batch prompt for the API
+      const batchPrompt = `
+      You are an IT professional documenting what you learned from resolving technical support tickets.
       
-      // Chunk the description and resolution if they're too large
-      const descriptionChunks = chunkText(ticketInfo.description);
-      const resolutionChunks = chunkText(ticketInfo.resolution);
+      I will provide you with a batch of ${batch.length} IT support tickets. For each ticket, generate a learning journal entry.
       
-      console.log(`Processing ticket with ${descriptionChunks.length} description chunks and ${resolutionChunks.length} resolution chunks`);
-      
-      // If we have multiple chunks, we'll need to summarize first
-      let processedDescription = ticketInfo.description;
-      let processedResolution = ticketInfo.resolution;
-      
-      // If description is too large, summarize it first
-      if (descriptionChunks.length > 1) {
-        console.log('Description is large, summarizing first...');
-        
-        // Process each chunk and collect summaries
-        const summaries = [];
-        for (let i = 0; i < descriptionChunks.length; i++) {
-          const chunk = descriptionChunks[i];
-          console.log(`Processing description chunk ${i+1}/${descriptionChunks.length}`);
-          
-          // Add a small delay to prevent too many API calls at once
-          await new Promise(resolve => setTimeout(resolve, 500));
-          
-          const summarizePrompt = `
-          Summarize the following ticket description chunk (${i+1}/${descriptionChunks.length}):
-          
-          ${chunk}
-          
-          Extract only the key technical details about the issue.
-          `;
-          
-          const summaryResponse = await fetch('/api/journal', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              messages: [
-                {
-                  role: 'system',
-                  content: 'You are a technical support analyst who extracts key information from IT support tickets.'
-                },
-                {
-                  role: 'user',
-                  content: summarizePrompt
-                }
-              ],
-              temperature: 0.3,
-              max_tokens: 150
-            })
-          });
-          
-          if (!summaryResponse.ok) {
-            console.error(`Failed to summarize description chunk ${i+1}`);
-            continue;
-          }
-          
-          const summaryData = await summaryResponse.json();
-          const summary = summaryData.choices?.[0]?.message?.content?.trim();
-          
-          if (summary) {
-            summaries.push(summary);
-          }
-        }
-        
-        // Combine summaries
-        processedDescription = summaries.join('\n\n');
-      }
-      
-      // If resolution is too large, summarize it first
-      if (resolutionChunks.length > 1) {
-        console.log('Resolution is large, summarizing first...');
-        
-        // Process each chunk and collect summaries
-        const summaries = [];
-        for (let i = 0; i < resolutionChunks.length; i++) {
-          const chunk = resolutionChunks[i];
-          console.log(`Processing resolution chunk ${i+1}/${resolutionChunks.length}`);
-          
-          // Add a small delay to prevent too many API calls at once
-          await new Promise(resolve => setTimeout(resolve, 500));
-          
-          const summarizePrompt = `
-          Summarize the following ticket resolution chunk (${i+1}/${resolutionChunks.length}):
-          
-          ${chunk}
-          
-          Extract only the key technical details about how the issue was resolved.
-          `;
-          
-          const summaryResponse = await fetch('/api/journal', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              messages: [
-                {
-                  role: 'system',
-                  content: 'You are a technical support analyst who extracts key information from IT support tickets.'
-                },
-                {
-                  role: 'user',
-                  content: summarizePrompt
-                }
-              ],
-              temperature: 0.3,
-              max_tokens: 150
-            })
-          });
-          
-          if (!summaryResponse.ok) {
-            console.error(`Failed to summarize resolution chunk ${i+1}`);
-            continue;
-          }
-          
-          const summaryData = await summaryResponse.json();
-          const summary = summaryData.choices?.[0]?.message?.content?.trim();
-          
-          if (summary) {
-            summaries.push(summary);
-          }
-        }
-        
-        // Combine summaries
-        processedResolution = summaries.join('\n\n');
-      }
-      
-      // Add a small delay to prevent too many API calls at once
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      console.log('Generating AI entry for ticket:', ticket.number || ticket.sys_id);
-      
-      // Construct a prompt that will generate specific technical learning entries
-      const prompt = `
-      You are an IT professional documenting what you learned from resolving a technical support ticket.
-      
-      TICKET INFORMATION:
-      ${ticketInfo.shortDescription ? `Short Description: ${ticketInfo.shortDescription}\n` : ''}
-      ${ticketInfo.category ? `Category: ${ticketInfo.category}\n` : ''}
-      ${ticketInfo.subcategory ? `Subcategory: ${ticketInfo.subcategory}\n` : ''}
-      ${ticketInfo.priority ? `Priority: ${String(ticketInfo.priority)}\n` : ''}
-      
-      TICKET DESCRIPTION:
-      ${processedDescription || 'No description provided'}
-      
-      RESOLUTION:
-      ${processedResolution || 'No resolution provided'}
-      
-      Write a detailed, specific learning journal entry that MUST start with "Today I learned about [COMPONENT]" where [COMPONENT] is the specific hardware or software component that was causing issues.
-      
-      Your entry MUST:
-      1. Start with "Today I learned about [specific component]" - replace [specific component] with the exact hardware/software component
+      Each entry MUST:
+      1. Start with "Today I learned about [specific component]" where [specific component] is the exact hardware/software component that failed
       2. Explain why the specific component failed or caused issues
       3. Detail what was done to resolve the issue
       4. Be written in first person as if you personally solved this issue
       5. Be 3-5 sentences long
       
-      BAD EXAMPLE: "Today I learned about hardware issues. The problem was with a computer not working. I fixed it by replacing parts."
+      Format your response as a JSON array where each object has:
+      - ticketId: The ID of the ticket
+      - content: The learning journal entry
       
-      GOOD EXAMPLE: "Today I learned about Dell OptiPlex power supply failures. The specific issue involved a faulty capacitor in the PSU causing intermittent shutdowns and preventing proper POST completion. I discovered that replacing the power supply unit and ensuring proper ventilation resolved the issue, while also documenting a pattern of similar failures in this model series."
+      Here are the tickets:
       `;
       
-      // Make API call to our secure API route that handles the OpenAI API key
-      console.log('Making fetch request to /api/journal');
-      const response = await fetch('/api/journal', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          messages: [
-            {
-              role: 'system',
-              content: 'You are an IT professional documenting specific technical learnings from support tickets.'
-            },
-            {
-              role: 'user',
-              content: prompt
-            }
-          ],
-          temperature: 0.7,
-          max_tokens: 250
-        })
-      });
-      
-      console.log('API response status:', response.status);
-      
-      if (!response.ok) {
-        console.error(`API response not OK: ${response.status} ${response.statusText}`);
-        const errorText = await response.text();
-        console.log('Error response text:', errorText);
+      // Add each ticket to the batch prompt
+      const ticketPrompts = batch.map((ticket, index) => {
+        const ticketId = typeof ticket.number === 'string' ? ticket.number : 
+                        typeof ticket.sys_id === 'string' ? ticket.sys_id : `unknown-${index}`;
         
-        let errorMessage = 'Unknown error';
-        try {
-          const errorData = JSON.parse(errorText);
-          errorMessage = errorData.error || 'API error';
-          console.log('Parsed error data:', errorData);
-        } catch {
-          errorMessage = errorText || `HTTP error ${response.status}`;
-          console.log('Failed to parse error response as JSON');
+        const ticketInfo = extractTicketInfo(ticket);
+        
+        return `
+        TICKET ${index + 1} (ID: ${ticketId}):
+        ${ticketInfo.shortDescription ? `Short Description: ${ticketInfo.shortDescription}\n` : ''}
+        ${ticketInfo.category ? `Category: ${ticketInfo.category}\n` : ''}
+        ${ticketInfo.subcategory ? `Subcategory: ${ticketInfo.subcategory}\n` : ''}
+        ${ticketInfo.priority ? `Priority: ${String(ticketInfo.priority)}\n` : ''}
+        
+        DESCRIPTION:
+        ${ticketInfo.description || 'No description provided'}
+        
+        RESOLUTION:
+        ${ticketInfo.resolution || 'No resolution provided'}
+        `;
+      }).join('\n\n---\n\n');
+      
+      // Combine the batch prompt with the ticket data
+      const fullPrompt = `${batchPrompt}\n\n${ticketPrompts}\n\nRemember to format your response as a JSON array with ticketId and content for each ticket.`;
+      
+      try {
+        console.log(`Making API request for batch ${batchIndex + 1} with ${batch.length} tickets...`);
+        
+        // Make API call to our secure API route that handles the OpenAI API key
+        const response = await fetch('/api/journal', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            messages: [
+              {
+                role: 'system',
+                content: 'You are an IT professional documenting specific technical learnings from support tickets.'
+              },
+              {
+                role: 'user',
+                content: fullPrompt
+              }
+            ],
+            temperature: 0.7,
+            max_tokens: 1500 // Increased token limit for batch processing
+          })
+        });
+        
+        if (!response.ok) {
+          console.error(`API response not OK for batch ${batchIndex + 1}: ${response.status} ${response.statusText}`);
+          const errorText = await response.text();
+          console.log('Error response text:', errorText);
+          
+          let errorMessage = 'Unknown error';
+          try {
+            const errorData = JSON.parse(errorText);
+            errorMessage = errorData.error || 'API error';
+          } catch {
+            errorMessage = errorText || `HTTP error ${response.status}`;
+          }
+          
+          console.error('OpenAI API error:', errorMessage);
+          throw new Error(errorMessage);
         }
         
-        console.error('OpenAI API error:', errorMessage);
-        addNotification({
-          type: 'error',
-          title: 'AI Processing Failed',
-          message: `Error: ${errorMessage}`
-        });
-        return null;
-      }
-      
-      console.log('API response OK, parsing JSON');
-      let data;
-      try {
-        data = await response.json();
-        console.log('API response received:', JSON.stringify(data).substring(0, 200) + '...');
+        const data = await response.json();
+        const aiContent = data.choices?.[0]?.message?.content?.trim();
+        
+        if (!aiContent) {
+          console.error('No content in API response for batch', batchIndex + 1);
+          continue;
+        }
+        
+        // Parse the JSON response
+        let batchEntries: { ticketId: string; content: string }[] = [];
+        try {
+          // Try to parse the JSON response
+          batchEntries = JSON.parse(aiContent);
+          console.log(`Successfully parsed ${batchEntries.length} entries from batch ${batchIndex + 1}`);
+        } catch (parseError) {
+          console.error('Failed to parse API response as JSON:', parseError);
+          console.log('Raw response:', aiContent);
+          
+          // Attempt to extract entries from text format if JSON parsing fails
+          const entriesMatch = aiContent.match(/TICKET \d+ \(ID: ([^\)]+)\)[^\n]*\n([\s\S]+?)(?=TICKET \d+|$)/g);
+          
+          if (entriesMatch) {
+            batchEntries = entriesMatch.map((match: string) => {
+              const idMatch = match.match(/TICKET \d+ \(ID: ([^\)]+)\)/);
+              const ticketId = idMatch ? idMatch[1] : 'unknown';
+              const content = match.replace(/TICKET \d+ \(ID: [^\)]+\)[^\n]*\n/, '').trim();
+              return { ticketId, content };
+            });
+            console.log(`Extracted ${batchEntries.length} entries from text format`);
+          } else {
+            console.error('Could not extract entries from response');
+            continue;
+          }
+        }
+        
+        // Process each entry from the batch response
+        for (const entry of batchEntries) {
+          // Find the corresponding ticket
+          const ticket = batch.find(t => {
+            const ticketId = typeof t.number === 'string' ? t.number : 
+                           typeof t.sys_id === 'string' ? t.sys_id : '';
+            return ticketId === entry.ticketId;
+          });
+          
+          if (!ticket) {
+            console.log(`Could not find ticket with ID ${entry.ticketId}`);
+            continue;
+          }
+          
+          // Verify the entry starts with the required format
+          let content = entry.content;
+          if (!content.startsWith('Today I learned about')) {
+            console.log(`Entry for ticket ${entry.ticketId} does not start with required format, fixing...`);
+            
+            // Extract what appears to be the component
+            const componentMatch = content.match(/about\s+([^.]+)/i);
+            const component = componentMatch ? componentMatch[1].trim() : 'a technical issue';
+            
+            // Reformat the entry
+            content = `Today I learned about ${component}. ${content.replace(/^Today I learned about[^.]+\.\s*/i, '')}`;
+          }
+          
+          // Get the ticket date
+          let dateValue: string | Date = new Date();
+          if (typeof ticket.created_at === 'string') dateValue = ticket.created_at;
+          else if (typeof ticket.created === 'string') dateValue = ticket.created;
+          else if (typeof ticket.opened_at === 'string') dateValue = ticket.opened_at;
+          else if (typeof ticket.sys_created_on === 'string') dateValue = ticket.sys_created_on;
+          
+          const ticketDate = new Date(dateValue);
+          const formattedDate = ticketDate.toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+          });
+          
+          // Extract tags
+          const extractedTags = extractMeaningfulTags(ticket);
+          
+          // Create the entry
+          const newEntry: JournalEntry = {
+            id: generateId(),
+            date: formattedDate,
+            originalDate: ticketDate,
+            content: content,
+            tags: [...extractedTags, 'ai-generated'],
+            ticketNumber: entry.ticketId,
+            title: `AI Entry for Ticket ${entry.ticketId}`,
+            ticketId: entry.ticketId,
+            source: 'ai'
+          };
+          
+          console.log(`Successfully generated entry for ticket ${entry.ticketId}`);
+          aiEntries.push(newEntry);
+        }
       } catch (error) {
-        console.error('Failed to parse API response as JSON:', error);
-        addNotification({
-          type: 'error',
-          title: 'API Response Error',
-          message: 'Failed to parse API response'
-        });
-        return null;
-      }
-      
-      console.log('Checking for AI content in response');
-      const aiEntry = data.choices?.[0]?.message?.content?.trim();
-      console.log('AI entry found:', aiEntry ? 'Yes' : 'No');
-      
-      if (!aiEntry) {
-        console.error('No content in API response:', JSON.stringify(data));
-        addNotification({
-          type: 'error',
-          title: 'AI Processing Failed',
-          message: 'No content generated by AI'
-        });
-        return null;
-      }
-      
-      // Verify the entry starts with the required format
-      if (!aiEntry.startsWith('Today I learned about')) {
-        console.log('Entry does not start with required format, fixing...');
+        console.error(`Error processing batch ${batchIndex + 1}:`, error);
         
-        // Extract what appears to be the component
-        const componentMatch = aiEntry.match(/about\s+([^.]+)/i);
-        const component = componentMatch ? componentMatch[1].trim() : 'a technical issue';
-        
-        // Reformat the entry
-        const reformattedEntry = `Today I learned about ${component}. ${aiEntry.replace(/^Today I learned about[^.]+\.\s*/i, '')}`;
-        
-        console.log('Generated entry (reformatted):', reformattedEntry.substring(0, 50) + '...');
-        return reformattedEntry;
+        // Check if it's an API key error and stop processing if it is
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        if (errorMessage.includes('API key') || errorMessage.includes('authentication')) {
+          console.error('API key error detected, stopping batch processing');
+          throw error; // Re-throw to stop all processing
+        }
       }
-      
-      console.log('Generated entry:', aiEntry.substring(0, 50) + '...');
-      return aiEntry;
-    } catch (error) {
-      console.error('Error generating AI entry:', error);
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      console.log('Error details:', errorMessage);
-      addNotification({
-        type: 'error',
-        title: 'AI Processing Failed',
-        message: `Error: ${errorMessage}`
-      });
-      return null;
     }
-  }, [addNotification, extractTicketInfo, chunkText]);
+    
+    return aiEntries;
+  }, [extractTicketInfo, extractMeaningfulTags, generateId]);
 
   // Function to process tickets with AI
   const processTicketsWithAI = useCallback(async () => {
@@ -474,108 +410,53 @@ export default function JournalPage() {
     setIsProcessingAI(true);
     console.log(`Starting to process ${tickets.length} tickets with AI...`);
     
+    // Check if we have any tickets to process
+    if (tickets.length === 0) {
+      addNotification({
+        type: 'warning',
+        title: 'No Tickets Available',
+        message: 'There are no tickets to process. Please import tickets first.'
+      });
+      setIsProcessingAI(false);
+      return;
+    }
+    
     try {
-      const processedTickets = new Set<string>();
-      const aiEntries: JournalEntry[] = [];
-      let processedCount = 0;
-      let skippedCount = 0;
-      let errorCount = 0;
-      let apiKeyError = false;
+      // Filter out tickets that have already been processed
+      const existingTicketIds = entries
+        .filter(entry => entry.source === 'ai')
+        .map(entry => entry.ticketId);
       
-      // Process tickets sequentially to avoid rate limiting
-      for (const ticket of tickets) {
-        // Skip if we've already processed this ticket
+      const ticketsToProcess = tickets.filter(ticket => {
         const ticketId = typeof ticket.number === 'string' ? ticket.number : 
                         typeof ticket.sys_id === 'string' ? ticket.sys_id : '';
         
-        if (!ticketId) {
-          console.log('Skipping ticket without ID');
-          skippedCount++;
-          continue;
+        // Skip tickets without ID or without description/resolution
+        if (!ticketId || (!ticket.description && !ticket.resolution)) {
+          return false;
         }
         
-        if (processedTickets.has(ticketId)) {
-          console.log(`Skipping already processed ticket: ${ticketId}`);
-          skippedCount++;
-          continue;
-        }
-        
-        processedTickets.add(ticketId);
-        processedCount++;
-        
-        // Check if ticket has at least one required field
-        if (!ticket.description && !ticket.resolution) {
-          console.log(`Skipping ticket ${ticketId} - missing both description and resolution`);
-          skippedCount++;
-          continue;
-        }
-        
-        // Generate AI entry
-        try {
-          // Check if we've already had API key errors
-          if (apiKeyError) {
-            console.log('API key error encountered earlier, stopping processing');
-            break; // Stop processing more tickets if we've had an API key error
-          }
-          
-          const content = await generateLearningEntryWithAI(ticket);
-          
-          if (content) {
-            // Get the ticket date
-            let dateValue: string | Date = new Date();
-            if (typeof ticket.created_at === 'string') dateValue = ticket.created_at;
-            else if (typeof ticket.created === 'string') dateValue = ticket.created;
-            else if (typeof ticket.opened_at === 'string') dateValue = ticket.opened_at;
-            else if (typeof ticket.sys_created_on === 'string') dateValue = ticket.sys_created_on;
-            
-            const ticketDate = new Date(dateValue);
-            const formattedDate = ticketDate.toLocaleDateString('en-US', { 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric' 
-            });
-            
-            // Extract tags
-            const extractedTags = extractMeaningfulTags(ticket);
-            
-            // Create the entry
-            const newEntry: JournalEntry = {
-              id: generateId(),
-              date: formattedDate,
-              originalDate: ticketDate,
-              content: content,
-              tags: [...extractedTags, 'ai-generated'],
-              ticketNumber: ticketId,
-              title: `AI Entry for Ticket ${ticketId}`,
-              ticketId: ticketId,
-              source: 'ai'
-            };
-            
-            console.log(`Successfully generated entry for ticket ${ticketId}`);
-            aiEntries.push(newEntry);
-          } else {
-            console.log(`Failed to generate content for ticket ${ticketId}`);
-            errorCount++;
-          }
-        } catch (error) {
-          console.error(`Error processing ticket ${ticketId}:`, error);
-          errorCount++;
-          
-          // Check if it's an API key error and stop processing if it is
-          const errorMessage = error instanceof Error ? error.message : String(error);
-          if (errorMessage.includes('API key') || errorMessage.includes('authentication')) {
-            console.error('API key error detected, stopping processing');
-            apiKeyError = true;
-            addNotification({
-              type: 'error',
-              title: 'API Key Error',
-              message: 'There was an issue with the API key. Please check your environment variables.'
-            });
-          }
-        }
+        // Skip tickets that already have entries
+        return !existingTicketIds.includes(ticketId);
+      });
+      
+      console.log(`Found ${ticketsToProcess.length} tickets to process out of ${tickets.length} total tickets`);
+      
+      if (ticketsToProcess.length === 0) {
+        addNotification({
+          type: 'info',
+          title: 'No New Tickets',
+          message: 'All tickets have already been processed or are missing required fields.'
+        });
+        setIsProcessingAI(false);
+        return;
       }
       
-      console.log(`Processing complete. Generated ${aiEntries.length} entries. Processed: ${processedCount}, Skipped: ${skippedCount}, Errors: ${errorCount}`);
+      // Process tickets in batches
+      const batchSize = 20; // Process 20 tickets at a time
+      const aiEntries = await processTicketsInBatches(ticketsToProcess, batchSize);
+      
+      console.log(`Processing complete. Generated ${aiEntries.length} entries.`);
       
       if (aiEntries.length > 0) {
         // Only add entries that don't already exist
@@ -601,47 +482,25 @@ export default function JournalPage() {
           });
           console.log('No new entries added (all were duplicates)');
         }
-      } else if (apiKeyError) {
-        // API key error notification already shown, don't show another one
-        console.log('No entries were generated due to API key error');
       } else {
         addNotification({
           type: 'warning',
           title: 'AI Processing Complete',
-          message: 'No entries were generated. Please check that your tickets have both description and resolution fields.'
+          message: 'No entries were generated. Please check that your tickets have valid description or resolution fields.'
         });
         console.log('No entries were generated');
       }
     } catch (error) {
-      console.error('Error in AI processing:', error);
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      console.log('Error details:', errorMessage);
+      console.error('Error processing tickets:', error);
       addNotification({
         type: 'error',
-        title: 'AI Processing Error',
-        message: `An error occurred: ${errorMessage}`
+        title: 'Error Processing Tickets',
+        message: 'An error occurred while processing tickets'
       });
     } finally {
       setIsProcessingAI(false);
     }
-  }, [tickets, entries, extractMeaningfulTags, generateLearningEntryWithAI, addNotification]);
-
-  // Update an existing journal entry - commented out as it's not currently used
-  /* 
-  const updateEntry = (updatedEntry: JournalEntry) => {
-    setEntries(prev => 
-      prev.map(entry => 
-        entry.id === updatedEntry.id ? updatedEntry : entry
-      )
-    );
-    addNotification({
-      type: 'success',
-      title: 'Entry Updated',
-      message: 'Journal entry has been updated successfully'
-    });
-    setEditingEntry(null);
-  };
-  */
+  }, [tickets, entries, extractMeaningfulTags, generateId, addNotification]);
 
   // Save entries to localStorage whenever they change
   useEffect(() => {
