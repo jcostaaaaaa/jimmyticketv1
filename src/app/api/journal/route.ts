@@ -20,7 +20,7 @@ export async function POST(request: Request) {
     };
     
     console.log('Alternative keys available:', Object.entries(alternativeKeys)
-      .filter(([_, value]) => !!value)
+      .filter(([, value]) => !!value)
       .map(([key]) => key));
     
     // Use OPENKEYGSMD as primary, fall back to alternatives if needed
