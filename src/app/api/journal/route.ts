@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 export async function POST(request: Request) {
   try {
     // Get the API key from environment variables
-    const apiKey = process.env.OPENAI_API_KEY || process.env.OPENKEYGSMD;
+    const apiKey = process.env.OPENAI_API_KEY || process.env.JOPENKEY;
     
     if (!apiKey) {
       console.error('API key not found in environment variables');
