@@ -46,7 +46,7 @@ export const Notification: React.FC<NotificationProps> = ({
     }, duration);
 
     return () => clearTimeout(timer);
-  }, [duration, id]);
+  }, [duration, id, handleClose]);
 
   if (!isVisible) return null;
 

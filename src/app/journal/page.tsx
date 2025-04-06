@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
 import { useTickets } from '@/context/TicketContext';
 import type { Ticket } from '@/context/TicketContext';
 // Simple function to generate a unique ID
@@ -31,14 +30,12 @@ export default function JournalPage() {
   const { tickets } = useTickets();
   const { addNotification } = useNotification();
   const [entries, setEntries] = useState<JournalEntry[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [editingEntry, setEditingEntry] = useState<JournalEntry | null>(null);
-  const [showForm, setShowForm] = useState(false);
+  const [setEditingEntry] = useState<(id: string | null) => void>(() => () => {});
   const [searchTerm, setSearchTerm] = useState('');
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
   const [isAddingEntry, setIsAddingEntry] = useState(false);
   const [newEntryContent, setNewEntryContent] = useState('');
-  const [newEntryTitle, setNewEntryTitle] = useState('');
+  const [newEntryTitle] = useState('');
   const [newEntryTags, setNewEntryTags] = useState('');
   const [isProcessingAI, setIsProcessingAI] = useState(false);
   
@@ -382,7 +379,8 @@ export default function JournalPage() {
     }
   }, [tickets, entries, extractMeaningfulTags, generateLearningEntryWithAI, addNotification]);
 
-  // Update an existing journal entry
+  // Update an existing journal entry - commented out as it's not currently used
+  /* 
   const updateEntry = (updatedEntry: JournalEntry) => {
     setEntries(prev => 
       prev.map(entry => 
@@ -396,6 +394,7 @@ export default function JournalPage() {
     });
     setEditingEntry(null);
   };
+  */
 
   // Save entries to localStorage whenever they change
   useEffect(() => {
