@@ -202,13 +202,27 @@ export default function JournalPage() {
       try {
         console.log(`Making API request for batch ${batchIndex + 1} with ${batch.length} tickets...`);
         
-        // Make API call to our secure API route that handles the OpenAI API key
-        const response = await fetch('/api/analyze', {
+        // Get API key from env or prompt user if needed
+        let apiKey = localStorage.getItem('openai_api_key');
+        
+        if (!apiKey) {
+          apiKey = prompt('Please enter your OpenAI API key (it will be stored in your browser):', '');
+          if (apiKey) {
+            localStorage.setItem('openai_api_key', apiKey);
+          } else {
+            throw new Error('API key is required');
+          }
+        }
+
+        // Direct call to OpenAI API
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`
           },
           body: JSON.stringify({
+            model: 'gpt-3.5-turbo-0125', // Specific versioned model
             messages: [
               {
                 role: 'system',
