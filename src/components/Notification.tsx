@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 
 export type NotificationType = 'success' | 'error' | 'info' | 'warning';
 
@@ -30,14 +30,14 @@ export const Notification: React.FC<NotificationProps> = ({
     type === 'error' ? 'bg-red-500' :
     type === 'warning' ? 'bg-yellow-500' : 'bg-blue-500';
 
-  // Handle close animation
-  const handleClose = () => {
+  // Function to handle closing the notification
+  const handleClose = useCallback(() => {
     setIsExiting(true);
     setTimeout(() => {
       setIsVisible(false);
       onClose(id);
-    }, 300); // Animation duration
-  };
+    }, 300); // Match the transition duration
+  }, [id, onClose]);
 
   // Auto-dismiss after duration
   useEffect(() => {

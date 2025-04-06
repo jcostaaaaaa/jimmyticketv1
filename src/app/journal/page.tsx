@@ -30,7 +30,7 @@ export default function JournalPage() {
   const { tickets } = useTickets();
   const { addNotification } = useNotification();
   const [entries, setEntries] = useState<JournalEntry[]>([]);
-  const [setEditingEntry] = useState<(id: string | null) => void>(() => () => {});
+  // Removed unused state variables
   const [searchTerm, setSearchTerm] = useState('');
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
   const [isAddingEntry, setIsAddingEntry] = useState(false);
@@ -620,10 +620,14 @@ export default function JournalPage() {
               );
             })
             .sort((a: JournalEntry, b: JournalEntry) => {
+              // Handle sorting with null checks for dates
+              const dateA = a.originalDate ? new Date(a.originalDate).getTime() : 0;
+              const dateB = b.originalDate ? new Date(b.originalDate).getTime() : 0;
+              
               if (sortOrder === 'newest') {
-                return new Date(b.originalDate).getTime() - new Date(a.originalDate).getTime();
+                return dateB - dateA;
               } else {
-                return new Date(a.originalDate).getTime() - new Date(b.originalDate).getTime();
+                return dateA - dateB;
               }
             })
             .map((entry) => (
