@@ -101,6 +101,81 @@ export default function JournalPage() {
     return extractKeywordsAsTags(text);
   }, [extractKeywordsAsTags]);
 
+  // Function to extract relevant information from a ticket in a structured format
+  const extractTicketInfo = useCallback((ticket: Ticket): { 
+    description: string, 
+    resolution: string, 
+    shortDescription: string,
+    category: string,
+    subcategory: string,
+    priority: string
+  } => {
+    // Extract core information
+    const description = typeof ticket.description === 'string' ? ticket.description : '';
+    const resolution = typeof ticket.resolution === 'string' ? ticket.resolution : '';
+    
+    // Extract additional context if available
+    const shortDescription = typeof ticket.short_description === 'string' ? ticket.short_description : 
+                             typeof ticket.title === 'string' ? ticket.title : '';
+    const category = typeof ticket.category === 'string' ? ticket.category : '';
+    const subcategory = typeof ticket.subcategory === 'string' ? ticket.subcategory : '';
+    const priority = ticket.priority ? String(ticket.priority) : '';
+    
+    return {
+      description,
+      resolution,
+      shortDescription,
+      category,
+      subcategory,
+      priority
+    };
+  }, []);
+
+  // Function to chunk large text to avoid token limits
+  const chunkText = useCallback((text: string, maxLength: number = 1000): string[] => {
+    if (!text || text.length <= maxLength) return [text];
+    
+    // Try to split at paragraph breaks first
+    const paragraphs = text.split(/\n\n+/);
+    const chunks: string[] = [];
+    let currentChunk = '';
+    
+    for (const paragraph of paragraphs) {
+      if ((currentChunk + paragraph).length <= maxLength) {
+        currentChunk += (currentChunk ? '\n\n' : '') + paragraph;
+      } else {
+        // If current paragraph would exceed limit
+        if (currentChunk) {
+          chunks.push(currentChunk);
+          currentChunk = paragraph;
+        } else {
+          // If a single paragraph is too long, split by sentences
+          const sentences = paragraph.split(/(?<=[.!?])\s+/);
+          for (const sentence of sentences) {
+            if ((currentChunk + sentence).length <= maxLength) {
+              currentChunk += (currentChunk ? ' ' : '') + sentence;
+            } else {
+              if (currentChunk) {
+                chunks.push(currentChunk);
+                currentChunk = sentence;
+              } else {
+                // If a single sentence is too long, split by words
+                chunks.push(sentence.substring(0, maxLength));
+                currentChunk = '';
+              }
+            }
+          }
+        }
+      }
+    }
+    
+    if (currentChunk) {
+      chunks.push(currentChunk);
+    }
+    
+    return chunks;
+  }, []);
+
   // Function to generate a learning entry with AI
   const generateLearningEntryWithAI = useCallback(async (ticket: Ticket): Promise<string | null> => {
     try {
@@ -110,59 +185,171 @@ export default function JournalPage() {
         return null;
       }
       
-      // If either field is missing, use what we have
-      const hasDescription = !!ticket.description;
-      const hasResolution = !!ticket.resolution;
+      // Extract ticket information in a structured format
+      const ticketInfo = extractTicketInfo(ticket);
       
-      console.log(`Processing ticket with description: ${hasDescription}, resolution: ${hasResolution}`);
-
-      // Construct a prompt that will generate specific technical learning entries
-      const prompt = `
-      You are an IT professional documenting what you learned from resolving a technical support ticket.
+      // Chunk the description and resolution if they're too large
+      const descriptionChunks = chunkText(ticketInfo.description);
+      const resolutionChunks = chunkText(ticketInfo.resolution);
       
-      TICKET DESCRIPTION:
-      ${ticket.description || 'No description provided'}
+      console.log(`Processing ticket with ${descriptionChunks.length} description chunks and ${resolutionChunks.length} resolution chunks`);
       
-      RESOLUTION:
-      ${ticket.resolution || 'No resolution provided'}
+      // If we have multiple chunks, we'll need to summarize first
+      let processedDescription = ticketInfo.description;
+      let processedResolution = ticketInfo.resolution;
       
-      Write a detailed, specific learning journal entry that starts with "Today I learned about..." 
+      // If description is too large, summarize it first
+      if (descriptionChunks.length > 1) {
+        console.log('Description is large, summarizing first...');
+        
+        // Process each chunk and collect summaries
+        const summaries = [];
+        for (let i = 0; i < descriptionChunks.length; i++) {
+          const chunk = descriptionChunks[i];
+          console.log(`Processing description chunk ${i+1}/${descriptionChunks.length}`);
+          
+          // Add a small delay to prevent too many API calls at once
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          const summarizePrompt = `
+          Summarize the following ticket description chunk (${i+1}/${descriptionChunks.length}):
+          
+          ${chunk}
+          
+          Extract only the key technical details about the issue.
+          `;
+          
+          const summaryResponse = await fetch('/api/journal', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              messages: [
+                {
+                  role: 'system',
+                  content: 'You are a technical support analyst who extracts key information from IT support tickets.'
+                },
+                {
+                  role: 'user',
+                  content: summarizePrompt
+                }
+              ],
+              temperature: 0.3,
+              max_tokens: 150
+            })
+          });
+          
+          if (!summaryResponse.ok) {
+            console.error(`Failed to summarize description chunk ${i+1}`);
+            continue;
+          }
+          
+          const summaryData = await summaryResponse.json();
+          const summary = summaryData.choices?.[0]?.message?.content?.trim();
+          
+          if (summary) {
+            summaries.push(summary);
+          }
+        }
+        
+        // Combine summaries
+        processedDescription = summaries.join('\n\n');
+      }
       
-      Your entry MUST:
-      1. Identify the SPECIFIC technical issue (not generic categories like "hardware" or "software")
-      2. Mention the exact components that failed (e.g., "corrupted registry keys", "failed network switch port")
-      3. Include technical details about symptoms and root causes
-      4. Explain the specific troubleshooting steps that were effective
-      5. Be written in first person as if you personally solved this issue
-      6. Be 3-5 sentences long
-      
-      BAD EXAMPLE: "Today I learned about hardware issues. The problem was with a computer not working. I fixed it by replacing parts."
-      
-      GOOD EXAMPLE: "Today I learned about troubleshooting Windows registry corruption causing application crashes. The specific issue involved corrupted shell extension registry keys preventing File Explorer from properly loading file context menus. I discovered that running the System File Checker and manually removing the problematic registry keys under HKEY_CLASSES_ROOT resolved the issue without requiring a system restore."
-      `;
+      // If resolution is too large, summarize it first
+      if (resolutionChunks.length > 1) {
+        console.log('Resolution is large, summarizing first...');
+        
+        // Process each chunk and collect summaries
+        const summaries = [];
+        for (let i = 0; i < resolutionChunks.length; i++) {
+          const chunk = resolutionChunks[i];
+          console.log(`Processing resolution chunk ${i+1}/${resolutionChunks.length}`);
+          
+          // Add a small delay to prevent too many API calls at once
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          const summarizePrompt = `
+          Summarize the following ticket resolution chunk (${i+1}/${resolutionChunks.length}):
+          
+          ${chunk}
+          
+          Extract only the key technical details about how the issue was resolved.
+          `;
+          
+          const summaryResponse = await fetch('/api/journal', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              messages: [
+                {
+                  role: 'system',
+                  content: 'You are a technical support analyst who extracts key information from IT support tickets.'
+                },
+                {
+                  role: 'user',
+                  content: summarizePrompt
+                }
+              ],
+              temperature: 0.3,
+              max_tokens: 150
+            })
+          });
+          
+          if (!summaryResponse.ok) {
+            console.error(`Failed to summarize resolution chunk ${i+1}`);
+            continue;
+          }
+          
+          const summaryData = await summaryResponse.json();
+          const summary = summaryData.choices?.[0]?.message?.content?.trim();
+          
+          if (summary) {
+            summaries.push(summary);
+          }
+        }
+        
+        // Combine summaries
+        processedResolution = summaries.join('\n\n');
+      }
       
       // Add a small delay to prevent too many API calls at once
       await new Promise(resolve => setTimeout(resolve, 500));
       
       console.log('Generating AI entry for ticket:', ticket.number || ticket.sys_id);
       
-      // Prepare request body
-      const requestBody = {
-        messages: [
-          {
-            role: 'system',
-            content: 'You are an IT professional documenting specific technical learnings from support tickets.'
-          },
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        temperature: 0.7,
-        max_tokens: 250
-      };
+      // Construct a prompt that will generate specific technical learning entries
+      const prompt = `
+      You are an IT professional documenting what you learned from resolving a technical support ticket.
       
-      console.log('API request body:', JSON.stringify(requestBody).substring(0, 200) + '...');
+      TICKET INFORMATION:
+      ${ticketInfo.shortDescription ? `Short Description: ${ticketInfo.shortDescription}\n` : ''}
+      ${ticketInfo.category ? `Category: ${ticketInfo.category}\n` : ''}
+      ${ticketInfo.subcategory ? `Subcategory: ${ticketInfo.subcategory}\n` : ''}
+      ${ticketInfo.priority ? `Priority: ${String(ticketInfo.priority)}\n` : ''}
+      
+      TICKET DESCRIPTION:
+      ${processedDescription || 'No description provided'}
+      
+      RESOLUTION:
+      ${processedResolution || 'No resolution provided'}
+      
+      Write a detailed, specific learning journal entry that MUST start with "Today I learned about [COMPONENT]" where [COMPONENT] is the specific hardware or software component that was causing issues.
+      
+      Your entry MUST:
+      1. Start with "Today I learned about [specific component]" - replace [specific component] with the exact hardware/software component
+      2. Explain why the specific component failed or caused issues
+      3. Detail what was done to resolve the issue
+      4. Be written in first person as if you personally solved this issue
+      5. Be 3-5 sentences long
+      
+      BAD EXAMPLE: "Today I learned about hardware issues. The problem was with a computer not working. I fixed it by replacing parts."
+      
+      GOOD EXAMPLE: "Today I learned about Dell OptiPlex power supply failures. The specific issue involved a faulty capacitor in the PSU causing intermittent shutdowns and preventing proper POST completion. I discovered that replacing the power supply unit and ensuring proper ventilation resolved the issue, while also documenting a pattern of similar failures in this model series."
+      `;
       
       // Make API call to our secure API route that handles the OpenAI API key
       console.log('Making fetch request to /api/journal');
@@ -171,7 +358,20 @@ export default function JournalPage() {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(requestBody)
+        body: JSON.stringify({
+          messages: [
+            {
+              role: 'system',
+              content: 'You are an IT professional documenting specific technical learnings from support tickets.'
+            },
+            {
+              role: 'user',
+              content: prompt
+            }
+          ],
+          temperature: 0.7,
+          max_tokens: 250
+        })
       });
       
       console.log('API response status:', response.status);
@@ -229,6 +429,21 @@ export default function JournalPage() {
         return null;
       }
       
+      // Verify the entry starts with the required format
+      if (!aiEntry.startsWith('Today I learned about')) {
+        console.log('Entry does not start with required format, fixing...');
+        
+        // Extract what appears to be the component
+        const componentMatch = aiEntry.match(/about\s+([^.]+)/i);
+        const component = componentMatch ? componentMatch[1].trim() : 'a technical issue';
+        
+        // Reformat the entry
+        const reformattedEntry = `Today I learned about ${component}. ${aiEntry.replace(/^Today I learned about[^.]+\.\s*/i, '')}`;
+        
+        console.log('Generated entry (reformatted):', reformattedEntry.substring(0, 50) + '...');
+        return reformattedEntry;
+      }
+      
       console.log('Generated entry:', aiEntry.substring(0, 50) + '...');
       return aiEntry;
     } catch (error) {
@@ -242,7 +457,7 @@ export default function JournalPage() {
       });
       return null;
     }
-  }, [addNotification]);
+  }, [addNotification, extractTicketInfo, chunkText]);
 
   // Function to process tickets with AI
   const processTicketsWithAI = useCallback(async () => {
