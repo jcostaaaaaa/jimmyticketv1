@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import type { Metadata } from 'next';
 import { TicketProvider } from '@/context/TicketContext';
 import { ConversationProvider } from '@/context/ConversationContext';
+import { NotificationProvider } from '@/context/NotificationContext';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -25,7 +26,9 @@ export default function RootLayout({
       <body className={`min-h-screen font-sans ${inter.className}`}>
         <TicketProvider>
           <ConversationProvider>
-            {children}
+            <NotificationProvider>
+              {children}
+            </NotificationProvider>
           </ConversationProvider>
         </TicketProvider>
       </body>

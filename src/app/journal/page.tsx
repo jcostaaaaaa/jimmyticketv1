@@ -2,146 +2,42 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { FaArrowLeft, FaPlus, FaSearch } from 'react-icons/fa';
 import { useTickets } from '@/context/TicketContext';
 import type { Ticket } from '@/context/TicketContext';
+// @ts-ignore
+import { v4 as uuidv4 } from 'uuid';
+import { FaPlus, FaSearch, FaArrowLeft } from 'react-icons/fa';
 
-// Create a custom toast component since we're not using Chakra UI
-const Toast = ({ title, description, status, onClose }: { 
-  title: string; 
-  description: string; 
-  status: 'success' | 'error' | 'info' | 'warning';
-  onClose: () => void;
-}) => {
-  const bgColor = status === 'success' ? 'bg-green-500' : 
-                  status === 'error' ? 'bg-red-500' : 
-                  status === 'warning' ? 'bg-yellow-500' : 'bg-blue-500';
-  
-  return (
-    <div className={`p-4 rounded-md shadow-lg ${bgColor} text-white max-w-md mb-4 relative`}>
-      <button 
-        onClick={onClose}
-        className="absolute top-2 right-2 text-white hover:text-gray-200"
-        aria-label="Close notification"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-          <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-        </svg>
-      </button>
-      <div>
-        <h3 className="font-bold">{title}</h3>
-        <p>{description}</p>
-      </div>
-    </div>
-  );
-};
-
-// Custom hook for toast functionality
-const useToast = () => {
-  const [toasts, setToasts] = useState<Array<{
-    id: string;
-    title: string;
-    description: string;
-    status: 'success' | 'error' | 'info' | 'warning';
-    timeoutId?: NodeJS.Timeout;
-  }>>([]);
-  
-  // Function to add a toast
-  const toast = ({ 
-    title, 
-    description, 
-    status
-  }: { 
-    title: string; 
-    description: string; 
-    status: 'success' | 'error' | 'info' | 'warning';
-  }) => {
-    const id = Math.random().toString(36).substring(2, 9);
-    
-    // Remove any existing toasts with the same title
-    setToasts(prev => {
-      const filtered = prev.filter(t => t.title !== title);
-      
-      // Create a timeout to auto-dismiss after 5 seconds
-      const timeoutId = setTimeout(() => {
-        console.log(`Auto-dismissing toast with id: ${id}`);
-        closeToast(id);
-      }, 5000);
-      
-      return [...filtered, { id, title, description, status, timeoutId }];
-    });
-  };
-  
-  // Function to close a toast
-  const closeToast = (id: string) => {
-    console.log(`Closing toast with id: ${id}`);
-    setToasts(prev => {
-      // Clear the timeout for the toast being removed
-      const toastToRemove = prev.find(t => t.id === id);
-      if (toastToRemove?.timeoutId) {
-        console.log(`Clearing timeout for toast id: ${id}`);
-        clearTimeout(toastToRemove.timeoutId);
-      }
-      
-      const newToasts = prev.filter(toast => toast.id !== id);
-      console.log(`Removed toast. Previous count: ${prev.length}, New count: ${newToasts.length}`);
-      return newToasts;
-    });
-  };
-  
-  // Cleanup timeouts when component unmounts
-  useEffect(() => {
-    return () => {
-      toasts.forEach(t => {
-        if (t.timeoutId) {
-          clearTimeout(t.timeoutId);
-        }
-      });
-    };
-  }, [toasts]);
-  
-  // Toast container component
-  const ToastContainer = () => (
-    <div className="fixed top-4 right-4 z-50 flex flex-col items-end">
-      {toasts.map(t => (
-        <Toast 
-          key={t.id} 
-          title={t.title} 
-          description={t.description} 
-          status={t.status}
-          onClose={() => closeToast(t.id)}
-        />
-      ))}
-    </div>
-  );
-  
-  return { toast, ToastContainer };
-};
+// Import the notification context hook
+import { useNotification } from '@/context/NotificationContext';
 
 interface JournalEntry {
   id: string;
   date: string;
-  originalDate: Date;
   content: string;
   tags: string[];
+  title: string;
+  ticketId: string | null;
   ticketNumber?: string;
   source: 'description' | 'resolution' | 'manual' | 'ai';
+  originalDate?: Date;
 }
 
 export default function JournalPage() {
-  const router = useRouter();
   const { tickets } = useTickets();
+  const { addNotification } = useNotification();
   const [entries, setEntries] = useState<JournalEntry[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [editingEntry, setEditingEntry] = useState<JournalEntry | null>(null);
+  const [showForm, setShowForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortOrder] = useState<'newest' | 'oldest'>('newest');
+  const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
   const [isAddingEntry, setIsAddingEntry] = useState(false);
-  const [newEntry, setNewEntry] = useState('');
-  const [newTags, setNewTags] = useState('');
+  const [newEntryContent, setNewEntryContent] = useState('');
+  const [newEntryTitle, setNewEntryTitle] = useState('');
+  const [newEntryTags, setNewEntryTags] = useState('');
   const [isProcessingAI, setIsProcessingAI] = useState(false);
   
-  // Custom toast hook
-  const { toast, ToastContainer } = useToast();
-
   // Function to extract keywords as tags from text
   const extractKeywordsAsTags = useCallback((text: string): string[] => {
     // Hardware components
@@ -286,10 +182,10 @@ export default function JournalPage() {
         }
         
         console.error('OpenAI API error:', errorMessage);
-        toast({
+        addNotification({
+          type: 'error',
           title: 'AI Processing Failed',
-          description: `Error: ${errorMessage}`,
-          status: 'error'
+          message: `Error: ${errorMessage}`
         });
         return null;
       }
@@ -301,10 +197,10 @@ export default function JournalPage() {
         console.log('API response received:', JSON.stringify(data).substring(0, 200) + '...');
       } catch (error) {
         console.error('Failed to parse API response as JSON:', error);
-        toast({
+        addNotification({
+          type: 'error',
           title: 'API Response Error',
-          description: 'Failed to parse API response',
-          status: 'error'
+          message: 'Failed to parse API response'
         });
         return null;
       }
@@ -315,10 +211,10 @@ export default function JournalPage() {
       
       if (!aiEntry) {
         console.error('No content in API response:', JSON.stringify(data));
-        toast({
+        addNotification({
+          type: 'error',
           title: 'AI Processing Failed',
-          description: 'No content generated by AI',
-          status: 'error'
+          message: 'No content generated by AI'
         });
         return null;
       }
@@ -329,22 +225,22 @@ export default function JournalPage() {
       console.error('Error generating AI entry:', error);
       const errorMessage = error instanceof Error ? error.message : String(error);
       console.log('Error details:', errorMessage);
-      toast({
+      addNotification({
+        type: 'error',
         title: 'AI Processing Failed',
-        description: `Error: ${errorMessage}`,
-        status: 'error'
+        message: `Error: ${errorMessage}`
       });
       return null;
     }
-  }, [toast]);
+  }, [addNotification]);
 
   // Function to process tickets with AI
   const processTicketsWithAI = useCallback(async () => {
     if (tickets.length === 0) {
-      toast({
+      addNotification({
+        type: 'warning',
         title: 'No Tickets Available',
-        description: 'Please import tickets first before generating journal entries.',
-        status: 'warning'
+        message: 'Please import tickets first before generating journal entries.'
       });
       return;
     }
@@ -407,20 +303,23 @@ export default function JournalPage() {
             });
             
             // Extract tags
-            const tags = extractMeaningfulTags(ticket);
+            const extractedTags = extractMeaningfulTags(ticket);
             
             // Create the entry
-            aiEntries.push({
-              id: `ai_${ticketId}`,
+            const newEntry: JournalEntry = {
+              id: uuidv4(),
               date: formattedDate,
               originalDate: ticketDate,
-              content,
-              tags,
+              content: content,
+              tags: [...extractedTags, 'ai-generated'],
               ticketNumber: ticketId,
+              title: `AI Entry for Ticket ${ticketId}`,
+              ticketId: ticketId,
               source: 'ai'
-            });
+            };
             
             console.log(`Successfully generated entry for ticket ${ticketId}`);
+            aiEntries.push(newEntry);
           } else {
             console.log(`Failed to generate content for ticket ${ticketId}`);
             errorCount++;
@@ -441,27 +340,27 @@ export default function JournalPage() {
         if (uniqueAiEntries.length > 0) {
           const updatedEntries = [...entries, ...uniqueAiEntries];
           setEntries(updatedEntries);
-          localStorage.setItem('journal_entries', JSON.stringify(updatedEntries));
+          localStorage.setItem('journalEntries', JSON.stringify(updatedEntries));
           
-          toast({
+          addNotification({
+            type: 'success',
             title: 'AI Processing Complete',
-            description: `Generated ${uniqueAiEntries.length} new journal entries`,
-            status: 'success'
+            message: `Generated ${uniqueAiEntries.length} new journal entries`
           });
           console.log(`Added ${uniqueAiEntries.length} new entries to journal`);
         } else {
-          toast({
+          addNotification({
+            type: 'info',
             title: 'AI Processing Complete',
-            description: 'All tickets have already been processed. No new entries were generated.',
-            status: 'info'
+            message: 'All tickets have already been processed. No new entries were generated.'
           });
           console.log('No new entries added (all were duplicates)');
         }
       } else {
-        toast({
+        addNotification({
+          type: 'warning',
           title: 'AI Processing Complete',
-          description: 'No entries were generated. Please check that your tickets have both description and resolution fields.',
-          status: 'warning'
+          message: 'No entries were generated. Please check that your tickets have both description and resolution fields.'
         });
         console.log('No entries were generated');
       }
@@ -469,74 +368,138 @@ export default function JournalPage() {
       console.error('Error in AI processing:', error);
       const errorMessage = error instanceof Error ? error.message : String(error);
       console.log('Error details:', errorMessage);
-      toast({
+      addNotification({
+        type: 'error',
         title: 'AI Processing Error',
-        description: `An error occurred: ${errorMessage}`,
-        status: 'error'
+        message: `An error occurred: ${errorMessage}`
       });
     } finally {
       setIsProcessingAI(false);
     }
-  }, [tickets, entries, extractMeaningfulTags, generateLearningEntryWithAI, toast]);
+  }, [tickets, entries, extractMeaningfulTags, generateLearningEntryWithAI, addNotification]);
+
+  // Update an existing journal entry
+  const updateEntry = (updatedEntry: JournalEntry) => {
+    setEntries(prev => 
+      prev.map(entry => 
+        entry.id === updatedEntry.id ? updatedEntry : entry
+      )
+    );
+    addNotification({
+      type: 'success',
+      title: 'Entry Updated',
+      message: 'Journal entry has been updated successfully'
+    });
+    setEditingEntry(null);
+  };
+
+  // Save entries to localStorage whenever they change
+  useEffect(() => {
+    try {
+      localStorage.setItem('journalEntries', JSON.stringify(entries));
+    } catch (error) {
+      console.error('Error saving entries:', error);
+      addNotification({
+        type: 'error',
+        title: 'Error Saving Entries',
+        message: 'Could not save journal entries'
+      });
+    }
+  }, [entries, addNotification]);
 
   // Load entries from localStorage on component mount
   useEffect(() => {
-    try {
-      const storedEntries = localStorage.getItem('journal_entries');
-      if (storedEntries) {
-        const parsedEntries = JSON.parse(storedEntries);
-        setEntries(parsedEntries);
+    const savedEntries = localStorage.getItem('journalEntries');
+    if (savedEntries) {
+      try {
+        setEntries(JSON.parse(savedEntries));
+      } catch (error) {
+        console.error('Error parsing saved entries:', error);
+        addNotification({
+          type: 'error',
+          title: 'Error Loading Entries',
+          message: 'Could not load saved journal entries'
+        });
       }
-    } catch (error) {
-      console.error('Error loading journal entries:', error);
     }
-  }, []);
+  }, [addNotification]);
 
-  // Auto-process tickets with AI when tickets are loaded and no AI entries exist
+  // Auto-process tickets with AI on component mount
   useEffect(() => {
-    if (!tickets || tickets.length === 0) return;
+    // Only auto-process if we have tickets and no AI entries yet
+    const hasAiEntries = entries.some(entry => entry.tags?.includes('ai-generated'));
     
     // Auto-process with AI on initial load if we have tickets and no AI entries yet
-    const hasAiEntries = entries.some(entry => entry.source === 'ai');
     if (tickets.length > 0 && !hasAiEntries && !isProcessingAI) {
       processTicketsWithAI();
     }
   }, [tickets, entries, isProcessingAI, processTicketsWithAI]);
 
-  // Process tickets with AI when the button is clicked
-  const handleProcessTicketsWithAI = useCallback(() => {
-    processTicketsWithAI();
-  }, [processTicketsWithAI]);
+  const handleAddEntry = () => {
+    if (newEntryContent.trim() === '') {
+      return;
+    }
+
+    const newEntry: JournalEntry = {
+      id: uuidv4(),
+      date: new Date().toISOString(),
+      content: newEntryContent,
+      tags: newEntryTags.split(',').map(tag => tag.trim()).filter(Boolean),
+      ticketId: null,
+      title: newEntryTitle || `Journal Entry - ${new Date().toLocaleDateString()}`,
+      source: 'manual',
+    };
+
+    setEntries([...entries, newEntry]);
+    setNewEntryContent('');
+    setNewEntryTags('');
+    setIsAddingEntry(false);
+    addNotification({
+      type: 'success',
+      title: 'Entry Added',
+      message: 'Journal entry has been added successfully'
+    });
+  };
 
   return (
-    <div className="min-h-screen bg-[#1A1A1A] text-[#E0E0E0]">
-      {/* Toast container */}
-      <ToastContainer />
+    <div className="min-h-screen bg-gray-900 text-white">
+      {/* Notifications are now handled by the NotificationProvider */}
       <div className="bg-[#2B2B2B] shadow-sm">
         <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
           <div className="flex items-center">
-            <button
-              onClick={() => router.push('/')}
-              className="mr-4 p-2 rounded-full hover:bg-gray-100"
-            >
-              <FaArrowLeft className="text-gray-600" />
-            </button>
-            <h1 className="text-2xl font-semibold text-[#E0E0E0]">Learning Journal</h1>
+            <h1 className="text-2xl font-bold">Learning Journal</h1>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex space-x-2">
+            <button
+              onClick={() => window.location.href = '/'}
+              className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-md flex items-center"
+            >
+              <FaArrowLeft className="mr-2" />
+              Back to Dashboard
+            </button>
             <button
               onClick={() => setIsAddingEntry(true)}
-              className="flex items-center px-4 py-2 bg-[#E69500] hover:bg-[#FFA500] text-white rounded-md transition-colors"
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-md flex items-center"
             >
               <FaPlus className="mr-2" />
-              <span>Add Entry</span>
+              Add Entry
             </button>
             <button
-              onClick={handleProcessTicketsWithAI}
-              className="flex items-center px-4 py-2 bg-[#E69500] hover:bg-[#FFA500] text-white rounded-md transition-colors"
+              onClick={processTicketsWithAI}
+              className={`px-4 py-2 ${isProcessingAI ? 'bg-gray-600 cursor-not-allowed' : 'bg-green-600 hover:bg-green-500'} rounded-md flex items-center`}
+              disabled={isProcessingAI}
             >
-              <FaPlus className="mr-2" />
-              <span>Generate AI Entries</span>
+              {isProcessingAI ? (
+                <>
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <FaPlus className="mr-2" />
+                  Generate AI Entries
+                </>
+              )}
             </button>
           </div>
         </div>
@@ -544,79 +507,87 @@ export default function JournalPage() {
 
       {/* New entry form */}
       {isAddingEntry && (
-        <div className="mb-6 p-4 bg-[#2B2B2B] rounded-lg shadow">
-          <h2 className="text-xl font-semibold mb-4 text-[#E0E0E0]">Add New Entry</h2>
-          <div className="mb-4">
-            <label htmlFor="newEntry" className="block text-sm font-medium text-[#E0E0E0] mb-1">
-              What did you learn today?
-            </label>
-            <textarea
-              id="newEntry"
-              value={newEntry}
-              onChange={(e) => setNewEntry(e.target.value)}
-              rows={4}
-              className="w-full border border-[#333333] rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-[#FFA500]"
-              placeholder="Today I learned..."
-            ></textarea>
-          </div>
-          <div className="mb-4">
-            <label htmlFor="newTags" className="block text-sm font-medium text-[#E0E0E0] mb-1">
-              Tags (comma separated)
-            </label>
-            <input
-              type="text"
-              id="newTags"
-              value={newTags}
-              onChange={(e) => setNewTags(e.target.value)}
-              className="w-full border border-[#333333] rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-[#FFA500]"
-              placeholder="e.g., networking, security, windows"
-            />
-          </div>
-          <div className="flex justify-end gap-2">
-            <button
-              onClick={() => setIsAddingEntry(false)}
-              className="px-4 py-2 border border-[#333333] rounded hover:bg-[#444444]"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={() => {
-                if (!newEntry.trim()) return;
-                
-                const today = new Date();
-                const formattedDate = today.toLocaleDateString('en-US', { 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric' 
-                });
-                
-                const newEntryObj: JournalEntry = {
-                  id: `manual_${Date.now()}`,
-                  date: formattedDate,
-                  originalDate: today,
-                  content: newEntry.trim(),
-                  tags: newTags.split(',').map((tag: string) => tag.trim().toLowerCase()).filter(Boolean),
-                  source: 'manual'
-                };
-                
-                const updatedEntries = [newEntryObj, ...entries];
-                setEntries(updatedEntries);
-                localStorage.setItem('journal_entries', JSON.stringify(updatedEntries));
-                
-                setNewEntry('');
-                setNewTags('');
-                setIsAddingEntry(false);
-              }}
-              className="bg-[#E69500] hover:bg-[#FFA500] text-white px-4 py-2 rounded-md"
-            >
-              Save Entry
-            </button>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-gray-800 p-6 rounded-lg shadow-xl max-w-2xl w-full">
+            <h2 className="text-xl font-bold mb-4">Add New Journal Entry</h2>
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1">Entry Content</label>
+              <textarea
+                className="w-full p-2 bg-gray-700 rounded-md text-white"
+                rows={8}
+                value={newEntryContent}
+                onChange={(e) => setNewEntryContent(e.target.value)}
+                placeholder="Write your journal entry here..."
+              ></textarea>
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1">Tags (comma separated)</label>
+              <input
+                type="text"
+                className="w-full p-2 bg-gray-700 rounded-md text-white"
+                value={newEntryTags}
+                onChange={(e) => setNewEntryTags(e.target.value)}
+                placeholder="learning, problem-solving, etc."
+              />
+            </div>
+            <div className="flex justify-end space-x-2">
+              <button
+                onClick={() => setIsAddingEntry(false)}
+                className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-md"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAddEntry}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-md"
+                disabled={!newEntryContent.trim()}
+              >
+                Save Entry
+              </button>
+            </div>
           </div>
         </div>
       )}
-      
+
       {/* Journal Entries */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow">
+      <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <div className="mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+            <div className="relative mb-4 sm:mb-0 sm:w-64">
+              <input
+                type="text"
+                className="w-full p-2 pl-10 bg-gray-800 border border-gray-700 rounded-md text-white"
+                placeholder="Search entries..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              <div className="absolute left-3 top-2.5 text-gray-400">
+                <FaSearch className="h-5 w-5" />
+              </div>
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm('')}
+                  className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-300"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              )}
+            </div>
+            <div className="flex space-x-2">
+              <select
+                className="p-2 bg-gray-800 border border-gray-700 rounded-md text-white"
+                value={sortOrder}
+                onChange={(e) => setSortOrder(e.target.value as 'newest' | 'oldest')}
+              >
+                <option value="newest">Newest First</option>
+                <option value="oldest">Oldest First</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
         {/* AI Processing Status */}
         {isProcessingAI && (
           <div className="mb-6 p-4 bg-[#2B2B2B] rounded-lg border border-[#333333]">
@@ -633,21 +604,7 @@ export default function JournalPage() {
             </div>
           </div>
         )}
-        
-        {/* Search and Filter Controls */}
-        <div className="mb-6 flex items-center gap-4">
-          <div className="relative flex-grow">
-            <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#E69500]" />
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search journal entries..."
-              className="pl-10 w-full border border-[#333333] rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-[#FFA500]"
-            />
-          </div>
-        </div>
-        
+
         {/* Journal entries */}
         <div className="space-y-4">
           {entries
@@ -688,19 +645,30 @@ export default function JournalPage() {
                         Ticket #{entry.ticketNumber}
                       </span>
                     )}
+                    {entry.originalDate ? (
+                      <span className="text-xs text-gray-400">
+                        {new Date(entry.originalDate as Date).toLocaleDateString()} {new Date(entry.originalDate as Date).toLocaleTimeString()}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-gray-400">
+                        {new Date(entry.date).toLocaleDateString()} {new Date(entry.date).toLocaleTimeString()}
+                      </span>
+                    )}
                   </div>
                   <button
                     onClick={() => {
-                      if (window.confirm('Are you sure you want to delete this entry?')) {
-                        const updatedEntries = entries.filter(e => e.id !== entry.id);
-                        setEntries(updatedEntries);
-                        localStorage.setItem('journal_entries', JSON.stringify(updatedEntries));
-                      }
+                      // Delete the entry
+                      setEntries(prev => prev.filter(e => e.id !== entry.id));
+                      addNotification({
+                        type: 'info',
+                        title: 'Entry Deleted',
+                        message: 'Journal entry has been deleted'
+                      });
                     }}
                     className="text-red-500 hover:text-red-700"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                      <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0111 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
                     </svg>
                   </button>
                 </div>
