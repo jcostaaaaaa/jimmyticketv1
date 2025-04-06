@@ -308,9 +308,9 @@ export default function QueryPage() {
           <div className="md:col-span-2">
             <div className="bg-[#2B2B2B] p-6 rounded-xl shadow-md border border-[#3C3C3C] mb-6">
               {/* Query type selector */}
-              <div className="flex space-x-2 mb-4">
+              <div className="flex flex-wrap gap-2 mb-4">
                 <button
-                  className={`px-3 py-2 rounded-md flex items-center ${
+                  className={`px-2 py-1 sm:px-3 sm:py-2 rounded-md flex items-center text-sm sm:text-base ${
                     queryType === 'ticket_analysis' 
                       ? 'bg-[#E69500] text-[#E0E0E0]' 
                       : 'bg-[#3C3C3C] hover:bg-[#4C4C4C] text-[#E0E0E0]'
@@ -321,7 +321,7 @@ export default function QueryPage() {
                   Ticket Analysis
                 </button>
                 <button
-                  className={`px-3 py-2 rounded-md flex items-center ${
+                  className={`px-2 py-1 sm:px-3 sm:py-2 rounded-md flex items-center text-sm sm:text-base ${
                     queryType === 'conversation_analysis' 
                       ? 'bg-[#E69500] text-[#E0E0E0]' 
                       : 'bg-[#3C3C3C] hover:bg-[#4C4C4C] text-[#E0E0E0]'
@@ -332,7 +332,7 @@ export default function QueryPage() {
                   Conversation Analysis
                 </button>
                 <button
-                  className={`px-3 py-2 rounded-md flex items-center ${
+                  className={`px-2 py-1 sm:px-3 sm:py-2 rounded-md flex items-center text-sm sm:text-base ${
                     queryType === 'it_knowledge' 
                       ? 'bg-[#E69500] text-[#E0E0E0]' 
                       : 'bg-[#3C3C3C] hover:bg-[#4C4C4C] text-[#E0E0E0]'
@@ -345,7 +345,7 @@ export default function QueryPage() {
               </div>
               
               <form onSubmit={handleSubmit}>
-                <div className="flex items-center bg-[#1A1A1A] rounded-lg p-2 border border-[#3C3C3C]">
+                <div className="flex flex-wrap sm:flex-nowrap items-center bg-[#1A1A1A] rounded-lg p-2 border border-[#3C3C3C]">
                   <FaTerminal className="text-[#FFA500] ml-2 mr-3" />
                   <input
                     type="text"
@@ -358,12 +358,12 @@ export default function QueryPage() {
                           ? "Ask a question about your conversation data..."
                           : "Ask a general IT support question..."
                     }
-                    className="flex-1 bg-transparent border-none focus:outline-none py-2 text-[#E0E0E0] placeholder-gray-500"
+                    className="w-full sm:flex-1 bg-transparent border-none focus:outline-none py-2 text-[#E0E0E0] placeholder-gray-500 text-sm sm:text-base"
                   />
                   <button
                     type="submit"
                     disabled={isLoading || !query.trim()}
-                    className={`ml-2 px-4 py-2 rounded-md ${
+                    className={`mt-2 sm:mt-0 sm:ml-2 px-3 py-1 sm:px-4 sm:py-2 rounded-md w-full sm:w-auto ${
                       isLoading || !query.trim() 
                         ? 'bg-gray-600 cursor-not-allowed' 
                         : 'bg-[#E69500] hover:bg-[#FFA500] text-[#E0E0E0]'
