@@ -131,50 +131,7 @@ export default function JournalPage() {
     };
   }, []);
 
-  // Function to chunk large text to avoid token limits
-  const chunkText = useCallback((text: string, maxLength: number = 1000): string[] => {
-    if (!text || text.length <= maxLength) return [text];
-    
-    // Try to split at paragraph breaks first
-    const paragraphs = text.split(/\n\n+/);
-    const chunks: string[] = [];
-    let currentChunk = '';
-    
-    for (const paragraph of paragraphs) {
-      if ((currentChunk + paragraph).length <= maxLength) {
-        currentChunk += (currentChunk ? '\n\n' : '') + paragraph;
-      } else {
-        // If current paragraph would exceed limit
-        if (currentChunk) {
-          chunks.push(currentChunk);
-          currentChunk = paragraph;
-        } else {
-          // If a single paragraph is too long, split by sentences
-          const sentences = paragraph.split(/(?<=[.!?])\s+/);
-          for (const sentence of sentences) {
-            if ((currentChunk + sentence).length <= maxLength) {
-              currentChunk += (currentChunk ? ' ' : '') + sentence;
-            } else {
-              if (currentChunk) {
-                chunks.push(currentChunk);
-                currentChunk = sentence;
-              } else {
-                // If a single sentence is too long, split by words
-                chunks.push(sentence.substring(0, maxLength));
-                currentChunk = '';
-              }
-            }
-          }
-        }
-      }
-    }
-    
-    if (currentChunk) {
-      chunks.push(currentChunk);
-    }
-    
-    return chunks;
-  }, []);
+  // Note: chunkText function was removed as it's not being used
 
   // Function to process tickets in batches
   const processTicketsInBatches = useCallback(async (ticketsToProcess: Ticket[], batchSize: number = 20): Promise<JournalEntry[]> => {
@@ -393,7 +350,7 @@ export default function JournalPage() {
     }
     
     return aiEntries;
-  }, [extractTicketInfo, extractMeaningfulTags, generateId]);
+  }, [extractTicketInfo, extractMeaningfulTags]);
 
   // Function to process tickets with AI
   const processTicketsWithAI = useCallback(async () => {
@@ -456,39 +413,25 @@ export default function JournalPage() {
       const batchSize = 20; // Process 20 tickets at a time
       const aiEntries = await processTicketsInBatches(ticketsToProcess, batchSize);
       
-      console.log(`Processing complete. Generated ${aiEntries.length} entries.`);
+      // Add new entries to the journal
+      const newEntries = aiEntries.filter(entry => !entries.find(e => e.id === entry.id));
+      const uniqueAiEntries = [...entries, ...newEntries];
       
-      if (aiEntries.length > 0) {
-        // Only add entries that don't already exist
-        const existingIds = entries.map(entry => entry.id);
-        const uniqueAiEntries = aiEntries.filter(entry => !existingIds.includes(entry.id));
-        
-        if (uniqueAiEntries.length > 0) {
-          const updatedEntries = [...entries, ...uniqueAiEntries];
-          setEntries(updatedEntries);
-          localStorage.setItem('journalEntries', JSON.stringify(updatedEntries));
-          
-          addNotification({
-            type: 'success',
-            title: 'AI Processing Complete',
-            message: `Generated ${uniqueAiEntries.length} new journal entries`
-          });
-          console.log(`Added ${uniqueAiEntries.length} new entries to journal`);
-        } else {
-          addNotification({
-            type: 'info',
-            title: 'AI Processing Complete',
-            message: 'All tickets have already been processed. No new entries were generated.'
-          });
-          console.log('No new entries added (all were duplicates)');
-        }
+      if (newEntries.length > 0) {
+        setEntries(uniqueAiEntries);
+        addNotification({
+          type: 'success',
+          title: 'AI Processing Complete',
+          message: `Generated ${newEntries.length} new journal entries`
+        });
+        console.log(`Added ${newEntries.length} new entries to journal`);
       } else {
         addNotification({
-          type: 'warning',
+          type: 'info',
           title: 'AI Processing Complete',
-          message: 'No entries were generated. Please check that your tickets have valid description or resolution fields.'
+          message: 'All tickets have already been processed. No new entries were generated.'
         });
-        console.log('No entries were generated');
+        console.log('No new entries added (all were duplicates)');
       }
     } catch (error) {
       console.error('Error processing tickets:', error);
@@ -500,7 +443,7 @@ export default function JournalPage() {
     } finally {
       setIsProcessingAI(false);
     }
-  }, [tickets, entries, extractMeaningfulTags, generateId, addNotification]);
+  }, [tickets, entries, extractMeaningfulTags, addNotification, isProcessingAI, processTicketsInBatches, setIsProcessingAI, setEntries]);
 
   // Save entries to localStorage whenever they change
   useEffect(() => {
