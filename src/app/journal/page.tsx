@@ -141,6 +141,9 @@ export default function JournalPage() {
       GOOD EXAMPLE: "Today I learned about troubleshooting Windows registry corruption causing application crashes. The specific issue involved corrupted shell extension registry keys preventing File Explorer from properly loading file context menus. I discovered that running the System File Checker and manually removing the problematic registry keys under HKEY_CLASSES_ROOT resolved the issue without requiring a system restore."
       `;
       
+      // Add a small delay to prevent too many API calls at once
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
       console.log('Generating AI entry for ticket:', ticket.number || ticket.sys_id);
       
       // Prepare request body
@@ -243,11 +246,12 @@ export default function JournalPage() {
 
   // Function to process tickets with AI
   const processTicketsWithAI = useCallback(async () => {
-    if (tickets.length === 0) {
+    if (isProcessingAI) {
+      console.log('Already processing tickets, please wait...');
       addNotification({
-        type: 'warning',
-        title: 'No Tickets Available',
-        message: 'Please import tickets first before generating journal entries.'
+        type: 'info',
+        title: 'Processing in Progress',
+        message: 'Please wait while we finish processing the current batch of tickets'
       });
       return;
     }
@@ -261,6 +265,7 @@ export default function JournalPage() {
       let processedCount = 0;
       let skippedCount = 0;
       let errorCount = 0;
+      let apiKeyError = false;
       
       // Process tickets sequentially to avoid rate limiting
       for (const ticket of tickets) {
@@ -292,6 +297,12 @@ export default function JournalPage() {
         
         // Generate AI entry
         try {
+          // Check if we've already had API key errors
+          if (apiKeyError) {
+            console.log('API key error encountered earlier, stopping processing');
+            break; // Stop processing more tickets if we've had an API key error
+          }
+          
           const content = await generateLearningEntryWithAI(ticket);
           
           if (content) {
@@ -334,6 +345,18 @@ export default function JournalPage() {
         } catch (error) {
           console.error(`Error processing ticket ${ticketId}:`, error);
           errorCount++;
+          
+          // Check if it's an API key error and stop processing if it is
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          if (errorMessage.includes('API key') || errorMessage.includes('authentication')) {
+            console.error('API key error detected, stopping processing');
+            apiKeyError = true;
+            addNotification({
+              type: 'error',
+              title: 'API Key Error',
+              message: 'There was an issue with the API key. Please check your environment variables.'
+            });
+          }
         }
       }
       
@@ -363,6 +386,9 @@ export default function JournalPage() {
           });
           console.log('No new entries added (all were duplicates)');
         }
+      } else if (apiKeyError) {
+        // API key error notification already shown, don't show another one
+        console.log('No entries were generated due to API key error');
       } else {
         addNotification({
           type: 'warning',

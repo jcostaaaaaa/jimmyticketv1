@@ -3,8 +3,8 @@ import { NextResponse } from 'next/server';
 export async function POST(request: Request) {
   console.log('Journal API route called');
   try {
-    // Get the API key from environment variables - use the same approach as analyze route
-    const apiKey = process.env.OPENKEYGSMD;
+    // Get the API key from environment variables
+    const apiKey = process.env.OPENAI_API_KEY || process.env.OPENKEYGSMD;
     
     if (!apiKey) {
       console.error('API key not found in environment variables');
@@ -13,7 +13,17 @@ export async function POST(request: Request) {
         { status: 500 }
       );
     }
-    console.log('API key found, proceeding with request');
+    
+    // Ensure the API key is in the correct format (should start with 'sk-')
+    if (!apiKey.startsWith('sk-')) {
+      console.error('Invalid API key format');
+      return NextResponse.json(
+        { error: 'Invalid API key format. OpenAI API keys should start with "sk-"' },
+        { status: 500 }
+      );
+    }
+    
+    console.log('API key found and validated, proceeding with request');
 
     // Get the request body
     const body = await request.json();
