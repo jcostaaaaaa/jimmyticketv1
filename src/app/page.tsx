@@ -43,6 +43,70 @@ export default function Home() {
           </div>
         </div>
         
+        {/* Analytics Dashboard Preview */}
+        <div className="bg-[#2B2B2B] border border-[#3C3C3C] rounded-xl shadow-lg p-6 mb-16">
+          <h2 className="text-2xl font-bold mb-6 text-[#E0E0E0]">Analytics Dashboard Preview</h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            {/* Resolution Efficiency KPI */}
+            <div className="bg-[#1A1A1A] p-6 rounded-lg border border-[#3C3C3C] flex flex-col items-center justify-center">
+              <h3 className="font-semibold text-[#E0E0E0] mb-4">Resolution Efficiency</h3>
+              <div className="flex items-center justify-center h-40">
+                <div className="text-center">
+                  <span className="text-4xl font-bold text-[#FF8000]">78%</span>
+                  <p className="text-[#A0A0A0] text-sm mt-2">↑ 5% from last month</p>
+                </div>
+              </div>
+              <p className="text-[#A0A0A0] text-sm text-center mt-2">
+                Based on 1,248 tickets resolved in the last 30 days
+              </p>
+            </div>
+            
+            {/* Other KPI cards */}
+            <div className="bg-[#1A1A1A] p-6 rounded-lg border border-[#3C3C3C]">
+              <h3 className="font-semibold text-[#E0E0E0] mb-4">Average Resolution Time</h3>
+              <div className="flex items-center justify-center h-40">
+                <div className="text-center">
+                  <span className="text-4xl font-bold text-[#FF8000]">4.2</span>
+                  <span className="text-xl text-[#E0E0E0] ml-2">hours</span>
+                  <p className="text-[#A0A0A0] text-sm mt-2">↓ 12% from last month</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-[#1A1A1A] p-6 rounded-lg border border-[#3C3C3C]">
+              <h3 className="font-semibold text-[#E0E0E0] mb-4">Customer Satisfaction</h3>
+              <div className="flex items-center justify-center h-40">
+                <div className="text-center">
+                  <span className="text-4xl font-bold text-[#4CAF50]">92</span>
+                  <span className="text-xl text-[#E0E0E0] ml-2">%</span>
+                  <p className="text-[#A0A0A0] text-sm mt-2">↑ 5% from last month</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-[#1A1A1A] p-6 rounded-lg border border-[#3C3C3C]">
+              <h3 className="font-semibold text-[#E0E0E0] mb-4">First Response Time</h3>
+              <div className="flex items-center justify-center h-40">
+                <div className="text-center">
+                  <span className="text-4xl font-bold text-[#FF8000]">18</span>
+                  <span className="text-xl text-[#E0E0E0] ml-2">min</span>
+                  <p className="text-[#A0A0A0] text-sm mt-2">↓ 22% from last month</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="text-center">
+            <Link 
+              href="/analytics" 
+              className="bg-[#3C3C3C] hover:bg-[#2B2B2B] text-[#FF8000] border border-[#3C3C3C] font-medium py-2 px-6 rounded-lg inline-flex items-center justify-center gap-2 shadow-sm hover:shadow transition-all"
+            >
+              <FaChartBar /> View Full Analytics Dashboard
+            </Link>
+          </div>
+        </div>
+        
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
           <div className="bg-[#2B2B2B] border border-[#3C3C3C] rounded-xl shadow-sm hover:shadow-md transition-shadow p-6 border-l-4 border-l-[#FF8000] orange-border">
             <div className="text-center mb-4">
@@ -268,11 +332,54 @@ export default function Home() {
           </Link>
         </div>
         
-
+        {/* Dedicated Analytics Section */}
+        <div className="bg-[#2B2B2B] rounded-xl shadow-md border border-[#3C3C3C] mb-16 overflow-hidden">
+          <div className="bg-[#3C3C3C] text-[#E0E0E0] p-6 border-b border-[#3C3C3C]">
+            <h2 className="text-2xl font-bold flex items-center gap-2">
+              <FaChartBar className="text-[#FFA500]" />
+              <span>Resolution Efficiency Analytics</span>
+            </h2>
+          </div>
+          <div className="p-8">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+              <div className="bg-[#1A1A1A] p-5 rounded-lg border border-[#3C3C3C] flex flex-col items-center">
+                <h3 className="font-semibold text-[#E0E0E0] mb-4">Hardware Issues</h3>
+                <div className="flex items-center justify-center h-24 w-24 rounded-full border-4 border-[#4CAF50] mb-2">
+                  <span className="text-2xl font-bold text-[#4CAF50]">92%</span>
+                </div>
+                <p className="text-[#A0A0A0] text-sm">Efficiency</p>
+              </div>
+              
+              <div className="bg-[#1A1A1A] p-5 rounded-lg border border-[#3C3C3C] flex flex-col items-center">
+                <h3 className="font-semibold text-[#E0E0E0] mb-4">Software Issues</h3>
+                <div className="flex items-center justify-center h-24 w-24 rounded-full border-4 border-[#FF8000] mb-2">
+                  <span className="text-2xl font-bold text-[#FF8000]">78%</span>
+                </div>
+                <p className="text-[#A0A0A0] text-sm">Efficiency</p>
+              </div>
+              
+              <div className="bg-[#1A1A1A] p-5 rounded-lg border border-[#3C3C3C] flex flex-col items-center">
+                <h3 className="font-semibold text-[#E0E0E0] mb-4">Network Issues</h3>
+                <div className="flex items-center justify-center h-24 w-24 rounded-full border-4 border-[#4CAF50] mb-2">
+                  <span className="text-2xl font-bold text-[#4CAF50]">85%</span>
+                </div>
+                <p className="text-[#A0A0A0] text-sm">Efficiency</p>
+              </div>
+              
+              <div className="bg-[#1A1A1A] p-5 rounded-lg border border-[#3C3C3C] flex flex-col items-center">
+                <h3 className="font-semibold text-[#E0E0E0] mb-4">Overall Efficiency</h3>
+                <div className="flex items-center justify-center h-24 w-24 rounded-full border-4 border-[#4CAF50] mb-2">
+                  <span className="text-2xl font-bold text-[#4CAF50]">84%</span>
+                </div>
+                <p className="text-[#A0A0A0] text-sm">Efficiency</p>
+              </div>
+            </div>
+          </div>
+        </div>
         
         {/* Version indicator */}
         <div className="fixed bottom-2 right-2 text-[#A0A0A0] text-sm font-mono">
-          v28
+          v29
         </div>
       </main>
       
