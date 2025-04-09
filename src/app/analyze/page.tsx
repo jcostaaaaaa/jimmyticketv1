@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Header } from '@/components/Header';
 import { useTickets } from '@/context/TicketContext';
-import { FaExclamationCircle, FaCheckCircle, FaClock, FaUserCog, FaInfoCircle, FaLightbulb, FaChartBar } from 'react-icons/fa';
+import { FaChartBar } from 'react-icons/fa';
+import { FaCircleExclamation, FaCircleCheck, FaClock, FaUserGear, FaCircleInfo, FaLightbulb } from 'react-icons/fa6';
 
 // Import the Ticket type from the context to ensure we're using consistent types
 import { Ticket } from '@/context/TicketContext';
@@ -436,9 +437,9 @@ export default function AnalyzePage() {
 
   if (tickets.length === 0) {
     return (
-      <div className="min-h-screen bg-[#1A1A1A]">
+      <div className="min-h-screen bg-[#1A1A1A] flex flex-col">
         <Header />
-        <div className="container mx-auto px-4 py-8">
+        <div className="container mx-auto px-4 py-8 flex-grow">
           <div className="bg-[#2B2B2B] rounded-lg shadow-md p-6 mb-8 border border-[#3C3C3C]">
             <h2 className="text-2xl font-bold mb-4 text-[#E0E0E0]">Analytics Dashboard</h2>
             <p className="text-[#E0E0E0]">No tickets available for analysis. Please import tickets first.</p>
@@ -455,9 +456,9 @@ export default function AnalyzePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#1A1A1A]">
+    <div className="min-h-screen bg-[#1A1A1A] flex flex-col">
       <Header />
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 flex-grow">
         <div className="bg-[#2B2B2B] rounded-lg shadow-md p-6 mb-8 border border-[#3C3C3C]">
           <h2 className="text-2xl font-bold mb-4 text-[#E0E0E0]">Analytics Dashboard</h2>
           
@@ -511,7 +512,7 @@ export default function AnalyzePage() {
                 <MetricCard
                   title="Total Tickets"
                   value={analytics?.totalTickets || 0}
-                  icon={<FaExclamationCircle />}
+                  icon={<FaCircleExclamation />}
                   color="blue"
                 />
                 <MetricCard
@@ -523,13 +524,13 @@ export default function AnalyzePage() {
                 <MetricCard
                   title="Resolved Tickets"
                   value={analytics?.resolvedTickets || 0}
-                  icon={<FaCheckCircle />}
+                  icon={<FaCircleCheck />}
                   color="green"
                 />
                 <MetricCard
                   title="Avg. Resolution Time"
                   value={analytics?.averageResolutionTime || 'N/A'}
-                  icon={<FaUserCog />}
+                  icon={<FaUserGear />}
                   color="purple"
                 />
               </div>
@@ -600,7 +601,7 @@ export default function AnalyzePage() {
                             <span className="text-sm text-[#A0A0A0] flex items-center whitespace-nowrap">
                               {count} ({Math.round((count / analytics.totalTickets) * 100)}%)
                               <span className="ml-1 text-[#FFA500] cursor-pointer" title="View subcategories">
-                                <FaInfoCircle />
+                                <FaCircleInfo />
                               </span>
                             </span>
                           </div>
@@ -751,7 +752,7 @@ export default function AnalyzePage() {
                     {/* AI Recommendations */}
                     <div>
                       <h3 className="text-lg font-semibold mb-3 text-[#E0E0E0] flex items-center">
-                        <FaCheckCircle className="text-[#FFA500] mr-2" /> 
+                        <FaCircleInfo className="text-[#FFA500] mr-2" /> 
                         Actionable Recommendations
                       </h3>
                       <div className="grid grid-cols-1 gap-3">
@@ -790,13 +791,12 @@ export default function AnalyzePage() {
           )}
         </div>
       </div>
+      <footer className="bg-[#1A1A1A] text-[#A0A0A0] py-8 mt-auto border-t border-[#3C3C3C]">
+        <div className="container mx-auto px-4 text-center">
+          <p className="mb-0">ServiceNow Ticket Analysis Dashboard &copy; 2024</p>
+        </div>
+      </footer>
     </div>
-    
-    <footer className="bg-[#1A1A1A] text-[#A0A0A0] py-8 mt-auto border-t border-[#3C3C3C]">
-      <div className="container mx-auto px-4 text-center">
-        <p className="mb-0">ServiceNow Ticket Analysis Dashboard &copy; 2024</p>
-      </div>
-    </footer>
   );
 }
 
