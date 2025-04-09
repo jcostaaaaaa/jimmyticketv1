@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { Header } from '@/components/Header';
-import { FaRobot, FaSyncAlt, FaHistory, FaTerminal, FaDatabase, FaQuestion } from 'react-icons/fa';
-import { FaComments } from 'react-icons/fa';
+import { FaArrowsRotate, FaClockRotateLeft, FaTerminal, FaDatabase, FaCircleQuestion, FaComments } from 'react-icons/fa6';
+import { FaRobot } from 'react-icons/fa6';
 import { useTickets } from '@/context/TicketContext';
 // Comment out this import for now until we verify it's working
 // import { useConversations } from '@/context/ConversationContext';
@@ -339,7 +339,7 @@ export default function QueryPage() {
                   }`}
                   onClick={() => handleQueryTypeChange('it_knowledge')}
                 >
-                  <FaQuestion className="mr-2" />
+                  <FaCircleQuestion className="mr-2" />
                   IT Knowledge
                 </button>
               </div>
@@ -370,7 +370,7 @@ export default function QueryPage() {
                     }`}
                   >
                     {isLoading ? (
-                      <FaSyncAlt className="animate-spin" />
+                      <FaArrowsRotate className="animate-spin" />
                     ) : (
                       'Ask'
                     )}
@@ -404,7 +404,7 @@ export default function QueryPage() {
                   }`}>
                     {response.type === 'ticket_analysis' && <FaDatabase className="text-xl" />}
                     {response.type === 'conversation_analysis' && <FaComments className="text-xl" />}
-                    {response.type === 'it_knowledge' && <FaQuestion className="text-xl" />}
+                    {response.type === 'it_knowledge' && <FaCircleQuestion className="text-xl" />}
                   </div>
                   <div className="flex-1">
                     <div className="whitespace-pre-line text-[#E0E0E0]" dangerouslySetInnerHTML={{ __html: response.answer.replace(/&apos;/g, "'") }}>
@@ -468,7 +468,7 @@ export default function QueryPage() {
           <div className="md:col-span-1">
             <div className="bg-[#2B2B2B] p-6 rounded-xl shadow-md border border-[#3C3C3C] mb-6">
               <h2 className="text-lg font-semibold mb-4 flex items-center text-[#E0E0E0]">
-                <FaHistory className="mr-2 text-[#FFA500]" />
+                <FaClockRotateLeft className="mr-2 text-[#FFA500]" />
                 Recent Queries
               </h2>
               <ul className="space-y-3">
@@ -483,7 +483,7 @@ export default function QueryPage() {
                       >
                         {rq.type === 'ticket_analysis' && <FaDatabase />}
                         {rq.type === 'conversation_analysis' && <FaComments />}
-                        {rq.type === 'it_knowledge' && <FaQuestion />}
+                        {rq.type === 'it_knowledge' && <FaCircleQuestion />}
                       </span>
                       <span>{rq.text}</span>
                     </button>
@@ -521,7 +521,7 @@ export default function QueryPage() {
                     onClick={() => handleSuggestedQuery("How do I fix Outlook when it&apos;s not syncing emails?", 'it_knowledge')}
                     className="text-left w-full p-2 hover:bg-[#3C3C3C] rounded text-[#E0E0E0] flex items-start transition-colors"
                   >
-                    <span className="text-[#FFA500] mr-2 mt-1"><FaQuestion /></span>
+                    <span className="text-[#FFA500] mr-2 mt-1"><FaCircleQuestion /></span>
                     <span>How do I fix Outlook when it&apos;s not syncing emails?</span>
                   </button>
                 </li>
@@ -539,7 +539,7 @@ export default function QueryPage() {
                     onClick={() => handleSuggestedQuery("How do I resolve network connectivity issues?", 'it_knowledge')}
                     className="text-left w-full p-2 hover:bg-[#3C3C3C] rounded text-[#E0E0E0] flex items-start transition-colors"
                   >
-                    <span className="text-[#FFA500] mr-2 mt-1"><FaQuestion /></span>
+                    <span className="text-[#FFA500] mr-2 mt-1"><FaCircleQuestion /></span>
                     <span>How do I resolve network connectivity issues?</span>
                   </button>
                 </li>
