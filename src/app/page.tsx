@@ -1,7 +1,7 @@
 import { Header } from "@/components/Header";
 import Link from "next/link";
 import { FaFileUpload, FaChartBar, FaSearch, FaLightbulb, FaServer, FaNetworkWired, FaDatabase, FaComments, FaChartPie } from "react-icons/fa";
-import Head from "next/head";
+import { ResolutionEfficiencyChart } from "@/components/ResolutionEfficiencyChart";
 
 // Note: For client components that need these imports, create a separate file with 'use client' directive
 // import Image from "next/image";
@@ -12,26 +12,7 @@ import Head from "next/head";
 export default function Home() {
   return (
     <div className="min-h-screen bg-[#1A1A1A]">
-      <Head>
-        {/* Force Samsung Internet browser to use the correct orange color */}
-        <style dangerouslySetInnerHTML={{ __html: `
-          @media screen and (max-width: 768px) {
-            /* Direct Samsung browser targeting */
-            @supports (-webkit-touch-callout: none) {
-              .orange-bg { background-color: #FF8000 !important; }
-              .orange-bg:hover { background-color: #F76B00 !important; }
-              .orange-text { color: #FF8000 !important; }
-              .orange-border { border-left-color: #FF8000 !important; }
-              .orange-gradient { 
-                background: #FF8000 !important;
-                background-image: none !important;
-                -webkit-text-fill-color: transparent !important;
-                -webkit-background-clip: text !important;
-              }
-            }
-          }
-        `}} />
-      </Head>
+
       
       <Header />
       
@@ -174,6 +155,75 @@ export default function Home() {
           </div>
         </div>
         
+        {/* Resolution Efficiency Metrics Section */}
+        <div className="bg-[#2B2B2B] rounded-xl shadow-md border border-[#3C3C3C] mb-16 overflow-hidden">
+          <div className="bg-[#3C3C3C] text-[#E0E0E0] p-6 border-b border-[#3C3C3C]">
+            <h2 className="text-2xl font-bold flex items-center gap-2">
+              <FaChartBar className="text-[#FFA500]" />
+              <span>Resolution Efficiency Metrics</span>
+            </h2>
+          </div>
+          
+          <div className="p-8">
+            <p className="text-xl text-[#E0E0E0] mb-6">
+              Track and analyze resolution efficiency across different categories to identify areas for improvement.
+            </p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+              <div className="bg-[#1A1A1A] p-5 rounded-lg border border-[#3C3C3C] flex flex-col items-center">
+                <h3 className="font-semibold text-[#E0E0E0] mb-4">Hardware Issues</h3>
+                <ResolutionEfficiencyChart 
+                  score={92} 
+                  size={100} 
+                  animated={true} 
+                  tooltipText="Hardware resolution efficiency"
+                />
+              </div>
+              
+              <div className="bg-[#1A1A1A] p-5 rounded-lg border border-[#3C3C3C] flex flex-col items-center">
+                <h3 className="font-semibold text-[#E0E0E0] mb-4">Software Issues</h3>
+                <ResolutionEfficiencyChart 
+                  score={78} 
+                  size={100} 
+                  animated={true}
+                  tooltipText="Software resolution efficiency"
+                />
+              </div>
+              
+              <div className="bg-[#1A1A1A] p-5 rounded-lg border border-[#3C3C3C] flex flex-col items-center">
+                <h3 className="font-semibold text-[#E0E0E0] mb-4">Network Issues</h3>
+                <ResolutionEfficiencyChart 
+                  score={85} 
+                  size={100} 
+                  animated={true}
+                  tooltipText="Network resolution efficiency"
+                />
+              </div>
+              
+              <div className="bg-[#1A1A1A] p-5 rounded-lg border border-[#3C3C3C] flex flex-col items-center">
+                <h3 className="font-semibold text-[#E0E0E0] mb-4">Overall Efficiency</h3>
+                <ResolutionEfficiencyChart 
+                  score={84} 
+                  size={100} 
+                  animated={true}
+                  tooltipText="Overall resolution efficiency"
+                />
+              </div>
+            </div>
+            
+            <div className="flex justify-center">
+              <button
+                onClick={() => window.location.href = '/journal'}
+                className="px-6 py-3 bg-[#FF8000] hover:bg-[#F76B00] text-[#E0E0E0] rounded-lg flex items-center gap-2 transition-colors"
+              >
+                <FaChartBar />
+                View Detailed Efficiency Journal
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        {/* Conversation History Analysis Section */}
         <div className="bg-[#2B2B2B] rounded-xl shadow-md border border-[#3C3C3C] mb-16 overflow-hidden">
           <div className="bg-[#3C3C3C] text-[#E0E0E0] p-6 border-b border-[#3C3C3C]">
             <h2 className="text-2xl font-bold flex items-center gap-2">
@@ -219,6 +269,9 @@ export default function Home() {
                     <FaChartBar className="text-[#FF8000]" />
                   </div>
                   <h3 className="font-semibold text-[#E0E0E0]">Agent Performance</h3>
+                </div>
+                <div className="flex flex-col items-center mt-4">
+                  <ResolutionEfficiencyChart score={78} className="mb-2" />
                 </div>
                 <p className="text-[#E0E0E0]">
                   Analyze response times, resolution rates, and customer satisfaction scores to evaluate and improve agent performance.

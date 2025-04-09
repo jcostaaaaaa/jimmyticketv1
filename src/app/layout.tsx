@@ -16,6 +16,13 @@ export const metadata: Metadata = {
   description: 'Analyze and visualize ServiceNow ticket data for better IT service management',
 };
 
+// Add custom styles for Samsung Internet browser
+export function generateViewport() {
+  return {
+    viewport: 'width=device-width, initial-scale=1',
+  };
+}
+
 export default function RootLayout({
   children,
 }: {
@@ -23,6 +30,25 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${inter.variable} dark`}>
+      <head>
+        <style dangerouslySetInnerHTML={{ __html: `
+          @media screen and (max-width: 768px) {
+            /* Direct Samsung browser targeting */
+            @supports (-webkit-touch-callout: none) {
+              .orange-bg { background-color: #FF8000 !important; }
+              .orange-bg:hover { background-color: #F76B00 !important; }
+              .orange-text { color: #FF8000 !important; }
+              .orange-border { border-left-color: #FF8000 !important; }
+              .orange-gradient { 
+                background: #FF8000 !important;
+                background-image: none !important;
+                -webkit-text-fill-color: transparent !important;
+                -webkit-background-clip: text !important;
+              }
+            }
+          }
+        `}} />
+      </head>
       <body className={`min-h-screen font-sans ${inter.className}`}>
         <TicketProvider>
           <ConversationProvider>
@@ -35,4 +61,4 @@ export default function RootLayout({
     </html>
   );
 }
-// TODO: Add Samsung browser color fix
+
