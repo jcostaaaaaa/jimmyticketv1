@@ -21,6 +21,7 @@ export function Header() {
                 width={28} 
                 height={28} 
                 className="text-[#FFA500]" 
+                priority
               />
               <span className="bg-gradient-to-r from-[#FFA500] to-[#FF8C00] bg-clip-text text-transparent">
                 ServiceNow Analytics
