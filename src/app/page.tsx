@@ -1,3 +1,5 @@
+'use client';
+
 import { Header } from "@/components/Header";
 import Link from "next/link";
 import { FaFileUpload, FaChartBar, FaSearch, FaLightbulb, FaServer, FaNetworkWired, FaDatabase, FaComments, FaChartPie } from "react-icons/fa";
