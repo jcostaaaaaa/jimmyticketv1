@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useConversations, Conversation } from '@/context/ConversationContext';
 import { Header } from '@/components/Header';
 import { FaComments, FaSearch } from 'react-icons/fa';
-import { FaUserCircle, FaLaptopCode, FaClockFour, FaCalendarDays, FaSliders } from 'react-icons/fa6';
+import { FaUser, FaLaptop, FaClock, FaCalendarDays, FaSliders } from 'react-icons/fa6';
 
 export default function ConversationsPage() {
   const { conversations } = useConversations();
@@ -110,7 +110,7 @@ export default function ConversationsPage() {
                           </div>
                         </div>
                         <div className="text-sm text-[#E0E0E0] mt-1 flex items-center">
-                          <FaClockFour className="mr-1 text-[#E69500]" />
+                          <FaClock className="mr-1 text-[#E69500]" />
                           {new Date(conversation.start_time).toLocaleDateString()}
                         </div>
                         <div className="text-sm text-[#E0E0E0] mt-2 line-clamp-2">
@@ -163,7 +163,7 @@ export default function ConversationsPage() {
                             <div className={`p-1 rounded-full mr-2 ${
                               message.sender === 'user' ? 'bg-[#FFA500]' : 'bg-[#E69500]'
                             }`}>
-                              <span className={`${message.sender === 'user' ? 'text-[#E69500]' : 'text-[#FFA500]'} mr-2`}>{message.sender === 'user' ? <FaUserCircle /> : <FaLaptopCode />}</span>
+                              <span className={`${message.sender === 'user' ? 'text-[#E69500]' : 'text-[#FFA500]'} mr-2`}>{message.sender === 'user' ? <FaUser /> : <FaLaptop />}</span>
                             </div>
                             <div className="text-xs font-medium">
                               {message.sender === 'user' ? 'Customer' : 'Support Agent'}

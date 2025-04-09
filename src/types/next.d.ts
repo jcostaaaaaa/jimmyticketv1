@@ -5,6 +5,6 @@ declare module 'next' {
   export type Metadata = {
     title?: string;
     description?: string;
-    [key: string]: any;
+    [key: string]: string | string[] | number | boolean | undefined;
   };
 }
