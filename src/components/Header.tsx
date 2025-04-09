@@ -1,7 +1,9 @@
 "use client";
 
 import Link from 'next/link';
-import { FaFileUpload, FaChartBar, FaSearch, FaQuestion, FaServer, FaHome, FaComments } from 'react-icons/fa';
+import Image from 'next/image';
+import { FaFileUpload, FaChartBar, FaSearch } from 'react-icons/fa';
+import { FaCircleQuestion, FaHouse, FaComments } from 'react-icons/fa6';
 import { useState } from 'react';
 
 export function Header() {
@@ -13,7 +15,13 @@ export function Header() {
         <div className="flex flex-col sm:flex-row justify-between items-center">
           <div className="flex items-center py-4 w-full sm:w-auto justify-between">
             <Link href="/" className="flex items-center gap-2 text-xl font-bold tracking-tight">
-              <FaServer className="text-[#FFA500]" />
+              <Image 
+                src="/images/ticket-search-logo.svg" 
+                alt="Ticket Analysis Logo" 
+                width={28} 
+                height={28} 
+                className="text-[#FFA500]" 
+              />
               <span className="bg-gradient-to-r from-[#FFA500] to-[#FF8C00] bg-clip-text text-transparent">
                 ServiceNow Analytics
               </span>
@@ -33,12 +41,12 @@ export function Header() {
           </div>
           
           <nav className={`${isMobileMenuOpen ? 'flex' : 'hidden'} sm:flex flex-col sm:flex-row w-full sm:w-auto py-2 sm:py-0 space-y-2 sm:space-y-0 sm:space-x-1`}>
-            <NavLink href="/" icon={<FaHome />} text="Home" />
+            <NavLink href="/" icon={<FaHouse />} text="Home" />
             <NavLink href="/import" icon={<FaFileUpload />} text="Import" />
             <NavLink href="/analyze" icon={<FaChartBar />} text="Analytics" />
             <NavLink href="/conversations" icon={<FaComments />} text="Conversations" />
             <NavLink href="/query" icon={<FaSearch />} text="Query" />
-            <NavLink href="/help" icon={<FaQuestion />} text="Help" />
+            <NavLink href="/help" icon={<FaCircleQuestion />} text="Help" />
           </nav>
         </div>
       </div>

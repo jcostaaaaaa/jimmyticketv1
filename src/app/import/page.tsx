@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { Header } from '@/components/Header';
-import { FaFileUpload, FaCheck, FaExclamationTriangle, FaTicketAlt, FaComments, FaLayerGroup } from 'react-icons/fa';
+import { FaFileUpload, FaComments } from 'react-icons/fa';
+import { FaCircleCheck, FaTriangleExclamation, FaTicket, FaLayerGroup } from 'react-icons/fa6';
 import { useTickets, Ticket } from '@/context/TicketContext';
 import { useConversations, Conversation } from '@/context/ConversationContext';
 
@@ -348,7 +349,7 @@ export default function ImportPage() {
     if (!previewData) {
       return (
         <div className="mt-4 bg-[#3A2A2A] text-red-400 p-3 rounded-md flex items-center border border-red-900">
-          <FaExclamationTriangle className="mr-2" />
+          <FaTriangleExclamation className="mr-2" />
           <span>No data loaded yet. Please select a file.</span>
         </div>
       );
@@ -360,7 +361,7 @@ export default function ImportPage() {
         {previewData.tickets.length > 0 && (
           <div>
             <h3 className="text-lg font-semibold mb-2 flex items-center text-[#E0E0E0]">
-              <FaTicketAlt className="mr-2 text-[#FFA500]" />
+              <FaTicket className="mr-2 text-[#FFA500]" />
               Ticket Data Preview
             </h3>
             <div className="bg-[#333333] p-4 rounded border border-gray-700 overflow-auto max-h-80">
@@ -494,20 +495,20 @@ export default function ImportPage() {
           
           {uploadStatus === 'error' && (
             <div className="mt-4 bg-[#3A2A2A] text-red-400 p-3 rounded-md flex items-center border border-red-900">
-              <FaExclamationTriangle className="mr-2" />
+              <FaTriangleExclamation className="mr-2" />
               <span>{errorMessage}</span>
             </div>
           )}
           
           {uploadStatus === 'success' && (
             <div className="mt-4 bg-[#2A3A2A] text-green-400 p-3 rounded-md flex items-center border border-green-900">
-              <FaCheck className="mr-2" />
+              <FaCircleCheck className="mr-2" />
               <div>
                 <p className="font-medium">Data processed successfully!</p>
                 <div className="flex flex-wrap gap-3 mt-2">
                   {previewData?.tickets.length ? (
                     <div className="bg-[#333333] text-[#E0E0E0] px-3 py-1 rounded-full text-sm flex items-center border border-[#FFA500]">
-                      <FaTicketAlt className="mr-1 text-[#FFA500]" /> {previewData.tickets.length} tickets imported
+                      <FaTicket className="mr-1 text-[#FFA500]" /> {previewData.tickets.length} tickets imported
                     </div>
                   ) : null}
                   
@@ -531,7 +532,7 @@ export default function ImportPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div className="border border-gray-700 bg-[#333333] p-4 rounded-lg">
               <h3 className="font-medium text-[#E0E0E0] mb-2 flex items-center">
-                <FaTicketAlt className="mr-2 text-[#FFA500]" />
+                <FaTicket className="mr-2 text-[#FFA500]" />
                 Ticket Data Format
               </h3>
               <ul className="list-disc pl-5 space-y-1 text-[#E0E0E0] text-sm">
@@ -566,9 +567,9 @@ export default function ImportPage() {
         </div>
       </main>
       
-      <footer className="bg-[#2B2B2B] text-[#E0E0E0] py-6 mt-auto border-t border-gray-800">
+      <footer className="bg-[#1A1A1A] text-[#A0A0A0] py-8 mt-auto border-t border-[#3C3C3C]">
         <div className="container mx-auto px-4 text-center">
-          <p>Jimmy Ticket Analyzer v27 &copy; 2025</p>
+          <p className="mb-0">ServiceNow Ticket Analysis Dashboard &copy; 2024</p>
         </div>
       </footer>
     </div>

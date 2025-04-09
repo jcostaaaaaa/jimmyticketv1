@@ -549,9 +549,9 @@ export default function QueryPage() {
         </div>
       </main>
       
-      <footer className="bg-[#1A1A1A] border-t border-[#3C3C3C] py-6 mt-auto">
+      <footer className="bg-[#1A1A1A] text-[#A0A0A0] py-8 mt-auto border-t border-[#3C3C3C]">
         <div className="container mx-auto px-4 text-center">
-          <p className="text-[#E0E0E0]">Jimmy Ticket Analyzer v27 &copy; 2025</p>
+          <p className="mb-0">ServiceNow Ticket Analysis Dashboard &copy; 2024</p>
         </div>
       </footer>
     </div>

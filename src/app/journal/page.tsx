@@ -9,7 +9,8 @@ function generateId() {
          Math.random().toString(36).substring(2, 15) + 
          Date.now().toString(36);
 }
-import { FaPlus, FaSearch, FaArrowLeft } from 'react-icons/fa';
+import { FaSearch } from 'react-icons/fa';
+import { FaCirclePlus, FaArrowLeftLong } from 'react-icons/fa6';
 
 // Import the notification context hook
 import { useNotification } from '@/context/NotificationContext';
@@ -586,14 +587,14 @@ export default function JournalPage() {
               onClick={() => window.location.href = '/'}
               className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-md flex items-center"
             >
-              <FaArrowLeft className="mr-2" />
+              <FaArrowLeftLong className="mr-2" />
               Back to Dashboard
             </button>
             <button
               onClick={() => setIsAddingEntry(true)}
               className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-md flex items-center"
             >
-              <FaPlus className="mr-2" />
+              <FaCirclePlus className="mr-2" />
               Add Entry
             </button>
             <button
@@ -608,7 +609,7 @@ export default function JournalPage() {
                 </>
               ) : (
                 <>
-                  <FaPlus className="mr-2" />
+                  <FaCirclePlus className="mr-2" />
                   Generate AI Entries
                 </>
               )}
@@ -816,7 +817,7 @@ export default function JournalPage() {
                   onClick={() => setIsAddingEntry(true)}
                   className="inline-flex items-center px-4 py-2 bg-[#E69500] hover:bg-[#FFA500] text-white rounded-md transition-colors"
                 >
-                  <FaPlus className="-ml-1 mr-2 h-5 w-5" />
+                  <FaCirclePlus className="-ml-1 mr-2 h-5 w-5" />
                   Add Your First Entry
                 </button>
               </div>
@@ -837,6 +838,12 @@ export default function JournalPage() {
           )}
         </div>
       </div>
+      
+      <footer className="bg-[#1A1A1A] text-[#A0A0A0] py-8 mt-auto border-t border-[#3C3C3C]">
+        <div className="container mx-auto px-4 text-center">
+          <p className="mb-0">ServiceNow Ticket Analysis Dashboard &copy; 2024</p>
+        </div>
+      </footer>
     </div>
   );
 }

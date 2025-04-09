@@ -274,9 +274,9 @@ export default function AnalyticsPage() {
         </div>
       </main>
       
-      <footer className="bg-gray-800 text-white py-4 mt-auto">
+      <footer className="bg-[#1A1A1A] text-[#A0A0A0] py-8 mt-auto border-t border-[#3C3C3C]">
         <div className="container mx-auto px-4 text-center">
-          <p>Ticket Analysis Dashboard &copy; 2024</p>
+          <p className="mb-0">ServiceNow Ticket Analysis Dashboard &copy; 2024</p>
         </div>
       </footer>
     </div>

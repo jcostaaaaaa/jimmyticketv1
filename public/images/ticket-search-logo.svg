@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <path fill="#FFA500" d="M480 432l-96-96v-40h16v-64h-64v64h16v40l-96 96v32h224v-32z"/>
+  <path fill="#FFA500" d="M96 32H32v64h64V32zm32 0v64h64V32h-64zm96 0v64h64V32h-64zm96 0v64h64V32h-64zM96 128H32v64h64v-64zm32 0v64h64v-64h-64zm96 0v64h64v-64h-64zm96 0v64h64v-64h-64zM96 224H32v64h64v-64zm32 0v64h64v-64h-64zm96 0v64h64v-64h-64zm96 0v64h64v-64h-64zM96 320H32v64h64v-64zm32 0v64h64v-64h-64zm96 0v64h64v-64h-64z"/>
+</svg>

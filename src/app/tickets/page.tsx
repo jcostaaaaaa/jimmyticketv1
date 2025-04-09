@@ -93,9 +93,9 @@ export default function TicketsPage() {
         <TicketList tickets={mockTickets} />
       </main>
       
-      <footer className="bg-[#2B2B2B] text-[#E0E0E0] py-4 mt-auto border-t border-gray-800">
+      <footer className="bg-[#1A1A1A] text-[#A0A0A0] py-8 mt-auto border-t border-[#3C3C3C]">
         <div className="container mx-auto px-4 text-center">
-          <p>Jimmy Ticket Analyzer v27 &copy; 2025</p>
+          <p className="mb-0">ServiceNow Ticket Analysis Dashboard &copy; 2024</p>
         </div>
       </footer>
     </div>

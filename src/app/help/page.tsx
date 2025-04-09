@@ -1,6 +1,6 @@
 import React from 'react';
 import { Header } from '@/components/Header';
-import { FaQuestion, FaFileAlt, FaTools, FaChartBar, FaDatabase, FaExchangeAlt, FaBook } from 'react-icons/fa';
+import { FaLightbulb, FaFileUpload, FaServer, FaChartBar, FaDatabase, FaNetworkWired } from 'react-icons/fa';
 
 export default function HelpPage() {
   return (
@@ -11,10 +11,10 @@ export default function HelpPage() {
         <h1 className="text-3xl font-bold mb-6 text-[#E0E0E0]">Help & Documentation</h1>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <div className="bg-[#2B2B2B] rounded-lg shadow-md p-6 border border-gray-700">
+          <div className="bg-[#2B2B2B] border border-[#3C3C3C] rounded-xl shadow-sm hover:shadow-md transition-shadow p-6 border-l-4 border-l-[#FF8000] orange-border">
             <div className="flex items-center mb-4">
-              <div className="bg-[#E69500] rounded-full p-3 mr-3">
-                <FaQuestion className="text-white" />
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-[#3C3C3C] mr-3">
+                <FaLightbulb className="text-[#FF8000] text-xl" />
               </div>
               <h2 className="text-xl font-semibold text-[#E0E0E0]">Getting Started</h2>
             </div>
@@ -30,10 +30,10 @@ export default function HelpPage() {
             </ol>
           </div>
           
-          <div className="bg-[#2B2B2B] rounded-lg shadow-md p-6 border border-gray-700">
+          <div className="bg-[#2B2B2B] border border-[#3C3C3C] rounded-xl shadow-sm hover:shadow-md transition-shadow p-6 border-l-4 border-l-[#FF8000] orange-border">
             <div className="flex items-center mb-4">
-              <div className="bg-[#E69500] rounded-full p-3 mr-3">
-                <FaFileAlt className="text-white" />
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-[#3C3C3C] mr-3">
+                <FaFileUpload className="text-[#FF8000] text-xl" />
               </div>
               <h2 className="text-xl font-semibold text-[#E0E0E0]">Supported File Formats</h2>
             </div>
@@ -54,17 +54,17 @@ export default function HelpPage() {
           </div>
         </div>
         
-        <div className="bg-[#2B2B2B] rounded-lg shadow-md p-6 mb-8 border border-gray-700">
+        <div className="bg-[#2B2B2B] border border-[#3C3C3C] rounded-xl shadow-sm hover:shadow-md transition-shadow p-6 mb-8 border-l-4 border-l-[#FF8000] orange-border">
           <div className="flex items-center mb-4">
-            <div className="bg-[#E69500] rounded-full p-3 mr-3">
-              <FaTools className="text-white" />
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-[#3C3C3C] mr-3">
+              <FaServer className="text-[#FF8000] text-xl" />
             </div>
             <h2 className="text-xl font-semibold text-[#E0E0E0]">Features & Functionality</h2>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <h3 className="text-lg font-medium mb-2 text-[#FFA500]">Ticket Analysis</h3>
+              <h3 className="text-lg font-medium mb-2 text-[#FF8000]">Ticket Analysis</h3>
               <p className="text-[#E0E0E0]">
                 The Analyze page provides comprehensive analytics on your ticket data, including:
               </p>
@@ -79,7 +79,7 @@ export default function HelpPage() {
             </div>
             
             <div>
-              <h3 className="text-lg font-medium mb-2 text-[#FFA500]">Learning Journal</h3>
+              <h3 className="text-lg font-medium mb-2 text-[#FF8000]">Learning Journal</h3>
               <p className="text-[#E0E0E0]">
                 The Journal page helps you track learning points from resolved tickets:
               </p>
@@ -95,10 +95,10 @@ export default function HelpPage() {
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-[#2B2B2B] rounded-lg shadow-md p-6 border border-gray-700">
+          <div className="bg-[#2B2B2B] border border-[#3C3C3C] rounded-xl shadow-sm hover:shadow-md transition-shadow p-6 border-l-4 border-l-[#FF8000] orange-border">
             <div className="flex items-center mb-4">
-              <div className="bg-[#E69500] rounded-full p-3 mr-3">
-                <FaChartBar className="text-white" />
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-[#3C3C3C] mr-3">
+                <FaChartBar className="text-[#FF8000] text-xl" />
               </div>
               <h2 className="text-xl font-semibold text-[#E0E0E0]">Analytics Guide</h2>
             </div>
@@ -106,15 +106,15 @@ export default function HelpPage() {
               Learn how to interpret the analytics data and use it to improve your support processes.
               The analytics dashboard provides actionable insights based on historical ticket data.
             </p>
-            <button className="mt-4 bg-[#E69500] hover:bg-[#FFA500] text-white py-2 px-4 rounded-md transition-colors">
+            <button className="mt-4 bg-[#FF8000] hover:bg-[#F76B00] text-[#E0E0E0] font-medium py-2 px-4 rounded-lg shadow-sm hover:shadow transition-all">
               View Guide
             </button>
           </div>
           
-          <div className="bg-[#2B2B2B] rounded-lg shadow-md p-6 border border-gray-700">
+          <div className="bg-[#2B2B2B] border border-[#3C3C3C] rounded-xl shadow-sm hover:shadow-md transition-shadow p-6 border-l-4 border-l-[#FF8000] orange-border">
             <div className="flex items-center mb-4">
-              <div className="bg-[#E69500] rounded-full p-3 mr-3">
-                <FaDatabase className="text-white" />
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-[#3C3C3C] mr-3">
+                <FaDatabase className="text-[#FF8000] text-xl" />
               </div>
               <h2 className="text-xl font-semibold text-[#E0E0E0]">Data Management</h2>
             </div>
@@ -122,15 +122,15 @@ export default function HelpPage() {
               Learn how to manage your imported data, update existing records, and ensure data quality.
               Proper data management ensures accurate analytics and insights.
             </p>
-            <button className="mt-4 bg-[#E69500] hover:bg-[#FFA500] text-white py-2 px-4 rounded-md transition-colors">
+            <button className="mt-4 bg-[#FF8000] hover:bg-[#F76B00] text-[#E0E0E0] font-medium py-2 px-4 rounded-lg shadow-sm hover:shadow transition-all">
               View Guide
             </button>
           </div>
           
-          <div className="bg-[#2B2B2B] rounded-lg shadow-md p-6 border border-gray-700">
+          <div className="bg-[#2B2B2B] border border-[#3C3C3C] rounded-xl shadow-sm hover:shadow-md transition-shadow p-6 border-l-4 border-l-[#FF8000] orange-border">
             <div className="flex items-center mb-4">
-              <div className="bg-[#E69500] rounded-full p-3 mr-3">
-                <FaExchangeAlt className="text-white" />
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-[#3C3C3C] mr-3">
+                <FaNetworkWired className="text-[#FF8000] text-xl" />
               </div>
               <h2 className="text-xl font-semibold text-[#E0E0E0]">API Integration</h2>
             </div>
@@ -138,24 +138,16 @@ export default function HelpPage() {
               Learn how to integrate with ticket systems via API to automate data import.
               The application supports OpenAI API integration for enhanced journal entry generation.
             </p>
-            <button className="mt-4 bg-[#E69500] hover:bg-[#FFA500] text-white py-2 px-4 rounded-md transition-colors">
+            <button className="mt-4 bg-[#FF8000] hover:bg-[#F76B00] text-[#E0E0E0] font-medium py-2 px-4 rounded-lg shadow-sm hover:shadow transition-all">
               View Guide
             </button>
           </div>
         </div>
       </main>
       
-      <footer className="bg-[#1A1A1A] border-t border-gray-800 py-6 mt-12">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="mb-4 md:mb-0">
-              <p className="text-[#E0E0E0]">Jimmy Ticket Analyzer v27 &copy; 2025</p>
-            </div>
-            <div className="flex items-center">
-              <FaBook className="text-[#E69500] mr-2" />
-              <span className="text-[#E0E0E0]">Documentation Version 2.1</span>
-            </div>
-          </div>
+      <footer className="bg-[#1A1A1A] text-[#A0A0A0] py-8 mt-auto border-t border-[#3C3C3C]">
+        <div className="container mx-auto px-4 text-center">
+          <p className="mb-0">ServiceNow Ticket Analysis Dashboard &copy; 2024</p>
         </div>
       </footer>
     </div>

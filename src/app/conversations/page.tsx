@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { useConversations, Conversation } from '@/context/ConversationContext';
 import { Header } from '@/components/Header';
-import { FaComments, FaUser, FaRobot, FaClock, FaCalendarAlt, FaSearch, FaFilter } from 'react-icons/fa';
+import { FaComments, FaSearch } from 'react-icons/fa';
+import { FaUserCircle, FaLaptopCode, FaClockFour, FaCalendarDays, FaSliders } from 'react-icons/fa6';
 
 export default function ConversationsPage() {
   const { conversations } = useConversations();
@@ -72,7 +73,7 @@ export default function ConversationsPage() {
                 </div>
                 
                 <div className="mb-4 flex items-center">
-                  <FaFilter className="text-[#E69500] mr-2" />
+                  <FaSliders className="text-[#E69500] mr-2" />
                   <select
                     value={filterBy}
                     onChange={(e) => setFilterBy(e.target.value)}
@@ -109,7 +110,7 @@ export default function ConversationsPage() {
                           </div>
                         </div>
                         <div className="text-sm text-[#E0E0E0] mt-1 flex items-center">
-                          <FaClock className="mr-1 text-[#E69500]" />
+                          <FaClockFour className="mr-1 text-[#E69500]" />
                           {new Date(conversation.start_time).toLocaleDateString()}
                         </div>
                         <div className="text-sm text-[#E0E0E0] mt-2 line-clamp-2">
@@ -140,7 +141,7 @@ export default function ConversationsPage() {
                       </div>
                     </div>
                     <div className="mt-2 flex items-center text-sm text-[#E0E0E0]">
-                      <FaCalendarAlt className="mr-2 text-[#E69500]" />
+                      <FaCalendarDays className="mr-2 text-[#E69500]" />
                       {new Date(conversationDetails.start_time).toLocaleString()}
                     </div>
                   </div>
@@ -162,7 +163,7 @@ export default function ConversationsPage() {
                             <div className={`p-1 rounded-full mr-2 ${
                               message.sender === 'user' ? 'bg-[#FFA500]' : 'bg-[#E69500]'
                             }`}>
-                              {message.sender === 'user' ? <FaUser size={12} /> : <FaRobot size={12} />}
+                              <span className={`${message.sender === 'user' ? 'text-[#E69500]' : 'text-[#FFA500]'} mr-2`}>{message.sender === 'user' ? <FaUserCircle /> : <FaLaptopCode />}</span>
                             </div>
                             <div className="text-xs font-medium">
                               {message.sender === 'user' ? 'Customer' : 'Support Agent'}
@@ -203,9 +204,9 @@ export default function ConversationsPage() {
         )}
       </main>
       
-      <footer className="bg-[#1A1A1A] text-[#E0E0E0] py-6 mt-auto">
+      <footer className="bg-[#1A1A1A] text-[#A0A0A0] py-8 mt-auto border-t border-[#3C3C3C]">
         <div className="container mx-auto px-4 text-center">
-          <p>ServiceNow Ticket Analysis Dashboard &copy; 2024</p>
+          <p className="mb-0">ServiceNow Ticket Analysis Dashboard &copy; 2024</p>
         </div>
       </footer>
     </div>
